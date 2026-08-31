@@ -1,252 +1,286 @@
 <style>
-.skmap{margin:0 0 2.4rem;border:1px solid var(--main-border-color,#333);border-radius:18px;overflow:hidden;background:#070707;color:#eee}
-.skmap-head{padding:1rem 1rem .6rem}
-.skmap-kicker{margin:0;font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:#8a8a8a}
-.skmap-title{margin:.15rem 0 .2rem;font-size:1.35rem}
-.skmap-desc{margin:0;color:#9a9a9a;font-size:.9rem}
-.skmap-view{position:relative;height:min(78vh,720px);cursor:grab;touch-action:none;background:
-radial-gradient(900px 420px at 50% 0,rgba(110,160,212,.08),transparent 60%),#070707}
-.skmap-view.is-drag{cursor:grabbing}
-.sk-world{position:absolute;left:0;top:0;transform-origin:0 0;will-change:transform}
-.sk-world svg{position:absolute;inset:0;pointer-events:none}
-.sk-node{position:absolute;transform:translate(-50%,-50%);width:8.2rem;border:0;background:transparent;color:inherit;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:.28rem;padding:0}
-.sk-node:focus-visible{outline:2px solid #e7d27a}
-.sk-dot{width:13px;height:13px;border-radius:50%;border:2px solid #6b3a44;background:#231016;box-shadow:0 0 0 3px rgba(0,0,0,.35)}
-.sk-node.lv0 .sk-dot{width:28px;height:28px;border-color:#e7d27a;background:#efe39a;box-shadow:0 0 22px rgba(231,210,122,.5)}
-.sk-node.lv1 .sk-dot{width:18px;height:18px;border-color:#6ea0d4;background:#d7e7f8}
-.sk-node.is-leaf .sk-dot{border-color:#7a8cae;background:#1b2433}
-.sk-node.is-on .sk-dot{border-color:#efe39a;background:#fff3b0;box-shadow:0 0 16px rgba(255,243,176,.45)}
-.sk-label{font-size:.74rem;line-height:1.2;text-align:center;color:#d8d8d8;text-shadow:0 1px 2px #000}
-.sk-node.lv0 .sk-label{font-size:1rem;font-weight:700;color:#fff}
-.sk-node.lv1 .sk-label{font-weight:700}
-.skmap-ui{position:absolute;right:10px;bottom:10px;display:flex;gap:.35rem}
-.skmap-ui button{width:34px;height:34px;border:1px solid #444;border-radius:9px;background:#151515;color:#ddd;cursor:pointer}
-.skmap-hint{padding:.45rem 1rem .75rem;color:#777;font-size:.8rem}
+.gate{margin:0 0 2.2rem;padding:1rem .7rem 1.3rem;border:1px solid var(--main-border-color,#333);border-radius:18px;background:#0a0a0a;color:#eee}
+.gate-kicker{margin:0;font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:#888}
+.gate-title{margin:.15rem 0 .2rem;font-size:1.35rem}
+.gate-desc{margin:0 0 1rem;color:#999;font-size:.9rem}
+.gate-branch{display:flex;flex-direction:column;align-items:center;min-width:0}
+.gate-kids{display:flex;flex-wrap:wrap;justify-content:center;gap:1.1rem .9rem;width:100%;margin-top:.55rem;padding-top:1rem;position:relative}
+.gate-kids:before{content:"";position:absolute;left:50%;top:0;width:1px;height:1rem;background:#5b7394}
+.gate-node{appearance:none;display:inline-flex;flex-direction:column;align-items:center;gap:.28rem;width:7.4rem;max-width:42vw;padding:0;border:0;background:transparent;color:inherit;text-decoration:none;cursor:pointer;font:inherit;text-align:center}
+.gate-dot{width:13px;height:13px;border-radius:50%;border:2px solid #7a8cae;background:#1b2433;box-shadow:0 0 0 3px rgba(0,0,0,.35)}
+.gate-node.is-root .gate-dot{width:26px;height:26px;border-color:#e7d27a;background:#efe39a;box-shadow:0 0 18px rgba(231,210,122,.45)}
+.gate-node.is-stem .gate-dot{width:17px;height:17px;border-color:#6ea0d4;background:#d7e7f8}
+.gate-node.is-on .gate-dot{border-color:#efe39a;background:#fff3b0}
+.gate-label{font-size:.78rem;line-height:1.25;color:#ddd;text-shadow:0 1px 2px #000}
+.gate-node.is-root .gate-label{font-size:1rem;font-weight:700;color:#fff}
+.gate-node.is-stem .gate-label{font-weight:700}
+.gate-node:hover .gate-label{color:#fff}
+.gate-hint{margin:.9rem 0 0;color:#777;font-size:.8rem}
 </style>
 
-<section class="skmap" aria-label="진리의 문">
-  <div class="skmap-head">
-    <p class="skmap-kicker">Constellation</p>
-    <h2 class="skmap-title">진리의 문</h2>
-    <p class="skmap-desc">모든 줄기는 펼쳐져 있습니다. 드래그로 이동, 휠로 확대, 노드를 누르면 그쪽으로 다가갑니다.</p>
-  </div>
-  <div class="skmap-view" id="sk-view">
-    <div class="sk-world" id="sk-world">
-      <svg id="sk-lines"></svg>
+<section class="gate" aria-label="진리의 문">
+  <p class="gate-kicker">Constellation</p>
+  <h2 class="gate-title">진리의 문</h2>
+  <p class="gate-desc">부모 아래 자식이 내려옵니다. 노드는 누르면 그쪽으로 이동하고, 글이 있는 잎은 바로 열립니다.</p>
+
+  <div class="gate-branch">
+    <button class="gate-node is-root" type="button" data-gate><span class="gate-dot"></span><span class="gate-label">진리의 문</span></button>
+    <div class="gate-kids">
+
+      <div class="gate-branch">
+        <button class="gate-node is-stem" type="button" data-gate><span class="gate-dot"></span><span class="gate-label">기초</span></button>
+        <div class="gate-kids">
+          <a class="gate-node" href="#"><span class="gate-dot"></span><span class="gate-label">통계</span></a>
+          <a class="gate-node" href="#"><span class="gate-dot"></span><span class="gate-label">확률</span></a>
+          <a class="gate-node" href="#"><span class="gate-dot"></span><span class="gate-label">수학</span></a>
+        </div>
+      </div>
+
+      <div class="gate-branch">
+        <button class="gate-node is-stem" type="button" data-gate><span class="gate-dot"></span><span class="gate-label">컴퓨터</span></button>
+        <div class="gate-kids">
+          <a class="gate-node" href="#"><span class="gate-dot"></span><span class="gate-label">운영체제</span></a>
+          <a class="gate-node" href="#"><span class="gate-dot"></span><span class="gate-label">데이터베이스</span></a>
+          <a class="gate-node" href="#"><span class="gate-dot"></span><span class="gate-label">네트워크</span></a>
+          <a class="gate-node" href="#"><span class="gate-dot"></span><span class="gate-label">소프트웨어공학</span></a>
+          <a class="gate-node" href="#"><span class="gate-dot"></span><span class="gate-label">자료구조</span></a>
+        </div>
+      </div>
+
+      <div class="gate-branch">
+        <button class="gate-node is-stem" type="button" data-gate><span class="gate-dot"></span><span class="gate-label">데이터</span></button>
+        <div class="gate-kids">
+          <a class="gate-node" href="#"><span class="gate-dot"></span><span class="gate-label">전처리</span></a>
+          <a class="gate-node" href="#"><span class="gate-dot"></span><span class="gate-label">SQL</span></a>
+          <a class="gate-node" href="#"><span class="gate-dot"></span><span class="gate-label">시각화</span></a>
+          <a class="gate-node" href="#"><span class="gate-dot"></span><span class="gate-label">빅데이터</span></a>
+        </div>
+      </div>
+
+      <div class="gate-branch">
+        <button class="gate-node is-stem" type="button" data-gate><span class="gate-dot"></span><span class="gate-label">AI</span></button>
+        <div class="gate-kids">
+          <div class="gate-branch">
+            <button class="gate-node is-stem" type="button" data-gate><span class="gate-dot"></span><span class="gate-label">머신러닝</span></button>
+            <div class="gate-kids">
+              <div class="gate-branch">
+                <button class="gate-node is-stem" type="button" data-gate><span class="gate-dot"></span><span class="gate-label">선형 모델</span></button>
+                <div class="gate-kids">
+                  <a class="gate-node" href="/posts/simple-linear-regression/"><span class="gate-dot"></span><span class="gate-label">단순선형회귀</span></a>
+                  <a class="gate-node" href="/posts/multiple-linear-regression/"><span class="gate-dot"></span><span class="gate-label">다중선형회귀</span></a>
+                  <a class="gate-node" href="/posts/polynomial-regression/"><span class="gate-dot"></span><span class="gate-label">다항회귀</span></a>
+                  <a class="gate-node" href="/posts/logistic-regression/"><span class="gate-dot"></span><span class="gate-label">로지스틱회귀</span></a>
+                  <a class="gate-node" href="/posts/softmax-regression/"><span class="gate-dot"></span><span class="gate-label">소프트맥스회귀</span></a>
+                  <a class="gate-node" href="/posts/ridge/"><span class="gate-dot"></span><span class="gate-label">Ridge</span></a>
+                  <a class="gate-node" href="/posts/lasso/"><span class="gate-dot"></span><span class="gate-label">Lasso</span></a>
+                  <a class="gate-node" href="/posts/elastic-net/"><span class="gate-dot"></span><span class="gate-label">Elastic Net</span></a>
+                </div>
+              </div>
+              <div class="gate-branch">
+                <button class="gate-node is-stem" type="button" data-gate><span class="gate-dot"></span><span class="gate-label">거리 기반</span></button>
+                <div class="gate-kids">
+                  <a class="gate-node" href="/posts/knn/"><span class="gate-dot"></span><span class="gate-label">KNN</span></a>
+                  <a class="gate-node" href="/posts/weighted-knn/"><span class="gate-dot"></span><span class="gate-label">Weighted KNN</span></a>
+                  <a class="gate-node" href="/posts/radius-neighbors/"><span class="gate-dot"></span><span class="gate-label">Radius Neighbors</span></a>
+                </div>
+              </div>
+              <div class="gate-branch">
+                <button class="gate-node is-stem" type="button" data-gate><span class="gate-dot"></span><span class="gate-label">확률 모델</span></button>
+                <div class="gate-kids">
+                  <a class="gate-node" href="#"><span class="gate-dot"></span><span class="gate-label">가우시안 NB</span></a>
+                  <a class="gate-node" href="#"><span class="gate-dot"></span><span class="gate-label">다항 NB</span></a>
+                  <a class="gate-node" href="#"><span class="gate-dot"></span><span class="gate-label">베르누이 NB</span></a>
+                  <a class="gate-node" href="#"><span class="gate-dot"></span><span class="gate-label">LDA</span></a>
+                  <a class="gate-node" href="#"><span class="gate-dot"></span><span class="gate-label">QDA</span></a>
+                  <a class="gate-node" href="#"><span class="gate-dot"></span><span class="gate-label">GMM</span></a>
+                </div>
+              </div>
+              <div class="gate-branch">
+                <button class="gate-node is-stem" type="button" data-gate><span class="gate-dot"></span><span class="gate-label">트리</span></button>
+                <div class="gate-kids">
+                  <a class="gate-node" href="#"><span class="gate-dot"></span><span class="gate-label">ID3</span></a>
+                  <a class="gate-node" href="#"><span class="gate-dot"></span><span class="gate-label">C4.5</span></a>
+                  <a class="gate-node" href="#"><span class="gate-dot"></span><span class="gate-label">C5.0</span></a>
+                  <a class="gate-node" href="#"><span class="gate-dot"></span><span class="gate-label">CART</span></a>
+                  <a class="gate-node" href="#"><span class="gate-dot"></span><span class="gate-label">회귀나무</span></a>
+                </div>
+              </div>
+              <div class="gate-branch">
+                <button class="gate-node is-stem" type="button" data-gate><span class="gate-dot"></span><span class="gate-label">앙상블</span></button>
+                <div class="gate-kids">
+                  <a class="gate-node" href="#"><span class="gate-dot"></span><span class="gate-label">Bagging</span></a>
+                  <a class="gate-node" href="#"><span class="gate-dot"></span><span class="gate-label">Random Forest</span></a>
+                  <a class="gate-node" href="#"><span class="gate-dot"></span><span class="gate-label">Extra Trees</span></a>
+                  <a class="gate-node" href="#"><span class="gate-dot"></span><span class="gate-label">AdaBoost</span></a>
+                  <a class="gate-node" href="#"><span class="gate-dot"></span><span class="gate-label">GBM</span></a>
+                  <a class="gate-node" href="#"><span class="gate-dot"></span><span class="gate-label">XGBoost</span></a>
+                  <a class="gate-node" href="#"><span class="gate-dot"></span><span class="gate-label">LightGBM</span></a>
+                  <a class="gate-node" href="#"><span class="gate-dot"></span><span class="gate-label">CatBoost</span></a>
+                  <a class="gate-node" href="#"><span class="gate-dot"></span><span class="gate-label">Voting</span></a>
+                  <a class="gate-node" href="#"><span class="gate-dot"></span><span class="gate-label">Stacking</span></a>
+                </div>
+              </div>
+              <div class="gate-branch">
+                <button class="gate-node is-stem" type="button" data-gate><span class="gate-dot"></span><span class="gate-label">커널 · SVM</span></button>
+                <div class="gate-kids">
+                  <a class="gate-node" href="#"><span class="gate-dot"></span><span class="gate-label">Linear SVM</span></a>
+                  <a class="gate-node" href="#"><span class="gate-dot"></span><span class="gate-label">Soft Margin</span></a>
+                  <a class="gate-node" href="#"><span class="gate-dot"></span><span class="gate-label">Kernel SVM</span></a>
+                  <a class="gate-node" href="#"><span class="gate-dot"></span><span class="gate-label">SVR</span></a>
+                  <a class="gate-node" href="#"><span class="gate-dot"></span><span class="gate-label">One-class</span></a>
+                </div>
+              </div>
+              <div class="gate-branch">
+                <button class="gate-node is-stem" type="button" data-gate><span class="gate-dot"></span><span class="gate-label">군집</span></button>
+                <div class="gate-kids">
+                  <a class="gate-node" href="#"><span class="gate-dot"></span><span class="gate-label">K-means</span></a>
+                  <a class="gate-node" href="#"><span class="gate-dot"></span><span class="gate-label">K-medoids</span></a>
+                  <a class="gate-node" href="#"><span class="gate-dot"></span><span class="gate-label">K-modes</span></a>
+                  <a class="gate-node" href="#"><span class="gate-dot"></span><span class="gate-label">계층적</span></a>
+                  <a class="gate-node" href="#"><span class="gate-dot"></span><span class="gate-label">DBSCAN</span></a>
+                  <a class="gate-node" href="#"><span class="gate-dot"></span><span class="gate-label">Mean Shift</span></a>
+                  <a class="gate-node" href="#"><span class="gate-dot"></span><span class="gate-label">Spectral</span></a>
+                </div>
+              </div>
+              <div class="gate-branch">
+                <button class="gate-node is-stem" type="button" data-gate><span class="gate-dot"></span><span class="gate-label">차원축소</span></button>
+                <div class="gate-kids">
+                  <a class="gate-node" href="#"><span class="gate-dot"></span><span class="gate-label">PCA</span></a>
+                  <a class="gate-node" href="#"><span class="gate-dot"></span><span class="gate-label">Kernel PCA</span></a>
+                  <a class="gate-node" href="#"><span class="gate-dot"></span><span class="gate-label">SVD</span></a>
+                  <a class="gate-node" href="#"><span class="gate-dot"></span><span class="gate-label">LDA</span></a>
+                  <a class="gate-node" href="#"><span class="gate-dot"></span><span class="gate-label">t-SNE</span></a>
+                  <a class="gate-node" href="#"><span class="gate-dot"></span><span class="gate-label">UMAP</span></a>
+                  <a class="gate-node" href="#"><span class="gate-dot"></span><span class="gate-label">NMF</span></a>
+                  <a class="gate-node" href="#"><span class="gate-dot"></span><span class="gate-label">ICA</span></a>
+                </div>
+              </div>
+              <div class="gate-branch">
+                <button class="gate-node is-stem" type="button" data-gate><span class="gate-dot"></span><span class="gate-label">연관규칙</span></button>
+                <div class="gate-kids">
+                  <a class="gate-node" href="#"><span class="gate-dot"></span><span class="gate-label">Apriori</span></a>
+                  <a class="gate-node" href="#"><span class="gate-dot"></span><span class="gate-label">FP-Growth</span></a>
+                  <a class="gate-node" href="#"><span class="gate-dot"></span><span class="gate-label">Eclat</span></a>
+                </div>
+              </div>
+              <a class="gate-node" href="#"><span class="gate-dot"></span><span class="gate-label">학습 실무</span></a>
+            </div>
+          </div>
+
+          <div class="gate-branch">
+            <button class="gate-node is-stem" type="button" data-gate><span class="gate-dot"></span><span class="gate-label">딥러닝</span></button>
+            <div class="gate-kids">
+              <a class="gate-node" href="#"><span class="gate-dot"></span><span class="gate-label">MLP</span></a>
+              <a class="gate-node" href="#"><span class="gate-dot"></span><span class="gate-label">CNN</span></a>
+              <a class="gate-node" href="#"><span class="gate-dot"></span><span class="gate-label">RNN</span></a>
+              <a class="gate-node" href="#"><span class="gate-dot"></span><span class="gate-label">LSTM</span></a>
+              <a class="gate-node" href="#"><span class="gate-dot"></span><span class="gate-label">GRU</span></a>
+              <a class="gate-node" href="#"><span class="gate-dot"></span><span class="gate-label">Transformer</span></a>
+              <a class="gate-node" href="#"><span class="gate-dot"></span><span class="gate-label">Autoencoder</span></a>
+              <a class="gate-node" href="#"><span class="gate-dot"></span><span class="gate-label">GAN</span></a>
+              <a class="gate-node" href="#"><span class="gate-dot"></span><span class="gate-label">Diffusion</span></a>
+            </div>
+          </div>
+
+          <div class="gate-branch">
+            <button class="gate-node is-stem" type="button" data-gate><span class="gate-dot"></span><span class="gate-label">생성형 AI</span></button>
+            <div class="gate-kids">
+              <a class="gate-node" href="#"><span class="gate-dot"></span><span class="gate-label">BERT</span></a>
+              <a class="gate-node" href="#"><span class="gate-dot"></span><span class="gate-label">GPT</span></a>
+              <a class="gate-node" href="#"><span class="gate-dot"></span><span class="gate-label">T5</span></a>
+              <a class="gate-node" href="#"><span class="gate-dot"></span><span class="gate-label">LLM</span></a>
+              <a class="gate-node" href="#"><span class="gate-dot"></span><span class="gate-label">RAG</span></a>
+              <a class="gate-node" href="#"><span class="gate-dot"></span><span class="gate-label">프롬프트</span></a>
+            </div>
+          </div>
+
+          <div class="gate-branch">
+            <button class="gate-node is-stem" type="button" data-gate><span class="gate-dot"></span><span class="gate-label">응용</span></button>
+            <div class="gate-kids">
+              <a class="gate-node" href="#"><span class="gate-dot"></span><span class="gate-label">비전</span></a>
+              <a class="gate-node" href="#"><span class="gate-dot"></span><span class="gate-label">자연어</span></a>
+              <a class="gate-node" href="#"><span class="gate-dot"></span><span class="gate-label">음성</span></a>
+              <a class="gate-node" href="#"><span class="gate-dot"></span><span class="gate-label">추천</span></a>
+              <a class="gate-node" href="#"><span class="gate-dot"></span><span class="gate-label">강화학습</span></a>
+              <a class="gate-node" href="#"><span class="gate-dot"></span><span class="gate-label">에이전트</span></a>
+            </div>
+          </div>
+
+          <div class="gate-branch">
+            <button class="gate-node is-stem" type="button" data-gate><span class="gate-dot"></span><span class="gate-label">학습 방법</span></button>
+            <div class="gate-kids">
+              <a class="gate-node" href="#"><span class="gate-dot"></span><span class="gate-label">전이학습</span></a>
+              <a class="gate-node" href="#"><span class="gate-dot"></span><span class="gate-label">미세조정</span></a>
+              <a class="gate-node" href="#"><span class="gate-dot"></span><span class="gate-label">준지도</span></a>
+              <a class="gate-node" href="#"><span class="gate-dot"></span><span class="gate-label">자기지도</span></a>
+              <a class="gate-node" href="#"><span class="gate-dot"></span><span class="gate-label">대조학습</span></a>
+              <a class="gate-node" href="#"><span class="gate-dot"></span><span class="gate-label">메타학습</span></a>
+              <a class="gate-node" href="#"><span class="gate-dot"></span><span class="gate-label">연합학습</span></a>
+              <a class="gate-node" href="#"><span class="gate-dot"></span><span class="gate-label">지속학습</span></a>
+              <a class="gate-node" href="#"><span class="gate-dot"></span><span class="gate-label">능동학습</span></a>
+              <a class="gate-node" href="#"><span class="gate-dot"></span><span class="gate-label">멀티태스크</span></a>
+            </div>
+          </div>
+
+          <div class="gate-branch">
+            <button class="gate-node is-stem" type="button" data-gate><span class="gate-dot"></span><span class="gate-label">시스템</span></button>
+            <div class="gate-kids">
+              <a class="gate-node" href="#"><span class="gate-dot"></span><span class="gate-label">양자화</span></a>
+              <a class="gate-node" href="#"><span class="gate-dot"></span><span class="gate-label">가지치기</span></a>
+              <a class="gate-node" href="#"><span class="gate-dot"></span><span class="gate-label">지식증류</span></a>
+              <a class="gate-node" href="#"><span class="gate-dot"></span><span class="gate-label">LoRA</span></a>
+              <a class="gate-node" href="#"><span class="gate-dot"></span><span class="gate-label">QLoRA</span></a>
+              <a class="gate-node" href="#"><span class="gate-dot"></span><span class="gate-label">KV Cache</span></a>
+              <a class="gate-node" href="#"><span class="gate-dot"></span><span class="gate-label">Spec Decode</span></a>
+              <a class="gate-node" href="#"><span class="gate-dot"></span><span class="gate-label">FlashAttention</span></a>
+              <a class="gate-node" href="#"><span class="gate-dot"></span><span class="gate-label">Batching</span></a>
+              <a class="gate-node" href="#"><span class="gate-dot"></span><span class="gate-label">텐서병렬</span></a>
+            </div>
+          </div>
+
+          <div class="gate-branch">
+            <button class="gate-node is-stem" type="button" data-gate><span class="gate-dot"></span><span class="gate-label">보안</span></button>
+            <div class="gate-kids">
+              <a class="gate-node" href="#"><span class="gate-dot"></span><span class="gate-label">적대적 예제</span></a>
+              <a class="gate-node" href="#"><span class="gate-dot"></span><span class="gate-label">데이터 중독</span></a>
+              <a class="gate-node" href="#"><span class="gate-dot"></span><span class="gate-label">프롬프트 인젝션</span></a>
+              <a class="gate-node" href="#"><span class="gate-dot"></span><span class="gate-label">탈옥</span></a>
+              <a class="gate-node" href="#"><span class="gate-dot"></span><span class="gate-label">멤버십 추론</span></a>
+              <a class="gate-node" href="#"><span class="gate-dot"></span><span class="gate-label">모델 추출</span></a>
+              <a class="gate-node" href="#"><span class="gate-dot"></span><span class="gate-label">차등프라이버시</span></a>
+              <a class="gate-node" href="#"><span class="gate-dot"></span><span class="gate-label">가드레일</span></a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="gate-branch">
+        <button class="gate-node is-stem" type="button" data-gate><span class="gate-dot"></span><span class="gate-label">자격증</span></button>
+        <div class="gate-kids">
+          <a class="gate-node" href="#"><span class="gate-dot"></span><span class="gate-label">정보처리기사</span></a>
+          <a class="gate-node" href="#"><span class="gate-dot"></span><span class="gate-label">빅데이터분석기사</span></a>
+        </div>
+      </div>
+
+      <div class="gate-branch">
+        <button class="gate-node is-stem" type="button" data-gate><span class="gate-dot"></span><span class="gate-label">취준</span></button>
+        <div class="gate-kids">
+          <a class="gate-node" href="#"><span class="gate-dot"></span><span class="gate-label">면접</span></a>
+          <a class="gate-node" href="#"><span class="gate-dot"></span><span class="gate-label">포트폴리오</span></a>
+        </div>
+      </div>
+
     </div>
-    <div class="skmap-ui">
-      <button type="button" id="sk-zoom-in">+</button>
-      <button type="button" id="sk-zoom-out">−</button>
-      <button type="button" id="sk-fit">⌂</button>
-    </div>
   </div>
-  <p class="skmap-hint">잎 노드를 두 번 누르면 글로 이동합니다. 빈 칸은 아직 글이 없습니다.</p>
+  <p class="gate-hint">단순선형회귀·KNN처럼 주소가 있는 노드는 한 번에 글로 열립니다.</p>
 </section>
 
 <script>
-(function(){
-  const data = {
-    name:"진리의 문",
-    children:[
-      {name:"기초", children:[{name:"통계",href:"#"},{name:"확률",href:"#"},{name:"수학",href:"#"}]},
-      {name:"컴퓨터", children:[{name:"운영체제",href:"#"},{name:"데이터베이스",href:"#"},{name:"네트워크",href:"#"},{name:"소프트웨어공학",href:"#"},{name:"자료구조",href:"#"}]},
-      {name:"데이터", children:[{name:"전처리",href:"#"},{name:"SQL",href:"#"},{name:"시각화",href:"#"},{name:"빅데이터",href:"#"}]},
-      {name:"AI", children:[
-        {name:"머신러닝", children:[
-          {name:"선형 모델", children:[
-            {name:"단순선형회귀", href:"/posts/simple-linear-regression/"},
-            {name:"다중선형회귀", href:"/posts/multiple-linear-regression/"},
-            {name:"다항회귀", href:"/posts/polynomial-regression/"},
-            {name:"로지스틱회귀", href:"/posts/logistic-regression/"},
-            {name:"소프트맥스회귀", href:"/posts/softmax-regression/"},
-            {name:"Ridge", href:"/posts/ridge/"},
-            {name:"Lasso", href:"/posts/lasso/"},
-            {name:"Elastic Net", href:"/posts/elastic-net/"}
-          ]},
-          {name:"거리 기반", children:[
-            {name:"KNN", href:"/posts/knn/"},
-            {name:"Weighted KNN", href:"/posts/weighted-knn/"},
-            {name:"Radius Neighbors", href:"/posts/radius-neighbors/"}
-          ]},
-          {name:"확률 모델", children:[
-            {name:"가우시안 NB", href:"#"},{name:"다항 NB", href:"#"},{name:"베르누이 NB", href:"#"},
-            {name:"LDA", href:"#"},{name:"QDA", href:"#"},{name:"GMM", href:"#"}
-          ]},
-          {name:"트리", children:[
-            {name:"ID3", href:"#"},{name:"C4.5", href:"#"},{name:"C5.0", href:"#"},{name:"CART", href:"#"},{name:"회귀나무", href:"#"}
-          ]},
-          {name:"앙상블", children:[
-            {name:"Bagging", href:"#"},{name:"Random Forest", href:"#"},{name:"Extra Trees", href:"#"},{name:"AdaBoost", href:"#"},{name:"GBM", href:"#"},
-            {name:"XGBoost", href:"#"},{name:"LightGBM", href:"#"},{name:"CatBoost", href:"#"},{name:"Voting", href:"#"},{name:"Stacking", href:"#"}
-          ]},
-          {name:"커널 · SVM", children:[
-            {name:"Linear SVM", href:"#"},{name:"Soft Margin", href:"#"},{name:"Kernel SVM", href:"#"},{name:"SVR", href:"#"},{name:"One-class", href:"#"}
-          ]},
-          {name:"군집", children:[
-            {name:"K-means", href:"#"},{name:"K-medoids", href:"#"},{name:"K-modes", href:"#"},{name:"계층적", href:"#"},
-            {name:"DBSCAN", href:"#"},{name:"Mean Shift", href:"#"},{name:"Spectral", href:"#"}
-          ]},
-          {name:"차원축소", children:[
-            {name:"PCA", href:"#"},{name:"Kernel PCA", href:"#"},{name:"SVD", href:"#"},{name:"LDA", href:"#"},
-            {name:"t-SNE", href:"#"},{name:"UMAP", href:"#"},{name:"NMF", href:"#"},{name:"ICA", href:"#"}
-          ]},
-          {name:"연관규칙", children:[
-            {name:"Apriori", href:"#"},{name:"FP-Growth", href:"#"},{name:"Eclat", href:"#"}
-          ]},
-          {name:"학습 실무", href:"#"}
-        ]},
-        {name:"딥러닝", children:[
-          {name:"MLP", href:"#"},{name:"CNN", href:"#"},{name:"RNN", href:"#"},{name:"LSTM", href:"#"},{name:"GRU", href:"#"},
-          {name:"Transformer", href:"#"},{name:"Autoencoder", href:"#"},{name:"GAN", href:"#"},{name:"Diffusion", href:"#"}
-        ]},
-        {name:"생성형 AI", children:[
-          {name:"BERT", href:"#"},{name:"GPT", href:"#"},{name:"T5", href:"#"},{name:"LLM", href:"#"},{name:"RAG", href:"#"},{name:"프롬프트", href:"#"}
-        ]},
-        {name:"응용", children:[
-          {name:"비전", href:"#"},{name:"자연어", href:"#"},{name:"음성", href:"#"},{name:"추천", href:"#"},{name:"강화학습", href:"#"},{name:"에이전트", href:"#"}
-        ]},
-        {name:"학습 방법", children:[
-          {name:"전이학습", href:"#"},{name:"미세조정", href:"#"},{name:"준지도", href:"#"},{name:"자기지도", href:"#"},{name:"대조학습", href:"#"},
-          {name:"메타학습", href:"#"},{name:"연합학습", href:"#"},{name:"지속학습", href:"#"},{name:"능동학습", href:"#"},{name:"멀티태스크", href:"#"}
-        ]},
-        {name:"시스템", children:[
-          {name:"양자화", href:"#"},{name:"가지치기", href:"#"},{name:"지식증류", href:"#"},{name:"LoRA", href:"#"},{name:"QLoRA", href:"#"},
-          {name:"KV Cache", href:"#"},{name:"Spec Decode", href:"#"},{name:"FlashAttention", href:"#"},{name:"Batching", href:"#"},{name:"텐서병렬", href:"#"}
-        ]},
-        {name:"보안", children:[
-          {name:"적대적 예제", href:"#"},{name:"데이터 중독", href:"#"},{name:"프롬프트 인젝션", href:"#"},{name:"탈옥", href:"#"},
-          {name:"멤버십 추론", href:"#"},{name:"모델 추출", href:"#"},{name:"차등프라이버시", href:"#"},{name:"가드레일", href:"#"}
-        ]}
-      ]},
-      {name:"자격증", children:[{name:"정보처리기사", href:"#"},{name:"빅데이터분석기사", href:"#"}]},
-      {name:"취준", children:[{name:"면접", href:"#"},{name:"포트폴리오", href:"#"}]}
-    ]
-  };
-
-  const COL=132, ROW=118, PAD=160;
-  const view=document.getElementById("sk-view");
-  const world=document.getElementById("sk-world");
-  const svg=document.getElementById("sk-lines");
-  let cam={x:0,y:0,s:1}, goal=null, nodes=[];
-
-  function layout(node, depth, next){
-    node.depth=depth;
-    if(!node.children||!node.children.length){
-      node.gx=next; node.gy=depth; return next+1;
-    }
-    let x=next;
-    node.children.forEach(ch=>{ x=layout(ch, depth+1, x); });
-    node.gx=(node.children[0].gx + node.children[node.children.length-1].gx)/2;
-    node.gy=depth;
-    return x;
-  }
-  layout(data,0,0);
-
-  function walk(node, fn){ fn(node); (node.children||[]).forEach(ch=>walk(ch,fn)); }
-  let maxX=0,maxY=0;
-  walk(data,n=>{ maxX=Math.max(maxX,n.gx); maxY=Math.max(maxY,n.gy); n.x=PAD+n.gx*COL; n.y=PAD+n.gy*ROW; });
-  const worldW=PAD*2+maxX*COL, worldH=PAD*2+maxY*ROW;
-  world.style.width=worldW+"px";
-  world.style.height=worldH+"px";
-  svg.setAttribute("width",worldW);
-  svg.setAttribute("height",worldH);
-  svg.setAttribute("viewBox","0 0 "+worldW+" "+worldH);
-
-  walk(data,n=>{
-    (n.children||[]).forEach((ch,i)=>{
-      const p=document.createElementNS("http://www.w3.org/2000/svg","path");
-      const mid=(n.y+ch.y)/2;
-      p.setAttribute("d",`M${n.x},${n.y+16} C${n.x},${mid} ${ch.x},${mid} ${ch.x},${ch.y-16}`);
-      p.setAttribute("fill","none");
-      p.setAttribute("stroke", n.depth===0 ? "#6ea0d4" : "#445066");
-      p.setAttribute("stroke-width", n.depth===0 ? "2.6" : "1.3");
-      svg.appendChild(p);
-    });
+document.querySelectorAll("[data-gate]").forEach((btn)=>{
+  btn.addEventListener("click",()=>{
+    document.querySelectorAll(".gate-node.is-on").forEach((n)=>n.classList.remove("is-on"));
+    btn.classList.add("is-on");
+    btn.scrollIntoView({behavior:"smooth", block:"center", inline:"center"});
   });
-
-  walk(data,n=>{
-    const leaf=!n.children||!n.children.length;
-    const btn=document.createElement("button");
-    btn.type="button";
-    btn.className="sk-node lv"+n.depth+(leaf?" is-leaf":"");
-    btn.style.left=n.x+"px";
-    btn.style.top=n.y+"px";
-    btn.innerHTML=`<span class="sk-dot"></span><span class="sk-label">${n.name}</span>`;
-    btn.addEventListener("click",(e)=>{
-      if(moved) return;
-      focus(n,btn);
-    });
-    btn.addEventListener("dblclick",()=>{
-      if(n.href && n.href!=="#") location.href=n.href;
-    });
-    world.appendChild(btn);
-    nodes.push({n,btn});
-  });
-
-  function apply(){
-    world.style.transform=`translate(${cam.x}px,${cam.y}px) scale(${cam.s})`;
-  }
-  function fit(){
-    const vw=view.clientWidth, vh=view.clientHeight;
-    const s=Math.min(vw/worldW, vh/worldH)*0.96;
-    cam.s=Math.max(0.22, Math.min(s,1));
-    cam.x=(vw-worldW*cam.s)/2;
-    cam.y=20;
-    goal=null;
-    apply();
-  }
-  function focus(n,btn){
-    nodes.forEach(o=>o.btn.classList.toggle("is-on", o.n===n));
-    const vw=view.clientWidth, vh=view.clientHeight;
-    const s=Math.min(1.35, Math.max(cam.s*1.18, 0.95));
-    goal={
-      s,
-      x: vw/2 - n.x*s,
-      y: vh*0.38 - n.y*s
-    };
-  }
-  function tick(){
-    if(goal){
-      cam.x+=(goal.x-cam.x)*0.12;
-      cam.y+=(goal.y-cam.y)*0.12;
-      cam.s+=(goal.s-cam.s)*0.12;
-      apply();
-      if(Math.abs(goal.x-cam.x)+Math.abs(goal.y-cam.y)+Math.abs(goal.s-cam.s)<0.4) goal=null;
-    }
-    requestAnimationFrame(tick);
-  }
-  tick();
-
-  let dragging=false, moved=false, lx=0, ly=0;
-  view.addEventListener("pointerdown",e=>{
-    dragging=true; moved=false; lx=e.clientX; ly=e.clientY; goal=null;
-    view.classList.add("is-drag");
-    view.setPointerCapture(e.pointerId);
-  });
-  view.addEventListener("pointermove",e=>{
-    if(!dragging) return;
-    const dx=e.clientX-lx, dy=e.clientY-ly;
-    if(Math.hypot(dx,dy)>3) moved=true;
-    cam.x+=dx; cam.y+=dy; lx=e.clientX; ly=e.clientY; apply();
-  });
-  view.addEventListener("pointerup",()=>{ dragging=false; view.classList.remove("is-drag"); });
-
-  view.addEventListener("wheel",e=>{
-    e.preventDefault();
-    goal=null;
-    const rect=view.getBoundingClientRect();
-    const mx=e.clientX-rect.left, my=e.clientY-rect.top;
-    const old=cam.s;
-    const next=Math.min(2.4, Math.max(0.2, old*(e.deltaY<0?1.12:1/1.12)));
-    cam.x=mx-(mx-cam.x)*(next/old);
-    cam.y=my-(my-cam.y)*(next/old);
-    cam.s=next; apply();
-  },{passive:false});
-
-  document.getElementById("sk-zoom-in").onclick=()=>{ cam.s=Math.min(2.4,cam.s*1.18); apply(); };
-  document.getElementById("sk-zoom-out").onclick=()=>{ cam.s=Math.max(0.2,cam.s/1.18); apply(); };
-  document.getElementById("sk-fit").onclick=fit;
-  window.addEventListener("resize",fit);
-  fit();
-})();
+});
 </script>
