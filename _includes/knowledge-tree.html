@@ -1,267 +1,278 @@
 <style>
-.kmap{margin:0 0 2.2rem;padding:1.25rem 1.2rem 1.1rem;border:1px solid var(--main-border-color,#ddd);border-radius:16px;background:var(--card-bg,transparent)}
-.kmap-kicker{margin:0;font-size:.75rem;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted-color,#888)}
-.kmap-title{margin:.2rem 0 .35rem;font-size:1.45rem}
-.kmap-desc{margin:0 0 1rem;color:var(--text-muted-color,#888);font-size:.92rem}
-.ktree,.ktree-children{list-style:none;margin:0;padding:0}
-.ktree-item + .ktree-item{margin-top:.35rem}
-.ktree-folder,.ktree-link{display:flex;align-items:center;gap:.55rem;width:100%;border:0;border-radius:10px;text-align:left;text-decoration:none;color:inherit;background:transparent;transition:background .18s,transform .18s}
-.ktree-folder{padding:.7rem .75rem;cursor:pointer;font-weight:700}
-.ktree-folder em{margin-left:auto;font-style:normal;font-weight:500;font-size:.78rem;color:var(--text-muted-color,#888)}
-.ktree-icon{width:1.15rem;height:1.15rem;border-radius:4px;border:1px solid currentColor;position:relative;flex:0 0 auto}
-.ktree-icon:before,.ktree-icon:after{content:"";position:absolute;background:currentColor;left:50%;top:50%;transform:translate(-50%,-50%)}
-.ktree-icon:before{width:8px;height:1.5px}
-.ktree-icon:after{width:1.5px;height:8px}
-.ktree-item.is-open > .ktree-folder .ktree-icon:after{display:none}
-.ktree-children{display:none;margin:.15rem 0 .35rem 1.15rem;padding-left:.85rem;border-left:1px dashed var(--main-border-color,#ddd)}
-.ktree-item.is-open > .ktree-children{display:block}
-.ktree-link{padding:.48rem .7rem;font-size:.95rem}
-.ktree-folder:hover,.ktree-link:hover,.ktree-folder:focus-visible,.ktree-link:focus-visible{background:rgba(127,127,255,.12);box-shadow:inset 3px 0 0 currentColor;outline:none;transform:translateX(2px)}
+.truthmap{margin:0 0 2.4rem;padding:1.4rem 1rem 1.3rem;border:1px solid var(--main-border-color,#ddd);border-radius:20px;background:
+radial-gradient(1200px 280px at 50% -40px,rgba(180,140,80,.14),transparent 55%),
+var(--card-bg,transparent)}
+.truth-gate{position:relative;margin:0 auto 1.15rem;max-width:22rem;text-align:center;padding:1rem .9rem .95rem;border:1px solid var(--main-border-color,#ddd);border-radius:18px 18px 12px 12px;background:rgba(127,127,127,.06)}
+.truth-gate:before,.truth-gate:after{content:"";position:absolute;top:12px;width:10px;height:calc(100% - 24px);border:1px solid var(--main-border-color,#ddd);border-radius:8px;opacity:.7}
+.truth-gate:before{left:10px} .truth-gate:after{right:10px}
+.truth-kicker{margin:0;font-size:.72rem;letter-spacing:.16em;text-transform:uppercase;color:var(--text-muted-color,#888)}
+.truth-title{margin:.15rem 0 .2rem;font-size:1.45rem}
+.truth-desc{margin:0;color:var(--text-muted-color,#888);font-size:.9rem}
+.truth-trunk{position:relative;margin:0 auto;max-width:52rem;padding:0 0 0 1.15rem}
+.truth-trunk:before{content:"";position:absolute;left:18px;top:0;bottom:8px;width:2px;background:linear-gradient(180deg,rgba(180,140,80,.85),var(--main-border-color,#ddd))}
+.troot,.troot-children{list-style:none;margin:0;padding:0}
+.troot-item{position:relative;margin:.18rem 0}
+.troot-item:before{content:"";position:absolute;left:-13px;top:1.05rem;width:13px;height:1px;background:var(--main-border-color,#c9b07a)}
+.troot-item:after{content:"";position:absolute;left:-16px;top:.92rem;width:7px;height:7px;border-radius:50%;background:var(--card-bg,#111);border:1.5px solid rgba(180,140,80,.95)}
+.troot-folder,.troot-link{display:flex;align-items:center;gap:.5rem;width:100%;border:0;border-radius:11px;text-align:left;text-decoration:none;color:inherit;background:transparent;transition:background .18s,transform .18s}
+.troot-folder{padding:.58rem .65rem;cursor:pointer;font-weight:700}
+.troot-folder em{margin-left:auto;font-style:normal;font-weight:500;font-size:.76rem;color:var(--text-muted-color,#888)}
+.troot-link{padding:.42rem .65rem;font-size:.95rem}
+.troot-folder:hover,.troot-link:hover,.troot-folder:focus-visible,.troot-link:focus-visible{background:rgba(180,140,80,.12);box-shadow:inset 3px 0 0 rgba(180,140,80,.85);outline:none;transform:translateX(2px)}
+.troot-children{display:none;margin:.1rem 0 .25rem 1.05rem;padding-left:.95rem;border-left:1px dashed rgba(180,140,80,.45)}
+.troot-item.is-open > .troot-children{display:block}
+.troot-mark{width:1rem;height:1rem;flex:0 0 auto;position:relative}
+.troot-mark:before,.troot-mark:after{content:"";position:absolute;left:50%;top:50%;background:currentColor;transform:translate(-50%,-50%)}
+.troot-mark:before{width:8px;height:1.5px}
+.troot-mark:after{width:1.5px;height:8px}
+.troot-item.is-open > .troot-folder .troot-mark:after{display:none}
 </style>
 
-<section class="kmap" aria-label="지식 지도">
-  <div class="kmap-head">
-    <p class="kmap-kicker">Knowledge Map</p>
-    <h2 class="kmap-title">공부 지도</h2>
-    <p class="kmap-desc">폴더를 눌러 여세요. 글이 쌓이면 항목이 실제 목록으로 연결됩니다.</p>
+<section class="truthmap" aria-label="진리의 문">
+  <div class="truth-gate">
+    <p class="truth-kicker">Porta Veritatis</p>
+    <h2 class="truth-title">진리의 문</h2>
+    <p class="truth-desc">문을 열면 뿌리가 갈라집니다. 줄기를 눌러 가지를 펼치세요.</p>
   </div>
-  <ul class="ktree">
-    <li class="ktree-item is-open">
-      <button class="ktree-folder" type="button"><span class="ktree-icon"></span><span>기초</span><em>통계 · 확률 · 수학</em></button>
-      <ul class="ktree-children">
-        <li><a class="ktree-link" href="#">통계</a></li>
-        <li><a class="ktree-link" href="#">확률</a></li>
-        <li><a class="ktree-link" href="#">수학</a></li>
-      </ul>
-    </li>
-    <li class="ktree-item">
-      <button class="ktree-folder" type="button"><span class="ktree-icon"></span><span>컴퓨터</span><em>정처기 뼈대</em></button>
-      <ul class="ktree-children">
-        <li><a class="ktree-link" href="#">운영체제</a></li>
-        <li><a class="ktree-link" href="#">데이터베이스</a></li>
-        <li><a class="ktree-link" href="#">네트워크</a></li>
-        <li><a class="ktree-link" href="#">소프트웨어공학</a></li>
-        <li><a class="ktree-link" href="#">자료구조</a></li>
-      </ul>
-    </li>
-    <li class="ktree-item">
-      <button class="ktree-folder" type="button"><span class="ktree-icon"></span><span>데이터</span><em>빅분기 뼈대</em></button>
-      <ul class="ktree-children">
-        <li><a class="ktree-link" href="#">전처리</a></li>
-        <li><a class="ktree-link" href="#">SQL</a></li>
-        <li><a class="ktree-link" href="#">시각화</a></li>
-        <li><a class="ktree-link" href="#">빅데이터</a></li>
-      </ul>
-    </li>
-    <li class="ktree-item is-open">
-      <button class="ktree-folder" type="button"><span class="ktree-icon"></span><span>AI</span><em>전공 · 생성형</em></button>
-      <ul class="ktree-children">
-        <li class="ktree-item">
-          <button class="ktree-folder" type="button"><span class="ktree-icon"></span><span>머신러닝</span></button>
-          <ul class="ktree-children">
-            <li class="ktree-item">
-              <button class="ktree-folder" type="button"><span class="ktree-icon"></span><span>선형 모델</span></button>
-              <ul class="ktree-children">
-                <li><a class="ktree-link" href="/posts/simple-linear-regression/">단순선형회귀</a></li>
-                <li><a class="ktree-link" href="/posts/multiple-linear-regression/">다중선형회귀</a></li>
-                <li><a class="ktree-link" href="/posts/polynomial-regression/">다항회귀</a></li>
-                <li><a class="ktree-link" href="/posts/logistic-regression/">로지스틱회귀</a></li>
-                <li><a class="ktree-link" href="/posts/softmax-regression/">소프트맥스회귀</a></li>
-                <li><a class="ktree-link" href="/posts/ridge/">Ridge</a></li>
-                <li><a class="ktree-link" href="/posts/lasso/">Lasso</a></li>
-                <li><a class="ktree-link" href="/posts/elastic-net/">Elastic Net</a></li>
-              </ul>
-            </li>
-            <li class="ktree-item">
-              <button class="ktree-folder" type="button"><span class="ktree-icon"></span><span>거리 기반</span></button>
-              <ul class="ktree-children">
-                <li><a class="ktree-link" href="/posts/knn/">KNN</a></li>
-                <li><a class="ktree-link" href="/posts/weighted-knn/">Weighted KNN</a></li>
-                <li><a class="ktree-link" href="/posts/radius-neighbors/">Radius Neighbors</a></li>
-              </ul>
-            </li>
-            <li class="ktree-item">
-              <button class="ktree-folder" type="button"><span class="ktree-icon"></span><span>확률 모델</span></button>
-              <ul class="ktree-children">
-                <li><a class="ktree-link" href="#">가우시안 나이브베이즈</a></li>
-                <li><a class="ktree-link" href="#">다항 나이브베이즈</a></li>
-                <li><a class="ktree-link" href="#">베르누이 나이브베이즈</a></li>
-                <li><a class="ktree-link" href="#">LDA</a></li>
-                <li><a class="ktree-link" href="#">QDA</a></li>
-                <li><a class="ktree-link" href="#">GMM</a></li>
-              </ul>
-            </li>
-            <li class="ktree-item">
-              <button class="ktree-folder" type="button"><span class="ktree-icon"></span><span>트리</span></button>
-              <ul class="ktree-children">
-                <li><a class="ktree-link" href="#">ID3</a></li>
-                <li><a class="ktree-link" href="#">C4.5</a></li>
-                <li><a class="ktree-link" href="#">C5.0</a></li>
-                <li><a class="ktree-link" href="#">CART</a></li>
-                <li><a class="ktree-link" href="#">회귀나무</a></li>
-              </ul>
-            </li>
-            <li class="ktree-item">
-              <button class="ktree-folder" type="button"><span class="ktree-icon"></span><span>앙상블</span></button>
-              <ul class="ktree-children">
-                <li><a class="ktree-link" href="#">Bagging</a></li>
-                <li><a class="ktree-link" href="#">Random Forest</a></li>
-                <li><a class="ktree-link" href="#">Extra Trees</a></li>
-                <li><a class="ktree-link" href="#">AdaBoost</a></li>
-                <li><a class="ktree-link" href="#">GBM</a></li>
-                <li><a class="ktree-link" href="#">XGBoost</a></li>
-                <li><a class="ktree-link" href="#">LightGBM</a></li>
-                <li><a class="ktree-link" href="#">CatBoost</a></li>
-                <li><a class="ktree-link" href="#">Voting</a></li>
-                <li><a class="ktree-link" href="#">Stacking</a></li>
-              </ul>
-            </li>
-            <li class="ktree-item">
-              <button class="ktree-folder" type="button"><span class="ktree-icon"></span><span>커널 · SVM</span></button>
-              <ul class="ktree-children">
-                <li><a class="ktree-link" href="#">Linear SVM</a></li>
-                <li><a class="ktree-link" href="#">Soft Margin SVM</a></li>
-                <li><a class="ktree-link" href="#">Kernel SVM</a></li>
-                <li><a class="ktree-link" href="#">SVR</a></li>
-                <li><a class="ktree-link" href="#">One-class SVM</a></li>
-              </ul>
-            </li>
-            <li class="ktree-item">
-              <button class="ktree-folder" type="button"><span class="ktree-icon"></span><span>군집</span></button>
-              <ul class="ktree-children">
-                <li><a class="ktree-link" href="#">K-means</a></li>
-                <li><a class="ktree-link" href="#">K-medoids</a></li>
-                <li><a class="ktree-link" href="#">K-modes</a></li>
-                <li><a class="ktree-link" href="#">계층적 군집</a></li>
-                <li><a class="ktree-link" href="#">DBSCAN</a></li>
-                <li><a class="ktree-link" href="#">Mean Shift</a></li>
-                <li><a class="ktree-link" href="#">Spectral Clustering</a></li>
-              </ul>
-            </li>
-            <li class="ktree-item">
-              <button class="ktree-folder" type="button"><span class="ktree-icon"></span><span>차원축소</span></button>
-              <ul class="ktree-children">
-                <li><a class="ktree-link" href="#">PCA</a></li>
-                <li><a class="ktree-link" href="#">Kernel PCA</a></li>
-                <li><a class="ktree-link" href="#">SVD</a></li>
-                <li><a class="ktree-link" href="#">LDA</a></li>
-                <li><a class="ktree-link" href="#">t-SNE</a></li>
-                <li><a class="ktree-link" href="#">UMAP</a></li>
-                <li><a class="ktree-link" href="#">NMF</a></li>
-                <li><a class="ktree-link" href="#">ICA</a></li>
-              </ul>
-            </li>
-            <li class="ktree-item">
-              <button class="ktree-folder" type="button"><span class="ktree-icon"></span><span>연관규칙</span></button>
-              <ul class="ktree-children">
-                <li><a class="ktree-link" href="#">Apriori</a></li>
-                <li><a class="ktree-link" href="#">FP-Growth</a></li>
-                <li><a class="ktree-link" href="#">Eclat</a></li>
-              </ul>
-            </li>
-            <li><a class="ktree-link" href="#">학습 실무</a></li>
-          </ul>
-        </li>
-        <li class="ktree-item">
-          <button class="ktree-folder" type="button"><span class="ktree-icon"></span><span>딥러닝</span></button>
-          <ul class="ktree-children">
-            <li><a class="ktree-link" href="#">MLP</a></li>
-            <li><a class="ktree-link" href="#">CNN</a></li>
-            <li><a class="ktree-link" href="#">RNN</a></li>
-            <li><a class="ktree-link" href="#">LSTM</a></li>
-            <li><a class="ktree-link" href="#">GRU</a></li>
-            <li><a class="ktree-link" href="#">Transformer</a></li>
-            <li><a class="ktree-link" href="#">Autoencoder</a></li>
-            <li><a class="ktree-link" href="#">GAN</a></li>
-            <li><a class="ktree-link" href="#">Diffusion</a></li>
-          </ul>
-        </li>
-        <li class="ktree-item">
-          <button class="ktree-folder" type="button"><span class="ktree-icon"></span><span>생성형 AI</span></button>
-          <ul class="ktree-children">
-            <li><a class="ktree-link" href="#">BERT</a></li>
-            <li><a class="ktree-link" href="#">GPT</a></li>
-            <li><a class="ktree-link" href="#">T5</a></li>
-            <li><a class="ktree-link" href="#">LLM</a></li>
-            <li><a class="ktree-link" href="#">RAG</a></li>
-            <li><a class="ktree-link" href="#">프롬프트</a></li>
-          </ul>
-        </li>
-        <li class="ktree-item">
-          <button class="ktree-folder" type="button"><span class="ktree-icon"></span><span>응용</span></button>
-          <ul class="ktree-children">
-            <li><a class="ktree-link" href="#">비전</a></li>
-            <li><a class="ktree-link" href="#">자연어</a></li>
-            <li><a class="ktree-link" href="#">음성</a></li>
-            <li><a class="ktree-link" href="#">추천</a></li>
-            <li><a class="ktree-link" href="#">강화학습</a></li>
-            <li><a class="ktree-link" href="#">에이전트</a></li>
-          </ul>
-        </li>
-        <li class="ktree-item">
-          <button class="ktree-folder" type="button"><span class="ktree-icon"></span><span>학습 방법</span></button>
-          <ul class="ktree-children">
-            <li><a class="ktree-link" href="#">전이학습</a></li>
-            <li><a class="ktree-link" href="#">미세조정</a></li>
-            <li><a class="ktree-link" href="#">준지도학습</a></li>
-            <li><a class="ktree-link" href="#">자기지도학습</a></li>
-            <li><a class="ktree-link" href="#">대조학습</a></li>
-            <li><a class="ktree-link" href="#">메타학습</a></li>
-            <li><a class="ktree-link" href="#">연합학습</a></li>
-            <li><a class="ktree-link" href="#">지속학습</a></li>
-            <li><a class="ktree-link" href="#">능동학습</a></li>
-            <li><a class="ktree-link" href="#">멀티태스크</a></li>
-          </ul>
-        </li>
-        <li class="ktree-item">
-          <button class="ktree-folder" type="button"><span class="ktree-icon"></span><span>시스템</span></button>
-          <ul class="ktree-children">
-            <li><a class="ktree-link" href="#">양자화</a></li>
-            <li><a class="ktree-link" href="#">가지치기</a></li>
-            <li><a class="ktree-link" href="#">지식증류</a></li>
-            <li><a class="ktree-link" href="#">LoRA</a></li>
-            <li><a class="ktree-link" href="#">QLoRA</a></li>
-            <li><a class="ktree-link" href="#">KV Cache</a></li>
-            <li><a class="ktree-link" href="#">스펙큘레이티브 디코딩</a></li>
-            <li><a class="ktree-link" href="#">FlashAttention</a></li>
-            <li><a class="ktree-link" href="#">Continuous Batching</a></li>
-            <li><a class="ktree-link" href="#">텐서병렬</a></li>
-          </ul>
-        </li>
-        <li class="ktree-item">
-          <button class="ktree-folder" type="button"><span class="ktree-icon"></span><span>보안</span></button>
-          <ul class="ktree-children">
-            <li><a class="ktree-link" href="#">적대적 예제</a></li>
-            <li><a class="ktree-link" href="#">데이터 중독</a></li>
-            <li><a class="ktree-link" href="#">프롬프트 인젝션</a></li>
-            <li><a class="ktree-link" href="#">탈옥</a></li>
-            <li><a class="ktree-link" href="#">멤버십 추론</a></li>
-            <li><a class="ktree-link" href="#">모델 추출</a></li>
-            <li><a class="ktree-link" href="#">차등프라이버시</a></li>
-            <li><a class="ktree-link" href="#">가드레일</a></li>
-          </ul>
-        </li>
-      </ul>
-    </li>
-    <li class="ktree-item">
-      <button class="ktree-folder" type="button"><span class="ktree-icon"></span><span>자격증</span><em>실전 · 기출</em></button>
-      <ul class="ktree-children">
-        <li><a class="ktree-link" href="#">정보처리기사</a></li>
-        <li><a class="ktree-link" href="#">빅데이터분석기사</a></li>
-      </ul>
-    </li>
-    <li class="ktree-item">
-      <button class="ktree-folder" type="button"><span class="ktree-icon"></span><span>취준</span><em>면접 · 포트폴리오</em></button>
-      <ul class="ktree-children">
-        <li><a class="ktree-link" href="#">면접</a></li>
-        <li><a class="ktree-link" href="#">포트폴리오</a></li>
-      </ul>
-    </li>
-  </ul>
+  <div class="truth-trunk">
+    <ul class="troot">
+      <li class="troot-item is-open">
+        <button class="troot-folder" type="button"><span class="troot-mark"></span><span>기초</span><em>통계 · 확률 · 수학</em></button>
+        <ul class="troot-children">
+          <li class="troot-item"><a class="troot-link" href="#">통계</a></li>
+          <li class="troot-item"><a class="troot-link" href="#">확률</a></li>
+          <li class="troot-item"><a class="troot-link" href="#">수학</a></li>
+        </ul>
+      </li>
+      <li class="troot-item">
+        <button class="troot-folder" type="button"><span class="troot-mark"></span><span>컴퓨터</span><em>정처기 뼈대</em></button>
+        <ul class="troot-children">
+          <li class="troot-item"><a class="troot-link" href="#">운영체제</a></li>
+          <li class="troot-item"><a class="troot-link" href="#">데이터베이스</a></li>
+          <li class="troot-item"><a class="troot-link" href="#">네트워크</a></li>
+          <li class="troot-item"><a class="troot-link" href="#">소프트웨어공학</a></li>
+          <li class="troot-item"><a class="troot-link" href="#">자료구조</a></li>
+        </ul>
+      </li>
+      <li class="troot-item">
+        <button class="troot-folder" type="button"><span class="troot-mark"></span><span>데이터</span><em>빅분기 뼈대</em></button>
+        <ul class="troot-children">
+          <li class="troot-item"><a class="troot-link" href="#">전처리</a></li>
+          <li class="troot-item"><a class="troot-link" href="#">SQL</a></li>
+          <li class="troot-item"><a class="troot-link" href="#">시각화</a></li>
+          <li class="troot-item"><a class="troot-link" href="#">빅데이터</a></li>
+        </ul>
+      </li>
+      <li class="troot-item is-open">
+        <button class="troot-folder" type="button"><span class="troot-mark"></span><span>AI</span><em>전공 · 생성형</em></button>
+        <ul class="troot-children">
+          <li class="troot-item">
+            <button class="troot-folder" type="button"><span class="troot-mark"></span><span>머신러닝</span></button>
+            <ul class="troot-children">
+              <li class="troot-item">
+                <button class="troot-folder" type="button"><span class="troot-mark"></span><span>선형 모델</span></button>
+                <ul class="troot-children">
+                  <li class="troot-item"><a class="troot-link" href="/posts/simple-linear-regression/">단순선형회귀</a></li>
+                  <li class="troot-item"><a class="troot-link" href="/posts/multiple-linear-regression/">다중선형회귀</a></li>
+                  <li class="troot-item"><a class="troot-link" href="/posts/polynomial-regression/">다항회귀</a></li>
+                  <li class="troot-item"><a class="troot-link" href="/posts/logistic-regression/">로지스틱회귀</a></li>
+                  <li class="troot-item"><a class="troot-link" href="/posts/softmax-regression/">소프트맥스회귀</a></li>
+                  <li class="troot-item"><a class="troot-link" href="/posts/ridge/">Ridge</a></li>
+                  <li class="troot-item"><a class="troot-link" href="/posts/lasso/">Lasso</a></li>
+                  <li class="troot-item"><a class="troot-link" href="/posts/elastic-net/">Elastic Net</a></li>
+                </ul>
+              </li>
+              <li class="troot-item">
+                <button class="troot-folder" type="button"><span class="troot-mark"></span><span>거리 기반</span></button>
+                <ul class="troot-children">
+                  <li class="troot-item"><a class="troot-link" href="/posts/knn/">KNN</a></li>
+                  <li class="troot-item"><a class="troot-link" href="/posts/weighted-knn/">Weighted KNN</a></li>
+                  <li class="troot-item"><a class="troot-link" href="/posts/radius-neighbors/">Radius Neighbors</a></li>
+                </ul>
+              </li>
+              <li class="troot-item">
+                <button class="troot-folder" type="button"><span class="troot-mark"></span><span>확률 모델</span></button>
+                <ul class="troot-children">
+                  <li class="troot-item"><a class="troot-link" href="#">가우시안 나이브베이즈</a></li>
+                  <li class="troot-item"><a class="troot-link" href="#">다항 나이브베이즈</a></li>
+                  <li class="troot-item"><a class="troot-link" href="#">베르누이 나이브베이즈</a></li>
+                  <li class="troot-item"><a class="troot-link" href="#">LDA</a></li>
+                  <li class="troot-item"><a class="troot-link" href="#">QDA</a></li>
+                  <li class="troot-item"><a class="troot-link" href="#">GMM</a></li>
+                </ul>
+              </li>
+              <li class="troot-item">
+                <button class="troot-folder" type="button"><span class="troot-mark"></span><span>트리</span></button>
+                <ul class="troot-children">
+                  <li class="troot-item"><a class="troot-link" href="#">ID3</a></li>
+                  <li class="troot-item"><a class="troot-link" href="#">C4.5</a></li>
+                  <li class="troot-item"><a class="troot-link" href="#">C5.0</a></li>
+                  <li class="troot-item"><a class="troot-link" href="#">CART</a></li>
+                  <li class="troot-item"><a class="troot-link" href="#">회귀나무</a></li>
+                </ul>
+              </li>
+              <li class="troot-item">
+                <button class="troot-folder" type="button"><span class="troot-mark"></span><span>앙상블</span></button>
+                <ul class="troot-children">
+                  <li class="troot-item"><a class="troot-link" href="#">Bagging</a></li>
+                  <li class="troot-item"><a class="troot-link" href="#">Random Forest</a></li>
+                  <li class="troot-item"><a class="troot-link" href="#">Extra Trees</a></li>
+                  <li class="troot-item"><a class="troot-link" href="#">AdaBoost</a></li>
+                  <li class="troot-item"><a class="troot-link" href="#">GBM</a></li>
+                  <li class="troot-item"><a class="troot-link" href="#">XGBoost</a></li>
+                  <li class="troot-item"><a class="troot-link" href="#">LightGBM</a></li>
+                  <li class="troot-item"><a class="troot-link" href="#">CatBoost</a></li>
+                  <li class="troot-item"><a class="troot-link" href="#">Voting</a></li>
+                  <li class="troot-item"><a class="troot-link" href="#">Stacking</a></li>
+                </ul>
+              </li>
+              <li class="troot-item">
+                <button class="troot-folder" type="button"><span class="troot-mark"></span><span>커널 · SVM</span></button>
+                <ul class="troot-children">
+                  <li class="troot-item"><a class="troot-link" href="#">Linear SVM</a></li>
+                  <li class="troot-item"><a class="troot-link" href="#">Soft Margin SVM</a></li>
+                  <li class="troot-item"><a class="troot-link" href="#">Kernel SVM</a></li>
+                  <li class="troot-item"><a class="troot-link" href="#">SVR</a></li>
+                  <li class="troot-item"><a class="troot-link" href="#">One-class SVM</a></li>
+                </ul>
+              </li>
+              <li class="troot-item">
+                <button class="troot-folder" type="button"><span class="troot-mark"></span><span>군집</span></button>
+                <ul class="troot-children">
+                  <li class="troot-item"><a class="troot-link" href="#">K-means</a></li>
+                  <li class="troot-item"><a class="troot-link" href="#">K-medoids</a></li>
+                  <li class="troot-item"><a class="troot-link" href="#">K-modes</a></li>
+                  <li class="troot-item"><a class="troot-link" href="#">계층적 군집</a></li>
+                  <li class="troot-item"><a class="troot-link" href="#">DBSCAN</a></li>
+                  <li class="troot-item"><a class="troot-link" href="#">Mean Shift</a></li>
+                  <li class="troot-item"><a class="troot-link" href="#">Spectral Clustering</a></li>
+                </ul>
+              </li>
+              <li class="troot-item">
+                <button class="troot-folder" type="button"><span class="troot-mark"></span><span>차원축소</span></button>
+                <ul class="troot-children">
+                  <li class="troot-item"><a class="troot-link" href="#">PCA</a></li>
+                  <li class="troot-item"><a class="troot-link" href="#">Kernel PCA</a></li>
+                  <li class="troot-item"><a class="troot-link" href="#">SVD</a></li>
+                  <li class="troot-item"><a class="troot-link" href="#">LDA</a></li>
+                  <li class="troot-item"><a class="troot-link" href="#">t-SNE</a></li>
+                  <li class="troot-item"><a class="troot-link" href="#">UMAP</a></li>
+                  <li class="troot-item"><a class="troot-link" href="#">NMF</a></li>
+                  <li class="troot-item"><a class="troot-link" href="#">ICA</a></li>
+                </ul>
+              </li>
+              <li class="troot-item">
+                <button class="troot-folder" type="button"><span class="troot-mark"></span><span>연관규칙</span></button>
+                <ul class="troot-children">
+                  <li class="troot-item"><a class="troot-link" href="#">Apriori</a></li>
+                  <li class="troot-item"><a class="troot-link" href="#">FP-Growth</a></li>
+                  <li class="troot-item"><a class="troot-link" href="#">Eclat</a></li>
+                </ul>
+              </li>
+              <li class="troot-item"><a class="troot-link" href="#">학습 실무</a></li>
+            </ul>
+          </li>
+          <li class="troot-item">
+            <button class="troot-folder" type="button"><span class="troot-mark"></span><span>딥러닝</span></button>
+            <ul class="troot-children">
+              <li class="troot-item"><a class="troot-link" href="#">MLP</a></li>
+              <li class="troot-item"><a class="troot-link" href="#">CNN</a></li>
+              <li class="troot-item"><a class="troot-link" href="#">RNN</a></li>
+              <li class="troot-item"><a class="troot-link" href="#">LSTM</a></li>
+              <li class="troot-item"><a class="troot-link" href="#">GRU</a></li>
+              <li class="troot-item"><a class="troot-link" href="#">Transformer</a></li>
+              <li class="troot-item"><a class="troot-link" href="#">Autoencoder</a></li>
+              <li class="troot-item"><a class="troot-link" href="#">GAN</a></li>
+              <li class="troot-item"><a class="troot-link" href="#">Diffusion</a></li>
+            </ul>
+          </li>
+          <li class="troot-item">
+            <button class="troot-folder" type="button"><span class="troot-mark"></span><span>생성형 AI</span></button>
+            <ul class="troot-children">
+              <li class="troot-item"><a class="troot-link" href="#">BERT</a></li>
+              <li class="troot-item"><a class="troot-link" href="#">GPT</a></li>
+              <li class="troot-item"><a class="troot-link" href="#">T5</a></li>
+              <li class="troot-item"><a class="troot-link" href="#">LLM</a></li>
+              <li class="troot-item"><a class="troot-link" href="#">RAG</a></li>
+              <li class="troot-item"><a class="troot-link" href="#">프롬프트</a></li>
+            </ul>
+          </li>
+          <li class="troot-item">
+            <button class="troot-folder" type="button"><span class="troot-mark"></span><span>응용</span></button>
+            <ul class="troot-children">
+              <li class="troot-item"><a class="troot-link" href="#">비전</a></li>
+              <li class="troot-item"><a class="troot-link" href="#">자연어</a></li>
+              <li class="troot-item"><a class="troot-link" href="#">음성</a></li>
+              <li class="troot-item"><a class="troot-link" href="#">추천</a></li>
+              <li class="troot-item"><a class="troot-link" href="#">강화학습</a></li>
+              <li class="troot-item"><a class="troot-link" href="#">에이전트</a></li>
+            </ul>
+          </li>
+          <li class="troot-item">
+            <button class="troot-folder" type="button"><span class="troot-mark"></span><span>학습 방법</span></button>
+            <ul class="troot-children">
+              <li class="troot-item"><a class="troot-link" href="#">전이학습</a></li>
+              <li class="troot-item"><a class="troot-link" href="#">미세조정</a></li>
+              <li class="troot-item"><a class="troot-link" href="#">준지도학습</a></li>
+              <li class="troot-item"><a class="troot-link" href="#">자기지도학습</a></li>
+              <li class="troot-item"><a class="troot-link" href="#">대조학습</a></li>
+              <li class="troot-item"><a class="troot-link" href="#">메타학습</a></li>
+              <li class="troot-item"><a class="troot-link" href="#">연합학습</a></li>
+              <li class="troot-item"><a class="troot-link" href="#">지속학습</a></li>
+              <li class="troot-item"><a class="troot-link" href="#">능동학습</a></li>
+              <li class="troot-item"><a class="troot-link" href="#">멀티태스크</a></li>
+            </ul>
+          </li>
+          <li class="troot-item">
+            <button class="troot-folder" type="button"><span class="troot-mark"></span><span>시스템</span></button>
+            <ul class="troot-children">
+              <li class="troot-item"><a class="troot-link" href="#">양자화</a></li>
+              <li class="troot-item"><a class="troot-link" href="#">가지치기</a></li>
+              <li class="troot-item"><a class="troot-link" href="#">지식증류</a></li>
+              <li class="troot-item"><a class="troot-link" href="#">LoRA</a></li>
+              <li class="troot-item"><a class="troot-link" href="#">QLoRA</a></li>
+              <li class="troot-item"><a class="troot-link" href="#">KV Cache</a></li>
+              <li class="troot-item"><a class="troot-link" href="#">스펙큘레이티브 디코딩</a></li>
+              <li class="troot-item"><a class="troot-link" href="#">FlashAttention</a></li>
+              <li class="troot-item"><a class="troot-link" href="#">Continuous Batching</a></li>
+              <li class="troot-item"><a class="troot-link" href="#">텐서병렬</a></li>
+            </ul>
+          </li>
+          <li class="troot-item">
+            <button class="troot-folder" type="button"><span class="troot-mark"></span><span>보안</span></button>
+            <ul class="troot-children">
+              <li class="troot-item"><a class="troot-link" href="#">적대적 예제</a></li>
+              <li class="troot-item"><a class="troot-link" href="#">데이터 중독</a></li>
+              <li class="troot-item"><a class="troot-link" href="#">프롬프트 인젝션</a></li>
+              <li class="troot-item"><a class="troot-link" href="#">탈옥</a></li>
+              <li class="troot-item"><a class="troot-link" href="#">멤버십 추론</a></li>
+              <li class="troot-item"><a class="troot-link" href="#">모델 추출</a></li>
+              <li class="troot-item"><a class="troot-link" href="#">차등프라이버시</a></li>
+              <li class="troot-item"><a class="troot-link" href="#">가드레일</a></li>
+            </ul>
+          </li>
+        </ul>
+      </li>
+      <li class="troot-item">
+        <button class="troot-folder" type="button"><span class="troot-mark"></span><span>자격증</span><em>실전 · 기출</em></button>
+        <ul class="troot-children">
+          <li class="troot-item"><a class="troot-link" href="#">정보처리기사</a></li>
+          <li class="troot-item"><a class="troot-link" href="#">빅데이터분석기사</a></li>
+        </ul>
+      </li>
+      <li class="troot-item">
+        <button class="troot-folder" type="button"><span class="troot-mark"></span><span>취준</span><em>면접 · 포트폴리오</em></button>
+        <ul class="troot-children">
+          <li class="troot-item"><a class="troot-link" href="#">면접</a></li>
+          <li class="troot-item"><a class="troot-link" href="#">포트폴리오</a></li>
+        </ul>
+      </li>
+    </ul>
+  </div>
 </section>
 
 <script>
-document.querySelectorAll('.ktree-folder').forEach((btn)=>{
+document.querySelectorAll('.troot-folder').forEach((btn)=>{
   btn.addEventListener('click',()=>{
     const item=btn.parentElement;
     const open=item.classList.toggle('is-open');
