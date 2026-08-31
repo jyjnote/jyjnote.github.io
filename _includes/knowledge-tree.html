@@ -1,0 +1,101 @@
+<link rel="stylesheet" href="{{ '/assets/css/knowledge-tree.css' | relative_url }}">
+
+<section class="kmap" aria-label="지식 지도">
+  <div class="kmap-head">
+    <p class="kmap-kicker">Knowledge Map</p>
+    <h2 class="kmap-title">공부 지도</h2>
+    <p class="kmap-desc">폴더를 눌러 열고, 항목에 마우스를 올리면 포커스가 갑니다. 글은 작은 폴더 기준으로 쌓입니다.</p>
+  </div>
+
+  <ul class="ktree" role="tree">
+    <li class="ktree-item is-open" role="treeitem" aria-expanded="true">
+      <button class="ktree-folder" type="button">
+        <span class="ktree-icon" aria-hidden="true"></span>
+        <span>기초</span>
+        <em>통계 · 확률 · 수학</em>
+      </button>
+      <ul class="ktree-children" role="group">
+        <li><a class="ktree-link" href="{{ '/categories/통계/' | relative_url }}">통계</a></li>
+        <li><a class="ktree-link" href="{{ '/categories/확률/' | relative_url }}">확률</a></li>
+        <li><a class="ktree-link" href="{{ '/categories/수학/' | relative_url }}">수학</a></li>
+      </ul>
+    </li>
+
+    <li class="ktree-item" role="treeitem" aria-expanded="false">
+      <button class="ktree-folder" type="button">
+        <span class="ktree-icon" aria-hidden="true"></span>
+        <span>컴퓨터</span>
+        <em>정처기 뼈대</em>
+      </button>
+      <ul class="ktree-children" role="group">
+        <li><a class="ktree-link" href="{{ '/categories/운영체제/' | relative_url }}">운영체제</a></li>
+        <li><a class="ktree-link" href="{{ '/categories/데이터베이스/' | relative_url }}">데이터베이스</a></li>
+        <li><a class="ktree-link" href="{{ '/categories/네트워크/' | relative_url }}">네트워크</a></li>
+        <li><a class="ktree-link" href="{{ '/categories/소프트웨어공학/' | relative_url }}">소프트웨어공학</a></li>
+        <li><a class="ktree-link" href="{{ '/categories/자료구조/' | relative_url }}">자료구조</a></li>
+      </ul>
+    </li>
+
+    <li class="ktree-item" role="treeitem" aria-expanded="false">
+      <button class="ktree-folder" type="button">
+        <span class="ktree-icon" aria-hidden="true"></span>
+        <span>데이터</span>
+        <em>빅분기 뼈대</em>
+      </button>
+      <ul class="ktree-children" role="group">
+        <li><a class="ktree-link" href="{{ '/categories/전처리/' | relative_url }}">전처리</a></li>
+        <li><a class="ktree-link" href="{{ '/categories/SQL/' | relative_url }}">SQL</a></li>
+        <li><a class="ktree-link" href="{{ '/categories/시각화/' | relative_url }}">시각화</a></li>
+        <li><a class="ktree-link" href="{{ '/categories/빅데이터/' | relative_url }}">빅데이터</a></li>
+      </ul>
+    </li>
+
+    <li class="ktree-item is-open" role="treeitem" aria-expanded="true">
+      <button class="ktree-folder" type="button">
+        <span class="ktree-icon" aria-hidden="true"></span>
+        <span>AI</span>
+        <em>전공 · 생성형</em>
+      </button>
+      <ul class="ktree-children" role="group">
+        <li><a class="ktree-link" href="{{ '/categories/머신러닝/' | relative_url }}">머신러닝</a></li>
+        <li><a class="ktree-link" href="{{ '/categories/딥러닝/' | relative_url }}">딥러닝</a></li>
+        <li><a class="ktree-link" href="{{ '/categories/생성형AI/' | relative_url }}">생성형 AI</a></li>
+        <li><a class="ktree-link" href="{{ '/categories/평가/' | relative_url }}">평가</a></li>
+      </ul>
+    </li>
+
+    <li class="ktree-item" role="treeitem" aria-expanded="false">
+      <button class="ktree-folder" type="button">
+        <span class="ktree-icon" aria-hidden="true"></span>
+        <span>자격증</span>
+        <em>실전 · 기출 묶음</em>
+      </button>
+      <ul class="ktree-children" role="group">
+        <li><a class="ktree-link" href="{{ '/categories/정보처리기사/' | relative_url }}">정보처리기사</a></li>
+        <li><a class="ktree-link" href="{{ '/categories/빅데이터분석기사/' | relative_url }}">빅데이터분석기사</a></li>
+      </ul>
+    </li>
+
+    <li class="ktree-item" role="treeitem" aria-expanded="false">
+      <button class="ktree-folder" type="button">
+        <span class="ktree-icon" aria-hidden="true"></span>
+        <span>취준</span>
+        <em>면접 · 포트폴리오</em>
+      </button>
+      <ul class="ktree-children" role="group">
+        <li><a class="ktree-link" href="{{ '/categories/면접/' | relative_url }}">면접</a></li>
+        <li><a class="ktree-link" href="{{ '/categories/포트폴리오/' | relative_url }}">포트폴리오</a></li>
+      </ul>
+    </li>
+  </ul>
+</section>
+
+<script>
+  document.querySelectorAll('.ktree-folder').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const item = btn.parentElement;
+      const open = item.classList.toggle('is-open');
+      item.setAttribute('aria-expanded', open ? 'true' : 'false');
+    });
+  });
+</script>
