@@ -1,6 +1,3 @@
-<button class="gate-node is-root" ...>진리의 문</button>
-<div class="gate-kids gate-kids-root">
-
 <style>
 .gate{
   margin:0 0 2.2rem;
@@ -24,7 +21,7 @@
 .gate-branch{display:flex;flex-direction:column;align-items:center;min-width:0}
 .gate-kids{display:flex;flex-wrap:wrap;justify-content:center;gap:1.35rem 1.1rem;width:100%;margin-top:.15rem;padding-top:1.15rem;position:relative}
 .gate-kids:before{content:"";position:absolute;left:50%;top:0;width:2px;height:1.15rem;background:linear-gradient(#c7d7f3,#5d7398);opacity:.85}
-.gate-kids-root{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:1.4rem .8rem;align-items:start}
+.gate-kids-root{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:1.4rem .8rem;align-items:start;padding-top:.4rem}
 .gate-kids-root:before{display:none}
 .gate-kids-root > .gate-branch{padding:1rem .4rem 1.1rem;border:1px solid rgba(120,140,180,.16);border-radius:16px;background:rgba(10,14,24,.35)}
 .gate-node{appearance:none;display:inline-flex;flex-direction:column;align-items:center;gap:.34rem;width:7.6rem;max-width:46vw;padding:0;border:0;background:transparent;color:inherit;text-decoration:none;cursor:pointer;font:inherit;text-align:center}
@@ -63,11 +60,11 @@
 <section class="gate" aria-label="진리의 문">
   <p class="gate-kicker">Constellation</p>
   <h2 class="gate-title">진리의 문</h2>
-  <p class="gate-desc">부모 아래 자식이 내려옵니다. 노드는 누르면 그쪽으로 이동하고, 글이 있는 잎은 바로 열립니다.</p>
+  <p class="gate-desc">부모 아래 자식이 내려옵니다. 줄기를 누르면 그쪽으로 이동하고, 글이 있는 잎은 바로 열립니다.</p>
 
   <div class="gate-branch">
     <button class="gate-node is-root" type="button" data-gate><span class="gate-dot"></span><span class="gate-label">진리의 문</span></button>
-    <div class="gate-kids">
+    <div class="gate-kids gate-kids-root">
 
       <div class="gate-branch">
         <button class="gate-node is-stem" type="button" data-gate><span class="gate-dot"></span><span class="gate-label">기초</span></button>
