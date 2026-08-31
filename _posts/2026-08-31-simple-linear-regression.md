@@ -5,6 +5,7 @@ slug: simple-linear-regression
 permalink: /posts/simple-linear-regression/
 categories: [AI, 머신러닝]
 tags: [선형모델, 단순선형회귀, 빅분기]
+math: true
 ---
 
 입력 하나, 출력 하나일 때 둘의 관계를 **직선 하나**로 설명하는 모델입니다.
