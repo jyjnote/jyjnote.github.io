@@ -4,7 +4,7 @@ date: 2026-08-30 12:00:00 +0900
 slug: simple-linear-regression
 permalink: /posts/simple-linear-regression/
 categories: [AI, 머신러닝]
-tags: [선형모델, 단순선형회귀, 빅분기]
+tags: [선형모델, 단순선형회귀, 빅분기, 머신러닝]
 math: true
 ---
 
