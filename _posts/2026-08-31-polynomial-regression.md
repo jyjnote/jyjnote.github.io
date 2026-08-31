@@ -1,6 +1,6 @@
 ---
 title: 다항회귀
-date: 2026-08-30 12:00:00 +0900
+date: 2026-08-31 09:00:00 +0900
 slug: polynomial-regression
 permalink: /posts/polynomial-regression/
 categories: [AI, 머신러닝]
