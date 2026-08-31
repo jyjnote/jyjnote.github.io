@@ -1,56 +1,57 @@
 <style>
-.sktree{margin:0 0 2.4rem;padding:1rem .6rem 1.2rem;border:1px solid var(--main-border-color,#333);border-radius:18px;background:#0b0b0b;color:#e8e8e8}
-.sktree-head{padding:.2rem .8rem .8rem}
-.sktree-kicker{margin:0;font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:#8a8a8a}
-.sktree-title{margin:.15rem 0 .25rem;font-size:1.35rem;color:#f3f3f3}
-.sktree-desc{margin:0;color:#9a9a9a;font-size:.9rem}
-.sktree-crumb{display:flex;flex-wrap:wrap;gap:.35rem;margin:.75rem 0 0;min-height:1.6rem}
-.sktree-crumb button{border:0;background:transparent;color:#c9b07a;cursor:pointer;padding:0;font:inherit}
-.sktree-crumb button:hover{text-decoration:underline}
-.sktree-crumb span{color:#666}
-.sktree-stage{position:relative;width:100%;height:520px;overflow:hidden}
-.sktree-stage svg{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
-.sk-node{position:absolute;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;gap:.28rem;width:7.2rem;border:0;background:transparent;color:inherit;cursor:pointer;padding:0}
-.sk-node:focus-visible{outline:2px solid #c9b07a}
-.sk-dot{width:16px;height:16px;border-radius:50%;border:2px solid #6b3a44;background:#2a1518;box-shadow:0 0 0 3px rgba(0,0,0,.35)}
-.sk-node.is-root .sk-dot{width:26px;height:26px;border-color:#e7d27a;background:#efe39a;box-shadow:0 0 18px rgba(231,210,122,.45)}
-.sk-node.is-child .sk-dot{width:14px;height:14px}
+.skmap{margin:0 0 2.4rem;border:1px solid var(--main-border-color,#333);border-radius:18px;overflow:hidden;background:#070707;color:#eee}
+.skmap-head{padding:1rem 1rem .6rem}
+.skmap-kicker{margin:0;font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:#8a8a8a}
+.skmap-title{margin:.15rem 0 .2rem;font-size:1.35rem}
+.skmap-desc{margin:0;color:#9a9a9a;font-size:.9rem}
+.skmap-view{position:relative;height:min(78vh,720px);cursor:grab;touch-action:none;background:
+radial-gradient(900px 420px at 50% 0,rgba(110,160,212,.08),transparent 60%),#070707}
+.skmap-view.is-drag{cursor:grabbing}
+.sk-world{position:absolute;left:0;top:0;transform-origin:0 0;will-change:transform}
+.sk-world svg{position:absolute;inset:0;pointer-events:none}
+.sk-node{position:absolute;transform:translate(-50%,-50%);width:8.2rem;border:0;background:transparent;color:inherit;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:.28rem;padding:0}
+.sk-node:focus-visible{outline:2px solid #e7d27a}
+.sk-dot{width:13px;height:13px;border-radius:50%;border:2px solid #6b3a44;background:#231016;box-shadow:0 0 0 3px rgba(0,0,0,.35)}
+.sk-node.lv0 .sk-dot{width:28px;height:28px;border-color:#e7d27a;background:#efe39a;box-shadow:0 0 22px rgba(231,210,122,.5)}
+.sk-node.lv1 .sk-dot{width:18px;height:18px;border-color:#6ea0d4;background:#d7e7f8}
 .sk-node.is-leaf .sk-dot{border-color:#7a8cae;background:#1b2433}
-.sk-label{font-size:.78rem;line-height:1.2;text-align:center;color:#cfcfcf;text-shadow:0 1px 2px #000}
-.sk-node.is-root .sk-label{font-size:.95rem;font-weight:700;color:#fff}
-.sk-sub{font-size:.68rem;color:#8d8d8d}
-.sktree-hint{margin:.4rem .8rem 0;color:#777;font-size:.8rem}
-@media (max-width:700px){.sktree-stage{height:460px}.sk-node{width:5.6rem}.sk-label{font-size:.7rem}}
+.sk-node.is-on .sk-dot{border-color:#efe39a;background:#fff3b0;box-shadow:0 0 16px rgba(255,243,176,.45)}
+.sk-label{font-size:.74rem;line-height:1.2;text-align:center;color:#d8d8d8;text-shadow:0 1px 2px #000}
+.sk-node.lv0 .sk-label{font-size:1rem;font-weight:700;color:#fff}
+.sk-node.lv1 .sk-label{font-weight:700}
+.skmap-ui{position:absolute;right:10px;bottom:10px;display:flex;gap:.35rem}
+.skmap-ui button{width:34px;height:34px;border:1px solid #444;border-radius:9px;background:#151515;color:#ddd;cursor:pointer}
+.skmap-hint{padding:.45rem 1rem .75rem;color:#777;font-size:.8rem}
 </style>
 
-<section class="sktree" aria-label="진리의 문">
-  <div class="sktree-head">
-    <p class="sktree-kicker">Constellation</p>
-    <h2 class="sktree-title">진리의 문</h2>
-    <p class="sktree-desc">큰 노드가 부모입니다. 아래로 뻗은 자식을 누르면 그 줄기가 중심으로 옵니다.</p>
-    <div class="sktree-crumb" id="sk-crumb"></div>
+<section class="skmap" aria-label="진리의 문">
+  <div class="skmap-head">
+    <p class="skmap-kicker">Constellation</p>
+    <h2 class="skmap-title">진리의 문</h2>
+    <p class="skmap-desc">모든 줄기는 펼쳐져 있습니다. 드래그로 이동, 휠로 확대, 노드를 누르면 그쪽으로 다가갑니다.</p>
   </div>
-  <div class="sktree-stage" id="sk-stage">
-    <svg id="sk-lines"></svg>
+  <div class="skmap-view" id="sk-view">
+    <div class="sk-world" id="sk-world">
+      <svg id="sk-lines"></svg>
+    </div>
+    <div class="skmap-ui">
+      <button type="button" id="sk-zoom-in">+</button>
+      <button type="button" id="sk-zoom-out">−</button>
+      <button type="button" id="sk-fit">⌂</button>
+    </div>
   </div>
-  <p class="sktree-hint">글이 있는 잎은 클릭하면 글로 이동합니다.</p>
+  <p class="skmap-hint">잎 노드를 두 번 누르면 글로 이동합니다. 빈 칸은 아직 글이 없습니다.</p>
 </section>
 
 <script>
 (function(){
-  const tree = {
+  const data = {
     name:"진리의 문",
     children:[
-      {name:"기초", sub:"통계 · 확률 · 수학", children:[
-        {name:"통계", href:"#"},{name:"확률", href:"#"},{name:"수학", href:"#"}
-      ]},
-      {name:"컴퓨터", sub:"정처기 뼈대", children:[
-        {name:"운영체제", href:"#"},{name:"데이터베이스", href:"#"},{name:"네트워크", href:"#"},{name:"소프트웨어공학", href:"#"},{name:"자료구조", href:"#"}
-      ]},
-      {name:"데이터", sub:"빅분기 뼈대", children:[
-        {name:"전처리", href:"#"},{name:"SQL", href:"#"},{name:"시각화", href:"#"},{name:"빅데이터", href:"#"}
-      ]},
-      {name:"AI", sub:"전공 · 생성형", children:[
+      {name:"기초", children:[{name:"통계",href:"#"},{name:"확률",href:"#"},{name:"수학",href:"#"}]},
+      {name:"컴퓨터", children:[{name:"운영체제",href:"#"},{name:"데이터베이스",href:"#"},{name:"네트워크",href:"#"},{name:"소프트웨어공학",href:"#"},{name:"자료구조",href:"#"}]},
+      {name:"데이터", children:[{name:"전처리",href:"#"},{name:"SQL",href:"#"},{name:"시각화",href:"#"},{name:"빅데이터",href:"#"}]},
+      {name:"AI", children:[
         {name:"머신러닝", children:[
           {name:"선형 모델", children:[
             {name:"단순선형회귀", href:"/posts/simple-linear-regression/"},
@@ -68,7 +69,7 @@
             {name:"Radius Neighbors", href:"/posts/radius-neighbors/"}
           ]},
           {name:"확률 모델", children:[
-            {name:"가우시안 나이브베이즈", href:"#"},{name:"다항 나이브베이즈", href:"#"},{name:"베르누이 나이브베이즈", href:"#"},
+            {name:"가우시안 NB", href:"#"},{name:"다항 NB", href:"#"},{name:"베르누이 NB", href:"#"},
             {name:"LDA", href:"#"},{name:"QDA", href:"#"},{name:"GMM", href:"#"}
           ]},
           {name:"트리", children:[
@@ -79,11 +80,11 @@
             {name:"XGBoost", href:"#"},{name:"LightGBM", href:"#"},{name:"CatBoost", href:"#"},{name:"Voting", href:"#"},{name:"Stacking", href:"#"}
           ]},
           {name:"커널 · SVM", children:[
-            {name:"Linear SVM", href:"#"},{name:"Soft Margin SVM", href:"#"},{name:"Kernel SVM", href:"#"},{name:"SVR", href:"#"},{name:"One-class SVM", href:"#"}
+            {name:"Linear SVM", href:"#"},{name:"Soft Margin", href:"#"},{name:"Kernel SVM", href:"#"},{name:"SVR", href:"#"},{name:"One-class", href:"#"}
           ]},
           {name:"군집", children:[
-            {name:"K-means", href:"#"},{name:"K-medoids", href:"#"},{name:"K-modes", href:"#"},{name:"계층적 군집", href:"#"},
-            {name:"DBSCAN", href:"#"},{name:"Mean Shift", href:"#"},{name:"Spectral Clustering", href:"#"}
+            {name:"K-means", href:"#"},{name:"K-medoids", href:"#"},{name:"K-modes", href:"#"},{name:"계층적", href:"#"},
+            {name:"DBSCAN", href:"#"},{name:"Mean Shift", href:"#"},{name:"Spectral", href:"#"}
           ]},
           {name:"차원축소", children:[
             {name:"PCA", href:"#"},{name:"Kernel PCA", href:"#"},{name:"SVD", href:"#"},{name:"LDA", href:"#"},
@@ -105,102 +106,147 @@
           {name:"비전", href:"#"},{name:"자연어", href:"#"},{name:"음성", href:"#"},{name:"추천", href:"#"},{name:"강화학습", href:"#"},{name:"에이전트", href:"#"}
         ]},
         {name:"학습 방법", children:[
-          {name:"전이학습", href:"#"},{name:"미세조정", href:"#"},{name:"준지도학습", href:"#"},{name:"자기지도학습", href:"#"},{name:"대조학습", href:"#"},
+          {name:"전이학습", href:"#"},{name:"미세조정", href:"#"},{name:"준지도", href:"#"},{name:"자기지도", href:"#"},{name:"대조학습", href:"#"},
           {name:"메타학습", href:"#"},{name:"연합학습", href:"#"},{name:"지속학습", href:"#"},{name:"능동학습", href:"#"},{name:"멀티태스크", href:"#"}
         ]},
         {name:"시스템", children:[
           {name:"양자화", href:"#"},{name:"가지치기", href:"#"},{name:"지식증류", href:"#"},{name:"LoRA", href:"#"},{name:"QLoRA", href:"#"},
-          {name:"KV Cache", href:"#"},{name:"스펙큘레이티브 디코딩", href:"#"},{name:"FlashAttention", href:"#"},{name:"Continuous Batching", href:"#"},{name:"텐서병렬", href:"#"}
+          {name:"KV Cache", href:"#"},{name:"Spec Decode", href:"#"},{name:"FlashAttention", href:"#"},{name:"Batching", href:"#"},{name:"텐서병렬", href:"#"}
         ]},
         {name:"보안", children:[
           {name:"적대적 예제", href:"#"},{name:"데이터 중독", href:"#"},{name:"프롬프트 인젝션", href:"#"},{name:"탈옥", href:"#"},
           {name:"멤버십 추론", href:"#"},{name:"모델 추출", href:"#"},{name:"차등프라이버시", href:"#"},{name:"가드레일", href:"#"}
         ]}
       ]},
-      {name:"자격증", sub:"실전 · 기출", children:[
-        {name:"정보처리기사", href:"#"},{name:"빅데이터분석기사", href:"#"}
-      ]},
-      {name:"취준", sub:"면접 · 포트폴리오", children:[
-        {name:"면접", href:"#"},{name:"포트폴리오", href:"#"}
-      ]}
+      {name:"자격증", children:[{name:"정보처리기사", href:"#"},{name:"빅데이터분석기사", href:"#"}]},
+      {name:"취준", children:[{name:"면접", href:"#"},{name:"포트폴리오", href:"#"}]}
     ]
   };
 
-  const stage = document.getElementById("sk-stage");
-  const svg = document.getElementById("sk-lines");
-  const crumb = document.getElementById("sk-crumb");
-  let path = [tree];
+  const COL=132, ROW=118, PAD=160;
+  const view=document.getElementById("sk-view");
+  const world=document.getElementById("sk-world");
+  const svg=document.getElementById("sk-lines");
+  let cam={x:0,y:0,s:1}, goal=null, nodes=[];
 
-  function current(){ return path[path.length-1]; }
-
-  function place(){
-    const node = current();
-    const kids = node.children || [];
-    const w = stage.clientWidth;
-    const h = stage.clientHeight;
-    const root = {x:w/2, y: Math.max(70, h*0.18)};
-    const childY = Math.min(h-80, h*0.72);
-    const n = kids.length;
-    const span = Math.min(w-80, Math.max(220, n*78));
-    const start = (w-span)/2;
-    const childPos = kids.map((_,i)=>({
-      x: n===1 ? w/2 : start + (span*i)/Math.max(n-1,1),
-      y: childY + ((i%2)*18)
-    }));
-
-    stage.querySelectorAll(".sk-node").forEach(el=>el.remove());
-    svg.innerHTML = "";
-
-    childPos.forEach((p,i)=>{
-      const line = document.createElementNS("http://www.w3.org/2000/svg","path");
-      const midY = (root.y+p.y)/2;
-      line.setAttribute("d", `M${root.x},${root.y+16} C${root.x},${midY} ${p.x},${midY} ${p.x},${p.y-16}`);
-      line.setAttribute("fill","none");
-      line.setAttribute("stroke", i===0 ? "#6ea0d4" : "#4a5a78");
-      line.setAttribute("stroke-width", i===0 ? "3.2" : "1.4");
-      svg.appendChild(line);
-    });
-
-    addBtn(node, root.x, root.y, "is-root", ()=>{});
-    kids.forEach((kid,i)=>{
-      const leaf = !kid.children || !kid.children.length;
-      addBtn(kid, childPos[i].x, childPos[i].y, leaf ? "is-child is-leaf" : "is-child", ()=>{
-        if(kid.href && leaf){
-          if(kid.href !== "#") location.href = kid.href;
-          return;
-        }
-        path.push(kid);
-        drawCrumb();
-        place();
-      });
-    });
+  function layout(node, depth, next){
+    node.depth=depth;
+    if(!node.children||!node.children.length){
+      node.gx=next; node.gy=depth; return next+1;
+    }
+    let x=next;
+    node.children.forEach(ch=>{ x=layout(ch, depth+1, x); });
+    node.gx=(node.children[0].gx + node.children[node.children.length-1].gx)/2;
+    node.gy=depth;
+    return x;
   }
+  layout(data,0,0);
 
-  function addBtn(node, x, y, cls, onClick){
-    const btn = document.createElement("button");
-    btn.type = "button";
-    btn.className = "sk-node " + cls;
-    btn.style.left = x + "px";
-    btn.style.top = y + "px";
-    btn.innerHTML = `<span class="sk-dot"></span><span class="sk-label">${node.name}</span>${node.sub?`<span class="sk-sub">${node.sub}</span>`:""}`;
-    btn.addEventListener("click", onClick);
-    stage.appendChild(btn);
-  }
+  function walk(node, fn){ fn(node); (node.children||[]).forEach(ch=>walk(ch,fn)); }
+  let maxX=0,maxY=0;
+  walk(data,n=>{ maxX=Math.max(maxX,n.gx); maxY=Math.max(maxY,n.gy); n.x=PAD+n.gx*COL; n.y=PAD+n.gy*ROW; });
+  const worldW=PAD*2+maxX*COL, worldH=PAD*2+maxY*ROW;
+  world.style.width=worldW+"px";
+  world.style.height=worldH+"px";
+  svg.setAttribute("width",worldW);
+  svg.setAttribute("height",worldH);
+  svg.setAttribute("viewBox","0 0 "+worldW+" "+worldH);
 
-  function drawCrumb(){
-    crumb.innerHTML = "";
-    path.forEach((n,i)=>{
-      if(i){ const s=document.createElement("span"); s.textContent=" / "; crumb.appendChild(s); }
-      const b=document.createElement("button");
-      b.type="button";
-      b.textContent=n.name;
-      b.addEventListener("click",()=>{ path=path.slice(0,i+1); drawCrumb(); place(); });
-      crumb.appendChild(b);
+  walk(data,n=>{
+    (n.children||[]).forEach((ch,i)=>{
+      const p=document.createElementNS("http://www.w3.org/2000/svg","path");
+      const mid=(n.y+ch.y)/2;
+      p.setAttribute("d",`M${n.x},${n.y+16} C${n.x},${mid} ${ch.x},${mid} ${ch.x},${ch.y-16}`);
+      p.setAttribute("fill","none");
+      p.setAttribute("stroke", n.depth===0 ? "#6ea0d4" : "#445066");
+      p.setAttribute("stroke-width", n.depth===0 ? "2.6" : "1.3");
+      svg.appendChild(p);
     });
-  }
+  });
 
-  drawCrumb();
-  place();
-  window.addEventListener("resize", place);
+  walk(data,n=>{
+    const leaf=!n.children||!n.children.length;
+    const btn=document.createElement("button");
+    btn.type="button";
+    btn.className="sk-node lv"+n.depth+(leaf?" is-leaf":"");
+    btn.style.left=n.x+"px";
+    btn.style.top=n.y+"px";
+    btn.innerHTML=`<span class="sk-dot"></span><span class="sk-label">${n.name}</span>`;
+    btn.addEventListener("click",(e)=>{
+      if(moved) return;
+      focus(n,btn);
+    });
+    btn.addEventListener("dblclick",()=>{
+      if(n.href && n.href!=="#") location.href=n.href;
+    });
+    world.appendChild(btn);
+    nodes.push({n,btn});
+  });
+
+  function apply(){
+    world.style.transform=`translate(${cam.x}px,${cam.y}px) scale(${cam.s})`;
+  }
+  function fit(){
+    const vw=view.clientWidth, vh=view.clientHeight;
+    const s=Math.min(vw/worldW, vh/worldH)*0.96;
+    cam.s=Math.max(0.22, Math.min(s,1));
+    cam.x=(vw-worldW*cam.s)/2;
+    cam.y=20;
+    goal=null;
+    apply();
+  }
+  function focus(n,btn){
+    nodes.forEach(o=>o.btn.classList.toggle("is-on", o.n===n));
+    const vw=view.clientWidth, vh=view.clientHeight;
+    const s=Math.min(1.35, Math.max(cam.s*1.18, 0.95));
+    goal={
+      s,
+      x: vw/2 - n.x*s,
+      y: vh*0.38 - n.y*s
+    };
+  }
+  function tick(){
+    if(goal){
+      cam.x+=(goal.x-cam.x)*0.12;
+      cam.y+=(goal.y-cam.y)*0.12;
+      cam.s+=(goal.s-cam.s)*0.12;
+      apply();
+      if(Math.abs(goal.x-cam.x)+Math.abs(goal.y-cam.y)+Math.abs(goal.s-cam.s)<0.4) goal=null;
+    }
+    requestAnimationFrame(tick);
+  }
+  tick();
+
+  let dragging=false, moved=false, lx=0, ly=0;
+  view.addEventListener("pointerdown",e=>{
+    dragging=true; moved=false; lx=e.clientX; ly=e.clientY; goal=null;
+    view.classList.add("is-drag");
+    view.setPointerCapture(e.pointerId);
+  });
+  view.addEventListener("pointermove",e=>{
+    if(!dragging) return;
+    const dx=e.clientX-lx, dy=e.clientY-ly;
+    if(Math.hypot(dx,dy)>3) moved=true;
+    cam.x+=dx; cam.y+=dy; lx=e.clientX; ly=e.clientY; apply();
+  });
+  view.addEventListener("pointerup",()=>{ dragging=false; view.classList.remove("is-drag"); });
+
+  view.addEventListener("wheel",e=>{
+    e.preventDefault();
+    goal=null;
+    const rect=view.getBoundingClientRect();
+    const mx=e.clientX-rect.left, my=e.clientY-rect.top;
+    const old=cam.s;
+    const next=Math.min(2.4, Math.max(0.2, old*(e.deltaY<0?1.12:1/1.12)));
+    cam.x=mx-(mx-cam.x)*(next/old);
+    cam.y=my-(my-cam.y)*(next/old);
+    cam.s=next; apply();
+  },{passive:false});
+
+  document.getElementById("sk-zoom-in").onclick=()=>{ cam.s=Math.min(2.4,cam.s*1.18); apply(); };
+  document.getElementById("sk-zoom-out").onclick=()=>{ cam.s=Math.max(0.2,cam.s/1.18); apply(); };
+  document.getElementById("sk-fit").onclick=fit;
+  window.addEventListener("resize",fit);
+  fit();
 })();
 </script>
