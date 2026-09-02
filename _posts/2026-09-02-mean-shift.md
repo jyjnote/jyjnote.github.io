@@ -55,6 +55,15 @@ $$
 
 봉우리에 도착하면 $$m(x)\approx x$$라 이동이 멈춥니다.
 
+연한 점은 처음 자리, 진한 점은 매 스텝 근처 평균으로 옮긴 자리입니다.  
+K는 넣지 않았습니다. 같은 봉우리에 모이면 한 군집입니다.
+
+<iframe src="{{ site.baseurl }}/assets/plotly/mean-shift-steps.html" width="100%" height="600" style="border:0;" loading="lazy"></iframe>
+
+- 스텝 0: 원래 점
+- 이후: 창 안 평균 쪽으로 이동
+- 끝: 두 봉우리에 모임
+
 ## 왜 모드인가
 
 점들의 밀도를 커널으로 부드럽게 그리면 언덕이 생깁니다.  
