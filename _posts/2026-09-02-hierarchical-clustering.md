@@ -134,7 +134,7 @@ $$K$$개를 원하면 나무를 가로로 잘라 가지가 $$K$$개 남게 합�
 슬라이더는 단일 연결(가장 가까운 쌍)로 붙는 순서입니다.  
 같은 색이 한 덩어리입니다. 높이 5에서 자르면 왼쪽 셋과 오른쪽 둘이 갈라집니다.
 
-<iframe src="{{ '/assets/plotly/hierarchical-clustering-merge.html' | relative_url }}" width="100%" height="600" style="border:0;" loading="lazy"></iframe>
+<iframe src="{{ site.baseurl }}/assets/plotly/hierarchical-clustering-merge.html" width="100%" height="600" style="border:0;" loading="lazy"></iframe>
 
 - 0: 점마다 군집 하나
 - 다음: A-B가 먼저 붙음
