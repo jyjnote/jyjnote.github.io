@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>PCA 차트</title>
+<script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+<style>
+:root{
+  --ink:#1b2430; --muted:#5d6d7e; --line:#e6ebf0;
+  --blue:#2471a3; --red:#c0392b; --gold:#d68910; --green:#1e8449;
+  --bg:#f7f9fb; --card:#fff;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans KR",sans-serif}
+.wrap{max-width:1080px;margin:0 auto;padding:14px 16px 28px}
+h1{font-size:20px;margin:4px 0 8px;letter-spacing:-.02em}
+.lead{color:var(--muted);font-size:14px;line-height:1.55;margin:0 0 14px}
+.tabs{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 12px}
+.tabs button{
+  border:1px solid var(--line);background:#fff;color:#2c3e50;
+  border-radius:999px;padding:7px 12px;font-size:13px;cursor:pointer
+}
+.tabs button.on{background:#1b2430;color:#fff;border-color:#1b2430}
+.hint{background:#fff;border:1px solid var(--line);border-radius:12px;
+  padding:10px 14px;font-size:13.5px;line-height:1.55;color:#34495e;margin-bottom:10px}
+.hint b{color:var(--red)}
+#chart{width:100%;height:560px;background:#fff;border:1px solid var(--line);border-radius:12px}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:8px;margin-top:10px}
+.stat{background:#fff;border:1px solid var(--line);border-radius:10px;padding:10px 12px}
+.stat .k{font-size:11px;color:var(--muted);letter-spacing:.04em}
+.stat .v{font-size:16px;font-weight:700;margin-top:2px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>PCA를 그림으로</h1>
+  <p class="lead">같은 학생 점수 구름을 축 · 스크리 · 스케일 · 복원 · 분류 함정 순으로 봅니다. 슬라이더가 있는 탭은 단계를 넘겨 가며 비교하세요.</p>
+  <div class="tabs" id="tabs"></div>
+  <div class="hint" id="hint"></div>
+  <div id="chart"></div>
+  <div class="stats" id="stats"></div>
+</div>
+<script>
+const D = {"exam":{"x":[71.966,76.922,68.031,63.417,66.533,61.267,70.14,88.776,62.717,60.484,77.269,74.483,73.593,65.324,69.986,79.096,56.28,67.495,48.833,56.114,51.304,70.219,54.723,75.097,73.952,67.648,42.319,63.82,73.362,73.745,53.817,65.085,60.021,58.298,82.468,63.035,67.353,84.306,61.505,72.173,71.635,74.323,57.561,69.84,90.804,56.318,82.181,72.884,63.983,94.055,83.344,56.523,72.792,77.334,68.482,77.639,73.716,79.699,91.194,63.919,73.049,65.787,72.407,57.77,64.298,69.046,80.028,84.129,59.426,61.122,77.655,48.766,69.257,67.925,86.667,79.009,64.551,69.047,68.951,90.425,65.359,69.265,75.152,70.265,67.416,56.199,74.533,65.663,86.577,79.769],"y":[69.044,72.467,68.097,58.649,64.211,58.149,73.31,87.58,64.935,61.314,72.838,76.372,73.391,58.525,70.841,80.063,55.698,66.536,46.183,57.858,45.157,69.075,55.877,75.177,76.015,71.023,37.279,59.821,71.215,69.127,51.611,66.114,54.641,55.652,83.301,60.407,69.069,80.697,61.104,65.33,70.959,68.628,51.684,72.026,86.171,52.329,78.136,69.985,60.104,92.054,79.577,53.886,71.678,77.668,72.19,75.131,71.155,77.81,87.231,58.702,71.425,66.075,71.346,55.932,62.409,70.186,80.738,78.902,52.595,56.133,70.61,44.925,67.376,68.936,82.505,76.203,68.561,65.924,67.103,88.165,64.948,68.128,75.447,69.025,65.338,57.756,68.356,67.083,81.197,77.534],"mu":[69.6745,67.7969],"evals":[214.7578,3.6639],"evecs":[[0.69889,0.71523],[0.71523,-0.69889]],"z1":[2.494,8.405,-0.935,-10.916,-4.76,-12.776,4.268,27.499,-6.909,-11.06,8.913,9.493,6.74,-9.672,2.395,15.357,-18.015,-2.426,-30.025,-16.586,-29.032,1.294,-18.974,9.068,8.867,0.891,-40.946,-9.797,5.022,3.796,-22.659,-4.411,-16.156,-16.637,20.03,-9.925,-0.713,19.453,-10.497,-0.018,3.631,3.843,-19.991,3.141,27.909,-20.398,16.136,3.808,-9.48,34.389,17.979,-19.141,4.954,12.413,2.309,10.812,5.226,14.168,28.94,-10.527,4.953,-3.948,4.448,-16.806,-7.611,1.269,16.492,18.045,-18.036,-14.32,7.589,-30.972,-0.593,-0.408,22.395,12.536,-3.034,-1.778,-1.002,29.07,-5.053,-0.049,9.3,1.291,-3.337,-16.6,3.796,-3.314,21.397,14.02],"z2":[0.767,1.919,-1.385,1.918,0.259,0.729,-3.52,-0.164,-2.976,-2.043,1.909,-2.554,-1.107,3.368,-1.905,-1.834,-1.124,-0.678,0.199,-2.753,2.684,-0.504,-2.363,-1.28,-2.684,-3.704,1.762,1.387,0.248,1.982,-0.03,-2.107,2.289,0.351,-1.686,0.416,-2.55,1.449,-1.166,3.511,-0.808,2.744,2.597,-2.837,2.271,1.257,1.719,0.767,1.305,0.484,1.544,0.316,-0.483,-1.421,-3.923,0.571,0.543,0.172,1.809,2.239,-0.122,-1.577,-0.526,-0.223,-0.08,-2.119,-1.639,2.577,3.294,2.035,3.742,1.03,-0.005,-2.048,1.875,0.801,-4.198,0.86,-0.033,0.607,-1.096,-0.524,-1.428,-0.436,0.103,-2.62,3.084,-2.371,2.724,0.415],"ratio":[0.9832,0.0168],"xhat":[71.418,75.549,69.021,62.045,66.348,60.745,72.658,88.893,64.846,61.945,75.904,76.309,74.385,62.915,71.348,80.408,57.084,67.979,48.69,58.083,49.385,70.579,56.414,76.012,75.872,70.297,41.058,62.828,73.184,72.328,53.838,66.592,58.383,58.047,83.674,62.738,69.176,83.27,62.338,69.662,72.213,72.361,55.703,71.869,89.18,55.418,80.951,72.336,63.049,93.708,82.24,56.297,73.137,78.35,71.288,77.231,73.327,79.576,89.9,62.317,73.136,66.915,72.783,57.929,64.355,70.562,81.2,82.286,57.07,59.667,74.978,48.029,69.26,69.389,85.326,78.436,67.554,68.432,68.974,89.991,66.143,69.64,76.174,70.577,67.342,58.073,72.327,67.358,84.629,79.473],"yhat":[69.581,73.809,67.128,59.989,64.392,58.659,70.85,87.465,62.855,59.887,74.172,74.587,72.617,60.879,69.51,78.781,54.912,66.062,46.322,55.934,47.032,68.723,54.226,74.283,74.139,68.434,38.511,60.79,71.389,70.512,51.59,64.642,56.241,55.898,82.123,60.698,67.287,81.71,60.289,67.784,70.394,70.546,53.499,70.043,87.758,53.207,79.338,70.52,61.017,92.393,80.656,54.107,71.34,76.675,69.448,75.53,71.535,77.93,88.496,60.267,71.34,64.973,70.978,55.776,62.353,68.705,79.592,80.703,54.897,57.555,73.225,45.645,67.372,67.505,83.815,76.763,65.627,66.525,67.08,88.589,64.182,67.762,74.448,68.72,65.41,55.924,70.512,65.427,83.101,77.824]},"scale":{"h":[169.941,159.403,183.776,181.683,166.291,176.174,173.029,149.092,172.003,169.509,170.666,161.385,167.845,168.574,179.505,172.675,169.956,182.232,165.558,166.885,155.466,182.553,177.715,177.335,175.351,170.881,171.724,167.984,168.371,170.434,182.095,174.446,169.532,165.365,164.92,182.822,174.053,170.54,167.231,161.128,169.465,176.989,166.86,168.182,168.232,170.877,157.256,168.117,163.165,177.077,163.835,174.616,182.195,167.491,165.187,171.531,169.984,162.051,173.687,186.124,167.935,168.377,161.641,172.553,160.024,161.145,180.237,162.756,178.651,182.195,172.075,174.427,185.618,168.426,165.256,159.174,170.334,181.833,177.677,162.463,163.157,165.967,172.338,168.358,171.716,172.374,167.61,169.679,171.653,169.328],"q":[51.753,54.958,54.138,51.948,43.542,52.284,43.641,41.932,53.292,52.398,49.575,42.723,48.377,47.411,53.655,58.303,50.753,49.107,45.237,49.336,47.201,47.853,51.564,47.072,54.695,53.851,54.055,48.038,51.557,49.603,50.453,49.48,45.381,44.251,52.018,51.254,51.366,53.587,43.519,45.925,50.533,52.421,48.209,53.329,50.471,45.885,44.831,52.537,50.598,44.415,53.792,52.786,56.531,48.281,48.243,46.287,58.877,48.194,56.109,50.153,50.264,43.907,47.406,53.826,44.123,52.424,52.716,45.26,49.542,50.222,50.138,48.788,49.447,48.698,45.694,43.863,49.881,54.865,45.799,48.882,46.699,45.975,53.338,47.94,55.501,47.627,50.994,49.156,47.609,51.956],"mu":[170.4891,49.6901],"sd":[7.1753,3.7064],"raw_evals":[54.3049,10.9183],"raw_v":[[0.96696,0.25491],[0.25491,-0.96696]],"raw_ratio":[0.8326,0.1674],"std_evals":[1.4021,0.5979],"std_v":[[0.70711,-0.70711],[0.70711,0.70711]],"std_ratio":[0.7011,0.2989],"hz":[-0.076,-1.545,1.852,1.56,-0.585,0.792,0.354,-2.982,0.211,-0.137,0.025,-1.269,-0.368,-0.267,1.256,0.305,-0.074,1.637,-0.687,-0.502,-2.094,1.681,1.007,0.954,0.678,0.055,0.172,-0.349,-0.295,-0.008,1.617,0.551,-0.133,-0.714,-0.776,1.719,0.497,0.007,-0.454,-1.305,-0.143,0.906,-0.506,-0.322,-0.315,0.054,-1.844,-0.331,-1.021,0.918,-0.927,0.575,1.631,-0.418,-0.739,0.145,-0.07,-1.176,0.446,2.179,-0.356,-0.294,-1.233,0.288,-1.458,-1.302,1.359,-1.078,1.137,1.631,0.221,0.549,2.108,-0.288,-0.729,-1.577,-0.022,1.581,1.002,-1.119,-1.022,-0.63,0.258,-0.297,0.171,0.263,-0.401,-0.113,0.162,-0.162],"qz":[0.557,1.421,1.2,0.609,-1.659,0.7,-1.632,-2.093,0.972,0.731,-0.031,-1.88,-0.354,-0.615,1.07,2.324,0.287,-0.157,-1.202,-0.095,-0.672,-0.496,0.506,-0.706,1.35,1.123,1.178,-0.446,0.504,-0.024,0.206,-0.057,-1.163,-1.467,0.628,0.422,0.452,1.051,-1.665,-1.016,0.228,0.737,-0.4,0.982,0.211,-1.027,-1.311,0.768,0.245,-1.423,1.107,0.835,1.846,-0.38,-0.39,-0.918,2.479,-0.404,1.732,0.125,0.155,-1.56,-0.616,1.116,-1.502,0.738,0.816,-1.195,-0.04,0.144,0.121,-0.244,-0.066,-0.268,-1.078,-1.572,0.052,1.396,-1.05,-0.218,-0.807,-1.002,0.984,-0.472,1.568,-0.557,0.352,-0.144,-0.562,0.611]},"scree":{"evals":[14.3289,0.7877,0.2003,0.1075],"ratio":[0.929,0.0511,0.013,0.007],"cum":[0.929,0.98,0.993,1.0],"names":["PC1","PC2","PC3","PC4"]},"stripe":{"x":[3.677,-2.319,3.034,-0.626,-1.599,-0.18,-4.115,-0.826,-2.692,2.044,-0.392,2.76,3.049,-1.361,-2.004,3.356,-0.119,-3.088,-4.008,4.056,0.381,-3.48,-0.033,0.26,-0.259,3.701,3.551,-3.009,-2.5,-0.723,2.505,1.119,1.788,0.294,-2.444,2.328,-4.082,1.529,-2.702,-0.384,4.058,0.581,-3.404,-0.742,1.332,-3.348,-2.158,-3.631,0.381,-0.802,-0.3,-1.587,1.229,-2.609,3.26,3.858,-0.088,-0.348,2.878,-1.574,2.194,-1.592,1.944,-1.101,1.113,3.402,-3.573,2.471,0.564,-1.301,-1.064,-3.557,-1.829,1.244,-3.413,1.394,4.021,3.776,2.99,2.414,-2.299,3.652,-2.823,2.721,3.118,1.007,0.344,-2.404,0.248,-1.961],"y":[-0.261,-1.455,1.502,0.567,-1.754,-1.199,-2.481,-1.234,-2.051,2.063,-1.742,-0.117,-0.239,0.674,-1.703,-0.176,-1.318,0.242,-2.324,2.333,-0.357,0.549,-1.528,1.246,1.672,2.633,0.168,-2.258,0.023,-1.469,-0.369,1.705,-0.618,-1.061,-2.298,-0.274,-2.761,1.655,-1.714,-1.128,2.622,1.359,-0.074,-1.385,1.513,0.121,-2.146,0.177,-1.028,0.609,-1.277,0.389,1.634,0.034,0.308,2.219,0.494,-1.452,-0.705,0.55,-0.005,0.736,1.391,0.472,1.935,0.132,-2.397,0.006,1.954,-1.126,0.77,-2.256,0.646,1.323,-2.573,1.639,2.179,0.179,-0.033,0.364,0.01,0.132,-2.028,0.006,2.501,1.354,0.98,-2.448,0.945,-1.586],"cls":[0,0,1,1,0,0,0,0,0,1,0,0,0,1,0,0,0,1,0,1,0,1,0,1,1,1,0,0,1,0,0,1,0,0,0,0,0,1,0,0,1,1,1,0,1,1,0,1,0,1,0,1,1,1,0,1,1,0,0,1,0,1,1,1,1,0,0,0,1,0,1,0,1,1,0,1,1,0,0,0,1,0,0,0,1,1,1,0,1,0],"mu":[0.0575,-0.0855],"evals":[6.8112,1.1491],"evecs":[[0.9161,0.40094],[0.40094,-0.9161]]}};
+const COL = {a:"#2471a3", b:"#c0392b", g:"#1e8449", gold:"#d68910", gray:"#85929e"};
+
+function axisLine(mu, v, len, color, name, dash){
+  const x = [mu[0]-len*v[0], mu[0]+len*v[0]];
+  const y = [mu[1]-len*v[1], mu[1]+len*v[1]];
+  return {x,y,mode:"lines",line:{color,width:3,dash:dash||"solid"},name,hoverinfo:"name"};
+}
+function arrowHead(mu, v, len, color){
+  const x = mu[0]+len*v[0], y = mu[1]+len*v[1];
+  return {x:[x],y:[y],mode:"markers",marker:{size:10,color,symbol:"triangle-up"},
+    hoverinfo:"skip",showlegend:false};
+}
+function setStats(items){
+  document.getElementById("stats").innerHTML = items.map(it =>
+    `<div class="stat"><div class="k">${it.k}</div><div class="v">${it.v}</div></div>`
+  ).join("");
+}
+
+const TABS = [
+  {id:"axes", label:"1. 축과 사영"},
+  {id:"scree", label:"2. 스크리"},
+  {id:"scale", label:"3. 스케일 함정"},
+  {id:"recon", label:"4. PC1 복원"},
+  {id:"stripe", label:"5. 분산 ≠ 분류"}
+];
+
+const HINT = {
+  axes: "파란 점은 중간·기말 점수입니다. 빨간 줄이 PC1(가장 긴 퍼짐), 회색 줄이 PC2입니다. 슬라이더를 오른쪽으로 밀면 점들이 PC1 위로 떨어집니다. 거의 한 줄이 됩니다.",
+  scree: "막대는 각 PC가 담는 분산 비율, 주황 선은 누적입니다. 이 예는 PC1만으로도 약 93%입니다. 팔꿈치는 PC2 직후입니다.",
+  scale: "왼쪽은 키(cm)와 퀴즈를 그대로, 오른쪽은 표준화 뒤입니다. 단위를 안 맞추면 키가 PC1을 거의 혼자 먹습니다.",
+  recon: "원 점은 원래 점수, 빨간 점은 PC1만 남기고 다시 펼친 점수입니다. 연결선이 복원 오차입니다. PC2 분산이 작아서 선이 짧습니다.",
+  stripe: "색은 반(클래스)입니다. 긴 빨간 축이 PCA 1축입니다. 반은 짧은 방향으로 갈라져 있어, 1축만 보면 두 반이 겹칩니다."
+};
+
+function tracesAxes(step){
+  const E=D.exam, mu=E.mu, V=E.evecs;
+  const pts={x:E.x,y:E.y,mode:"markers",name:"학생",
+    marker:{size:8,color:COL.a,opacity:0.82},
+    text:E.x.map((_,i)=>`중간 ${E.x[i]} / 기말 ${E.y[i]}`),hoverinfo:"text"};
+  const pc1=axisLine(mu,[V[0][0],V[1][0]],22,COL.b,"PC1");
+  const pc2=axisLine(mu,[V[0][1],V[1][1]],8,COL.gray,"PC2","dash");
+  const mean={x:[mu[0]],y:[mu[1]],mode:"markers",name:"평균",
+    marker:{size:12,color:COL.gold,symbol:"x",line:{width:2}}};
+  if(step===0) return [pts, mean];
+  if(step===1) return [pts, pc1, pc2, mean];
+  // drop onto PC1
+  const segs=[];
+  const xs=[],ys=[],xh=[],yh=[];
+  for(let i=0;i<E.x.length;i++){
+    xs.push(E.x[i], E.xhat[i], null);
+    ys.push(E.y[i], E.yhat[i], null);
+  }
+  return [
+    pts,
+    {x:xs,y:ys,mode:"lines",line:{color:"rgba(192,57,43,0.25)",width:1},name:"사영",hoverinfo:"skip"},
+    {x:E.xhat,y:E.yhat,mode:"markers",name:"PC1 위",marker:{size:7,color:COL.b}},
+    pc1, pc2, mean
+  ];
+}
+
+function tracesScree(){
+  const s=D.scree;
+  return [
+    {x:s.names,y:s.ratio.map(v=>+(v*100).toFixed(2)),type:"bar",name:"설명 비율(%)",
+     marker:{color:["#c0392b","#2471a3","#7f8c8d","#bdc3c7"],opacity:0.9},
+     text:s.ratio.map(v=>(v*100).toFixed(1)+"%"),textposition:"outside"},
+    {x:s.names,y:s.cum.map(v=>+(v*100).toFixed(2)),type:"scatter",mode:"lines+markers",
+     name:"누적(%)",yaxis:"y2",line:{color:COL.gold,width:3},marker:{size:9,color:COL.gold}}
+  ];
+}
+
+function tracesScale(mode){
+  // 0 raw, 1 std
+  if(mode===0){
+    const S=D.scale, mu=S.mu, V=S.raw_v;
+    return [
+      {x:S.h,y:S.q,mode:"markers",name:"키·퀴즈",marker:{size:8,color:COL.a,opacity:0.85}},
+      axisLine(mu,[V[0][0],V[1][0]],20,COL.b,"PC1 raw"),
+      axisLine(mu,[V[0][1],V[1][1]],8,COL.gray,"PC2 raw","dash"),
+      {x:[mu[0]],y:[mu[1]],mode:"markers",name:"평균",marker:{size:11,color:COL.gold,symbol:"x",line:{width:2}}}
+    ];
+  }
+  const S=D.scale, V=S.std_v;
+  return [
+    {x:S.hz,y:S.qz,mode:"markers",name:"표준화 좌표",marker:{size:8,color:COL.g,opacity:0.85}},
+    axisLine([0,0],[V[0][0],V[1][0]],3.2,COL.b,"PC1 std"),
+    axisLine([0,0],[V[0][1],V[1][1]],2.4,COL.gray,"PC2 std","dash"),
+    {x:[0],y:[0],mode:"markers",name:"원점",marker:{size:11,color:COL.gold,symbol:"x",line:{width:2}}}
+  ];
+}
+
+function tracesRecon(){
+  const E=D.exam;
+  const xs=[],ys=[];
+  for(let i=0;i<E.x.length;i++){
+    xs.push(E.x[i],E.xhat[i],null);
+    ys.push(E.y[i],E.yhat[i],null);
+  }
+  return [
+    {x:xs,y:ys,mode:"lines",line:{color:"rgba(93,109,126,0.35)",width:1},name:"잔차",hoverinfo:"skip"},
+    {x:E.x,y:E.y,mode:"markers",name:"원래",marker:{size:8,color:COL.a,opacity:0.8}},
+    {x:E.xhat,y:E.yhat,mode:"markers",name:"PC1 복원",marker:{size:8,color:COL.b}},
+    axisLine(E.mu,[E.evecs[0][0],E.evecs[1][0]],22,COL.b,"PC1")
+  ];
+}
+
+function tracesStripe(){
+  const S=D.stripe, mu=S.mu, V=S.evecs;
+  const x0=[],y0=[],x1=[],y1=[];
+  for(let i=0;i<S.x.length;i++){
+    if(S.cls[i]===0){x0.push(S.x[i]);y0.push(S.y[i]);}
+    else {x1.push(S.x[i]);y1.push(S.y[i]);}
+  }
+  return [
+    {x:x0,y:y0,mode:"markers",name:"반 A",marker:{size:8,color:COL.a,opacity:0.88}},
+    {x:x1,y:y1,mode:"markers",name:"반 B",marker:{size:8,color:COL.g,opacity:0.88}},
+    axisLine(mu,[V[0][0],V[1][0]],6.2,COL.b,"PCA 1축"),
+    axisLine(mu,[V[0][1],V[1][1]],3.2,COL.gold,"PCA 2축","dash"),
+    {x:[mu[0]],y:[mu[1]],mode:"markers",name:"평균",marker:{size:11,color:"#8e44ad",symbol:"x",line:{width:2}}}
+  ];
+}
+
+const TITLES = {
+  axes:["원래 점수 구름","PC1 · PC2 축","점들을 PC1 위에 떨어뜨림"],
+  scale:["단위 그대로 (키가 이김)","표준화 후 (두 과목을 공평히)"],
+};
+
+function layoutAxes(step){
+  return {
+    title:TITLES.axes[step],
+    xaxis:{title:"중간고사",zeroline:false},
+    yaxis:{title:"기말고사",scaleanchor:"x",zeroline:false},
+    legend:{orientation:"h",y:1.14},
+    margin:{t:70,r:16,b:48,l:52},
+    sliders:[{
+      pad:{t:28}, currentvalue:{prefix:"단계  ",font:{size:13}},
+      steps:[0,1,2].map(i=>({
+        method:"animate", label:["구름","축","사영"][i],
+        args:[[String(i)],{mode:"immediate",frame:{duration:0,redraw:true},transition:{duration:0}}]
+      }))
+    }]
+  };
+}
+
+function draw(id){
+  const hint=document.getElementById("hint");
+  hint.innerHTML=HINT[id];
+  const gd=document.getElementById("chart");
+  if(id==="axes"){
+    const E=D.exam;
+    setStats([
+      {k:"PC1 설명 비율", v:(E.ratio[0]*100).toFixed(1)+"%"},
+      {k:"PC2 설명 비율", v:(E.ratio[1]*100).toFixed(1)+"%"},
+      {k:"PC1 방향", v:"거의 (1, 1) · 중간=기말"},
+      {k:"학생 수", v:String(E.x.length)}
+    ]);
+    Plotly.purge(gd);
+    Plotly.newPlot(gd, tracesAxes(0), layoutAxes(0), {responsive:true,displaylogo:false}).then(()=>{
+      Plotly.addFrames(gd,[0,1,2].map(i=>({name:String(i),data:tracesAxes(i),layout:{title:TITLES.axes[i]}})));
+    });
+    return;
+  }
+  if(id==="scree"){
+    const s=D.scree;
+    setStats([
+      {k:"λ1 / 전체", v:(s.ratio[0]*100).toFixed(1)+"%"},
+      {k:"누적 2개", v:(s.cum[1]*100).toFixed(1)+"%"},
+      {k:"누적 3개", v:(s.cum[2]*100).toFixed(1)+"%"},
+      {k:"해석", v:"PC1이 거의 전부"}
+    ]);
+    Plotly.purge(gd);
+    Plotly.newPlot(gd, tracesScree(), {
+      title:"스크리 · 누적 설명 분산",
+      xaxis:{title:"주성분"},
+      yaxis:{title:"설명 비율 (%)",range:[0,110]},
+      yaxis2:{title:"누적 (%)",overlaying:"y",side:"right",range:[0,110]},
+      legend:{orientation:"h",y:1.14},
+      margin:{t:70,r:56,b:48,l:52},
+      bargap:0.35
+    },{responsive:true,displaylogo:false});
+    return;
+  }
+  if(id==="scale"){
+    const S=D.scale;
+    setStats([
+      {k:"그대로 PC1 비율", v:(S.raw_ratio[0]*100).toFixed(1)+"%"},
+      {k:"그대로 PC1 로딩", v:"키 "+S.raw_v[0][0].toFixed(2)+" · 퀴즈 "+S.raw_v[1][0].toFixed(2)},
+      {k:"표준화 PC1 비율", v:(S.std_ratio[0]*100).toFixed(1)+"%"},
+      {k:"표준화 PC1 로딩", v:"둘 다 약 0.71"}
+    ]);
+    Plotly.purge(gd);
+    Plotly.newPlot(gd, tracesScale(0), {
+      title:TITLES.scale[0],
+      xaxis:{title:"키 (cm)"},
+      yaxis:{title:"퀴즈 점수",scaleanchor:"x"},
+      legend:{orientation:"h",y:1.14},
+      margin:{t:70,r:16,b:48,l:52},
+      sliders:[{
+        pad:{t:28}, currentvalue:{prefix:"",font:{size:13}},
+        steps:[
+          {method:"animate",label:"단위 그대로",args:[["0"],{mode:"immediate",frame:{duration:0,redraw:true},transition:{duration:0}}]},
+          {method:"animate",label:"표준화",args:[["1"],{mode:"immediate",frame:{duration:0,redraw:true},transition:{duration:0}}]}
+        ]
+      }]
+    },{responsive:true,displaylogo:false}).then(()=>{
+      Plotly.addFrames(gd,[
+        {name:"0",data:tracesScale(0),layout:{title:TITLES.scale[0],
+          xaxis:{title:"키 (cm)"},yaxis:{title:"퀴즈 점수"}}},
+        {name:"1",data:tracesScale(1),layout:{title:TITLES.scale[1],
+          xaxis:{title:"키 (표준화)"},yaxis:{title:"퀴즈 (표준화)",scaleanchor:"x"}}}
+      ]);
+    });
+    return;
+  }
+  if(id==="recon"){
+    const E=D.exam;
+    setStats([
+      {k:"버린 분산", v:(E.ratio[1]*100).toFixed(2)+"%"},
+      {k:"복원", v:"x̂ = x̄ + v1 z1"},
+      {k:"잔차 방향", v:"PC2와 평행"},
+      {k:"이상치 단서", v:"잔차 큰 점"}
+    ]);
+    Plotly.purge(gd);
+    Plotly.newPlot(gd, tracesRecon(), {
+      title:"PC1만 남기고 다시 펼치기",
+      xaxis:{title:"중간고사"},
+      yaxis:{title:"기말고사",scaleanchor:"x"},
+      legend:{orientation:"h",y:1.14},
+      margin:{t:70,r:16,b:48,l:52}
+    },{responsive:true,displaylogo:false});
+    return;
+  }
+  if(id==="stripe"){
+    const S=D.stripe;
+    setStats([
+      {k:"PC1 분산 비율", v:((S.evals[0]/(S.evals[0]+S.evals[1]))*100).toFixed(1)+"%"},
+      {k:"PCA가 본 것", v:"띠가 긴 방향"},
+      {k:"반을 가르는 것", v:"짧은 2축 쪽"},
+      {k:"시험 함정", v:"분산 최대 ≠ 분류 최적"}
+    ]);
+    Plotly.purge(gd);
+    Plotly.newPlot(gd, tracesStripe(), {
+      title:"두 반이 나란한 띠일 때",
+      xaxis:{title:"특징 1",zeroline:false},
+      yaxis:{title:"특징 2",scaleanchor:"x",zeroline:false},
+      legend:{orientation:"h",y:1.14},
+      margin:{t:70,r:16,b:48,l:52}
+    },{responsive:true,displaylogo:false});
+  }
+}
+
+function setTab(id){
+  document.querySelectorAll(".tabs button").forEach(b=>b.classList.toggle("on",b.dataset.id===id));
+  history.replaceState(null,"","#"+id);
+  draw(id);
+}
+
+const tabBox=document.getElementById("tabs");
+TABS.forEach(t=>{
+  const b=document.createElement("button");
+  b.textContent=t.label; b.dataset.id=t.id;
+  b.onclick=()=>setTab(t.id);
+  tabBox.appendChild(b);
+});
+const start=(location.hash||"#axes").replace("#","");
+setTab(TABS.some(t=>t.id===start)?start:"axes");
+</script>
+</body>
+</html>
