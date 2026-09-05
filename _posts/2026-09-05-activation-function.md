@@ -12,7 +12,7 @@ math: true
 선형인 채로 두면 층을 쌓아도 한 줄입니다. <span style="color:#c0392b"><strong>비선형</strong></span>이어야 MLP가 의미를 갖습니다.
 
 <blockquote class="prompt-info">
-  <p>Activation function. 은닉층에 ReLU·시그모이드·tanh, 출력층에 시그모이드·소프트맥스·항등. 시험 단골은 치역, 미분, 기울기 소실, dying ReLU입니다.</p>
+  <p>Activation function. 은닉층에 ReLU·시그모이드·tanh, 출력층에 시그모이드·소프트맥스·항등. 시험 단골은 치역, 미분, 기울기 소실, dying ReLU입니다. 차트는 <code>https://jyjnote.github.io/assets/plotly/activation-function-charts.html</code> 입니다.</p>
 </blockquote>
 
 ## 한 줄 식
@@ -42,6 +42,13 @@ $$
 
 가 다시 $$W'x+b'$$가 됩니다.  
 앞 글 MLP에서 본 그대로입니다.
+
+[차트 새 탭]({{ '/assets/plotly/activation-function-charts.html' | relative_url }}#all)
+
+<iframe src="{{ '/assets/plotly/activation-function-charts.html' | relative_url }}#all" title="활성화 함수 비교" width="100%" height="720" style="border:0;border-radius:12px;background:#f7f9fb" loading="lazy"></iframe>
+
+탭 **1. 한눈에**에서 같은 $$z$$에 대한 출력을 겹쳐 보세요.  
+계단은 0/1, 시그모이드는 (0,1), tanh는 (-1,1), ReLU는 음수에서 0입니다.
 
 ## 계단 함수
 
@@ -118,6 +125,13 @@ $$
 
 이진 분류의 **출력층**에서는 여전히 씁니다. 한 값을 확률처럼 보기 좋습니다.
 
+[차트 새 탭]({{ '/assets/plotly/activation-function-charts.html' | relative_url }}#sigmoid)
+
+<iframe src="{{ '/assets/plotly/activation-function-charts.html' | relative_url }}#sigmoid" title="시그모이드와 미분" width="100%" height="720" style="border:0;border-radius:12px;background:#f7f9fb" loading="lazy"></iframe>
+
+파란 곡선이 $$\sigma(z)$$, 빨간 곡선이 $$\sigma'(z)$$입니다.  
+$$z=0$$에서 빨간 점의 높이가 $$0.25$$입니다.
+
 ## tanh
 
 $$
@@ -141,6 +155,10 @@ $$
 미분 최댓값은 $$z=0$$에서 $$1$$입니다. 시그모이드의 $$0.25$$보다 큽니다.  
 그래도 $$|z|$$가 커지면 다시 포화하고, 기울기는 0에 가까워집니다.  
 깊게 쌓으면 소실 문제는 남습니다.
+
+[차트 새 탭]({{ '/assets/plotly/activation-function-charts.html' | relative_url }}#tanh)
+
+<iframe src="{{ '/assets/plotly/activation-function-charts.html' | relative_url }}#tanh" title="tanh와 미분" width="100%" height="720" style="border:0;border-radius:12px;background:#f7f9fb" loading="lazy"></iframe>
 
 ## ReLU
 
@@ -187,6 +205,13 @@ $$
 
 음수 구간을 완전히 0으로 안 막아서 dying을 줄입니다.  
 PReLU는 $$\alpha$$까지 학습합니다.
+
+[차트 새 탭]({{ '/assets/plotly/activation-function-charts.html' | relative_url }}#relu)
+
+<iframe src="{{ '/assets/plotly/activation-function-charts.html' | relative_url }}#relu" title="ReLU와 Leaky ReLU" width="100%" height="720" style="border:0;border-radius:12px;background:#f7f9fb" loading="lazy"></iframe>
+
+파란 선이 ReLU, 금색이 Leaky ReLU입니다.  
+점선은 미분입니다. $$z<0$$에서 ReLU 미분만 0입니다.
 
 ## Softmax
 
@@ -236,6 +261,12 @@ $$
 시그모이드는 클래스마다 따로 0~1입니다. 합이 1이 아닙니다.  
 상호 배타 다중 분류는 소프트맥스입니다.
 
+[차트 새 탭]({{ '/assets/plotly/activation-function-charts.html' | relative_url }}#softmax)
+
+<iframe src="{{ '/assets/plotly/activation-function-charts.html' | relative_url }}#softmax" title="소프트맥스" width="100%" height="720" style="border:0;border-radius:12px;background:#f7f9fb" loading="lazy"></iframe>
+
+막대 세 개의 합이 1입니다. $$z=2$$인 클래스가 약 $$0.665$$로 가장 큽니다.
+
 ## 한눈에 비교
 
 | 함수 | 식 | 치역 | 은닉 | 출력 | 주의 |
@@ -245,7 +276,7 @@ $$
 | tanh | $$(e^{z}-e^{-z})/(e^{z}+e^{-z})$$ | $$(-1,1)$$ | 시그모이드보다 나음 | 드묾 | 역시 포화 |
 | ReLU | $$\max(0,z)$$ | $$[0,\infty)$$ | 기본 | 회귀에 그대로 안 씀 | dying ReLU |
 | Leaky ReLU | 음수는 $$\alpha z$$ | $$(-\infty,\infty)$$ | ReLU 대체 | — | $$\alpha$$ 선택 |
-| 소프트맥스 | $$e^{z_i}/\sum e^{z_j}$$ | 심플렉스 | 안 씀 | 다중 분류 | 합 1 |
+| 소프트맥스 | $$e^{z_i}/\sum e^{z_j}$$ | 합이 1인 확률 | 안 씀 | 다중 분류 | 합 1 |
 
 GELU·Swish는 Transformer 쪽에 자주 나옵니다.  
 기본 시험 범위는 위 표면 됩니다.
