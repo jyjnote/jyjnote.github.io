@@ -13,7 +13,7 @@ math: true
 <span style="color:#c0392b"><strong>무엇을 줄일지</strong></span>가 정해져야 역전파가 출발합니다.
 
 <blockquote class="prompt-info">
-  <p>Loss / cost. 한 표본의 손실을 보통 $$L$$, 표본 평균을 비용 $$J$$로 씁니다. 회귀는 MSE, 이진 분류는 이진 교차엔트로피, 다중 분류는 소프트맥스 + 교차엔트로피. 출력 활성화와 짝을 맞춥니다.</p>
+  <p>Loss / cost. 한 표본의 손실을 보통 $$L$$, 표본 평균을 비용 $$J$$로 씁니다. 회귀는 MSE, 이진 분류는 이진 교차엔트로피, 다중 분류는 소프트맥스 + 교차엔트로피. 차트는 <code>https://jyjnote.github.io/assets/plotly/loss-function-charts.html</code> 입니다.</p>
 </blockquote>
 
 ## 한 줄 식
@@ -42,6 +42,13 @@ $$
 맞힌 개수(0-1 손실)는 미분할 곳이 거의 없습니다.  
 경계 하나만 넘기면 0에서 1로 뛰므로, 경사하강의 출발점으로 못 씁니다.  
 그래서 **매끈한** $$L$$을 씁니다.
+
+[차트 새 탭]({{ '/assets/plotly/loss-function-charts.html' | relative_url }}#mse)
+
+<iframe src="{{ '/assets/plotly/loss-function-charts.html' | relative_url }}#mse" title="MSE와 MAE" width="100%" height="720" style="border:0;border-radius:12px;background:#f7f9fb" loading="lazy"></iframe>
+
+탭 **1. MSE·MAE**는 정답 $$y=80$$을 고정하고 예측을 움직입니다.  
+제곱은 멀리 틀릴수록 더 가파르게 올라갑니다.
 
 ## 회귀: MSE
 
@@ -107,6 +114,13 @@ $$\hat{y}=0.9$$이면 $$-\log 0.1\approx 2.303$$
 
 <mark>틀린 쪽에 자신 있게 확률을 몰면 손실이 급증합니다.</mark>
 
+[차트 새 탭]({{ '/assets/plotly/loss-function-charts.html' | relative_url }}#bce)
+
+<iframe src="{{ '/assets/plotly/loss-function-charts.html' | relative_url }}#bce" title="이진 교차엔트로피" width="100%" height="720" style="border:0;border-radius:12px;background:#f7f9fb" loading="lazy"></iframe>
+
+파란 선은 $$y=1$$일 때 $$-\log\hat{y}$$입니다. $$\hat{y}\to 0$$이면 손실이 무한대로 갑니다.  
+금색 선은 $$y=0$$일 때 $$-\log(1-\hat{y})$$입니다.
+
 MSE로 분류해도 숫자는 나옵니다.  
 $$y=1$$, $$\hat{y}=0.1$$이면 $$(1-0.1)^2=0.81$$.  
 다만 시그모이드를 통과한 뒤 MSE를 쓰면, 틀려도 포화된 구간에서 기울기가 작아집니다.  
@@ -117,6 +131,13 @@ $$y=1$$, $$\hat{y}=0.1$$이면 $$(1-0.1)^2=0.81$$.
 > 출력 시그모이드 + 이진 교차엔트로피
 
 입니다.
+
+[차트 새 탭]({{ '/assets/plotly/loss-function-charts.html' | relative_url }}#compare)
+
+<iframe src="{{ '/assets/plotly/loss-function-charts.html' | relative_url }}#compare" title="BCE와 MSE 비교" width="100%" height="720" style="border:0;border-radius:12px;background:#f7f9fb" loading="lazy"></iframe>
+
+탭 **3. BCE vs MSE**는 정답 $$y=1$$입니다.  
+$$\hat{y}=0.1$$에서 BCE는 약 $$2.30$$, MSE는 $$0.81$$입니다. 틀린 확신을 BCE가 더 세게 벌합니다.
 
 ## 다중 분류: 소프트맥스 + 교차엔트로피
 
@@ -150,6 +171,13 @@ $$
 
 정답 확률이 $$0.9$$면 $$-\log 0.9\approx 0.105$$.  
 정답 확률이 $$0.01$$이면 $$-\log 0.01\approx 4.605$$.
+
+[차트 새 탭]({{ '/assets/plotly/loss-function-charts.html' | relative_url }}#ce)
+
+<iframe src="{{ '/assets/plotly/loss-function-charts.html' | relative_url }}#ce" title="다중 교차엔트로피" width="100%" height="720" style="border:0;border-radius:12px;background:#f7f9fb" loading="lazy"></iframe>
+
+가로축은 정답 클래스 확률입니다. 식이 이진 $$y=1$$과 같습니다.  
+점 $$0.245$$가 위 예시의 손실 $$\approx 1.406$$입니다.
 
 합이 1인 확률 벡터와 원-핫을 비교하는 식입니다.  
 시그모이드 $$K$$개를 따로 쓰는 멀티라벨과 다릅니다. 그쪽은 클래스마다 이진 교차엔트로피를 더합니다.
@@ -219,7 +247,7 @@ $$\log\hat{y}$$는 $$\hat{y}<1$$이라 음수입니다.
 
 ### 4. $$y$$가 원-핫이 아니면
 
-정답이 부드러운 확률이면 같은 식 $$\sum y_c\log\hat{y}_c$$를 그대로 씁니다. 라벨 스무딩입니다.  
+정답이 부드러운 확률이면 같은 식 $$-\sum y_c\log\hat{y}_c$$를 그대로 씁니다. 라벨 스무딩입니다.  
 식 자체는 “정답 분포와 예측 분포의 교차엔트로피”입니다.
 
 ### 5. 손실을 줄인다고 일반화가 보장되지 않음
@@ -364,7 +392,7 @@ $$L=-\sum y_c\log\hat{y}_c=-\log\hat{y}_2$$.
 **9.** 시그모이드 + MSE가 분류에서 기본이 아닌 이유에 가까운 것은?
 
 - ① 확률을 못 냄
-- ② 포화 구간에서 기울기가 작아지기 쉬움
+- ② 포화 구간에서 기울기가 작아지기 쉽습니다
 - ③ 편향을 못 씀
 - ④ XOR 전용
 
@@ -372,7 +400,7 @@ $$L=-\sum y_c\log\hat{y}_c=-\log\hat{y}_2$$.
 <summary>정답</summary>
 
 ②  
-교차엔트로피+시그모이드는 $$\partial L/\partial z=\hat{y}-y$$로 단순하고, 틀린 확신을 더 세게 밈.
+교차엔트로피+시그모이드는 $$\partial L/\partial z=\hat{y}-y$$로 단순하고, 틀린 확신을 더 세게 밉니다.
 
 </details>
 
