@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>활성화 함수 차트</title>
+<script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+<style>
+:root{
+  --ink:#1b2430; --muted:#5d6d7e; --line:#e6ebf0;
+  --blue:#2471a3; --red:#c0392b; --gold:#d68910; --green:#1e8449;
+  --bg:#f7f9fb;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans KR",sans-serif}
+.wrap{max-width:1080px;margin:0 auto;padding:14px 16px 28px}
+h1{font-size:20px;margin:4px 0 8px;letter-spacing:-.02em}
+.lead{color:var(--muted);font-size:14px;line-height:1.55;margin:0 0 14px}
+.tabs{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 12px}
+.tabs button{
+  border:1px solid var(--line);background:#fff;color:#2c3e50;
+  border-radius:999px;padding:7px 12px;font-size:13px;cursor:pointer
+}
+.tabs button.on{background:#1b2430;color:#fff;border-color:#1b2430}
+.hint{background:#fff;border:1px solid var(--line);border-radius:12px;
+  padding:10px 14px;font-size:13.5px;line-height:1.55;color:#34495e;margin-bottom:10px}
+.hint b{color:var(--red)}
+#chart{width:100%;height:520px;background:#fff;border:1px solid var(--line);border-radius:12px}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px;margin-top:10px}
+.stat{background:#fff;border:1px solid var(--line);border-radius:10px;padding:10px 12px}
+.stat .k{font-size:11px;color:var(--muted);letter-spacing:.04em}
+.stat .v{font-size:16px;font-weight:700;margin-top:2px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>활성화 함수를 그림으로</h1>
+  <p class="lead">가중합 z가 가로축입니다. 세로축은 출력 또는 미분입니다. 탭을 바꿔 함수·기울기·소프트맥스를 보세요.</p>
+  <div class="hash-targets" aria-hidden="true">
+    <span id="all"></span><span id="sigmoid"></span><span id="tanh"></span>
+    <span id="relu"></span><span id="softmax"></span>
+  </div>
+  <div class="tabs" id="tabs"></div>
+  <div class="hint" id="hint"></div>
+  <div id="chart"></div>
+  <div class="stats" id="stats"></div>
+</div>
+<script>
+const COL = {a:"#2471a3", b:"#c0392b", g:"#1e8449", gold:"#d68910", gray:"#85929e"};
+const z = [];
+for (let i = 0; i <= 400; i++) z.push(-6 + i * 12 / 400);
+
+function sigmoid(t){ return 1 / (1 + Math.exp(-t)); }
+function tanh(t){ return Math.tanh(t); }
+function relu(t){ return Math.max(0, t); }
+function leaky(t, a){ return t >= 0 ? t : a * t; }
+function step(t){ return t >= 0 ? 1 : 0; }
+function dsig(t){ const s = sigmoid(t); return s * (1 - s); }
+function dtanh(t){ const u = tanh(t); return 1 - u * u; }
+
+const yStep = z.map(step);
+const ySig = z.map(sigmoid);
+const yTanh = z.map(tanh);
+const yRelu = z.map(relu);
+const yLeak = z.map(t => leaky(t, 0.01));
+const yDsig = z.map(dsig);
+const yDtanh = z.map(dtanh);
+const yDrelu = z.map(t => t > 0 ? 1 : 0);
+const yDleak = z.map(t => t >= 0 ? 1 : 0.01);
+
+function setStats(items){
+  document.getElementById("stats").innerHTML = items.map(it =>
+    `<div class="stat"><div class="k">${it.k}</div><div class="v">${it.v}</div></div>`
+  ).join("");
+}
+
+const layoutBase = {
+  margin: {t: 28, r: 18, b: 48, l: 52},
+  paper_bgcolor: "#fff",
+  plot_bgcolor: "#fff",
+  font: {family: "Noto Sans KR, sans-serif", size: 12, color: "#1b2430"},
+  legend: {orientation: "h", y: 1.08, x: 0},
+  xaxis: {title: "z (가중합)", zeroline: true, gridcolor: "#eef2f5", range: [-6, 6]},
+  yaxis: {zeroline: true, gridcolor: "#eef2f5"}
+};
+
+const TABS = [
+  {id: "all", label: "1. 한눈에"},
+  {id: "sigmoid", label: "2. 시그모이드"},
+  {id: "tanh", label: "3. tanh"},
+  {id: "relu", label: "4. ReLU"},
+  {id: "softmax", label: "5. 소프트맥스"}
+];
+
+const HINT = {
+  all: "같은 z에서 출력이 얼마나 다른지 봅니다. 계단은 0/1, 시그모이드는 (0,1), tanh는 (-1,1), ReLU는 음수에서 0입니다.",
+  sigmoid: "파란 곡선이 σ(z), 빨간 곡선이 미분 σ(1−σ)입니다. 미분 최댓값은 z=0에서 <b>0.25</b>입니다. |z|가 커지면 기울기가 사라집니다.",
+  tanh: "치역은 (−1,1). 미분 최댓값은 z=0에서 <b>1</b>입니다. 시그모이드보다 크지만 |z|가 크면 다시 포화합니다.",
+  relu: "파란 선이 ReLU, 금색이 Leaky ReLU(α=0.01)입니다. z&lt;0에서 ReLU는 출력·미분이 0입니다. dying ReLU입니다.",
+  softmax: "로짓 z=(2, 1, 0)을 확률로 바꾼 막대입니다. 합은 1입니다. 가장 큰 로짓이 가장 큰 확률을 받습니다."
+};
+
+function draw(id){
+  document.getElementById("hint").innerHTML = HINT[id];
+  let traces, layout, stats;
+
+  if (id === "all"){
+    traces = [
+      {x:z, y:yStep, name:"계단", mode:"lines", line:{color:COL.gray, width:2, shape:"hv"}},
+      {x:z, y:ySig, name:"시그모이드", mode:"lines", line:{color:COL.a, width:2.5}},
+      {x:z, y:yTanh, name:"tanh", mode:"lines", line:{color:COL.g, width:2.5}},
+      {x:z, y:yRelu, name:"ReLU", mode:"lines", line:{color:COL.b, width:2.5}}
+    ];
+    layout = Object.assign({}, layoutBase, {
+      yaxis: Object.assign({}, layoutBase.yaxis, {title: "f(z)", range: [-1.3, 3.2]})
+    });
+    stats = [
+      {k:"계단 치역", v:"{0, 1}"},
+      {k:"시그모이드 치역", v:"(0, 1)"},
+      {k:"tanh 치역", v:"(−1, 1)"},
+      {k:"ReLU 치역", v:"[0, ∞)"}
+    ];
+  }
+
+  if (id === "sigmoid"){
+    traces = [
+      {x:z, y:ySig, name:"σ(z)", mode:"lines", line:{color:COL.a, width:3}},
+      {x:z, y:yDsig, name:"σ'(z)", mode:"lines", line:{color:COL.b, width:3}},
+      {x:[0], y:[0.25], name:"최댓값 0.25", mode:"markers",
+        marker:{size:10, color:COL.b}}
+    ];
+    layout = Object.assign({}, layoutBase, {
+      yaxis: Object.assign({}, layoutBase.yaxis, {title: "값", range: [-0.05, 1.05]})
+    });
+    stats = [
+      {k:"σ(0)", v:"0.5"},
+      {k:"σ(2)", v:"≈ 0.881"},
+      {k:"σ'(0)", v:"0.25"},
+      {k:"σ'(2)", v:"≈ 0.105"}
+    ];
+  }
+
+  if (id === "tanh"){
+    traces = [
+      {x:z, y:yTanh, name:"tanh(z)", mode:"lines", line:{color:COL.g, width:3}},
+      {x:z, y:yDtanh, name:"tanh'(z)", mode:"lines", line:{color:COL.gold, width:3}},
+      {x:[0], y:[1], name:"최댓값 1", mode:"markers",
+        marker:{size:10, color:COL.gold}}
+    ];
+    layout = Object.assign({}, layoutBase, {
+      yaxis: Object.assign({}, layoutBase.yaxis, {title: "값", range: [-1.2, 1.2]})
+    });
+    stats = [
+      {k:"tanh(0)", v:"0"},
+      {k:"tanh(2)", v:"≈ 0.964"},
+      {k:"tanh'(0)", v:"1"},
+      {k:"치역", v:"(−1, 1)"}
+    ];
+  }
+
+  if (id === "relu"){
+    traces = [
+      {x:z, y:yRelu, name:"ReLU", mode:"lines", line:{color:COL.a, width:3}},
+      {x:z, y:yLeak, name:"Leaky α=0.01", mode:"lines", line:{color:COL.gold, width:3}},
+      {x:z, y:yDrelu, name:"ReLU 미분", mode:"lines", line:{color:COL.b, width:2, dash:"dot"}},
+      {x:z, y:yDleak, name:"Leaky 미분", mode:"lines", line:{color:COL.g, width:2, dash:"dot"}}
+    ];
+    layout = Object.assign({}, layoutBase, {
+      yaxis: Object.assign({}, layoutBase.yaxis, {title: "값", range: [-0.4, 6]})
+    });
+    stats = [
+      {k:"ReLU(-2)", v:"0"},
+      {k:"Leaky(-2)", v:"-0.02"},
+      {k:"ReLU'(z>0)", v:"1"},
+      {k:"ReLU'(z<0)", v:"0"}
+    ];
+  }
+
+  if (id === "softmax"){
+    const logits = [2, 1, 0];
+    const ex = logits.map(Math.exp);
+    const s = ex.reduce((a,b)=>a+b, 0);
+    const p = ex.map(v => v / s);
+    traces = [
+      {x:["클래스 1 (z=2)","클래스 2 (z=1)","클래스 3 (z=0)"],
+       y:p, type:"bar", marker:{color:[COL.a, COL.gold, COL.gray]},
+       text:p.map(v => v.toFixed(3)), textposition:"outside", name:"확률"}
+    ];
+    layout = Object.assign({}, layoutBase, {
+      xaxis: {title: ""},
+      yaxis: {title: "softmax", range: [0, 1], gridcolor: "#eef2f5"},
+      showlegend: false
+    });
+    stats = [
+      {k:"p1", v:p[0].toFixed(3)},
+      {k:"p2", v:p[1].toFixed(3)},
+      {k:"p3", v:p[2].toFixed(3)},
+      {k:"합", v:(p[0]+p[1]+p[2]).toFixed(3)}
+    ];
+  }
+
+  setStats(stats);
+  Plotly.react("chart", traces, layout, {displayModeBar: false, responsive: true});
+}
+
+const tabsEl = document.getElementById("tabs");
+TABS.forEach((t, i) => {
+  const b = document.createElement("button");
+  b.textContent = t.label;
+  b.onclick = () => {
+    document.querySelectorAll(".tabs button").forEach(x => x.classList.remove("on"));
+    b.classList.add("on");
+    history.replaceState(null, "", "#" + t.id);
+    draw(t.id);
+  };
+  if (i === 0) b.classList.add("on");
+  tabsEl.appendChild(b);
+});
+
+const start = (location.hash || "#all").slice(1);
+const ix = Math.max(0, TABS.findIndex(t => t.id === start));
+document.querySelectorAll(".tabs button")[ix].classList.add("on");
+document.querySelectorAll(".tabs button").forEach((b, i) => {
+  if (i !== ix) b.classList.remove("on");
+});
+draw(TABS[ix].id);
+</script>
+</body>
+</html>
