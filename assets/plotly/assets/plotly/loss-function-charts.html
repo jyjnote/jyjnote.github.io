@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>손실 함수 차트</title>
+<script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+<style>
+:root{
+  --ink:#1b2430; --muted:#5d6d7e; --line:#e6ebf0;
+  --blue:#2471a3; --red:#c0392b; --gold:#d68910; --green:#1e8449;
+  --bg:#f7f9fb;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans KR",sans-serif}
+.wrap{max-width:1080px;margin:0 auto;padding:14px 16px 28px}
+h1{font-size:20px;margin:4px 0 8px;letter-spacing:-.02em}
+.lead{color:var(--muted);font-size:14px;line-height:1.55;margin:0 0 14px}
+.tabs{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 12px}
+.tabs button{
+  border:1px solid var(--line);background:#fff;color:#2c3e50;
+  border-radius:999px;padding:7px 12px;font-size:13px;cursor:pointer
+}
+.tabs button.on{background:#1b2430;color:#fff;border-color:#1b2430}
+.hint{background:#fff;border:1px solid var(--line);border-radius:12px;
+  padding:10px 14px;font-size:13.5px;line-height:1.55;color:#34495e;margin-bottom:10px}
+.hint b{color:var(--red)}
+#chart{width:100%;height:520px;background:#fff;border:1px solid var(--line);border-radius:12px}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px;margin-top:10px}
+.stat{background:#fff;border:1px solid var(--line);border-radius:10px;padding:10px 12px}
+.stat .k{font-size:11px;color:var(--muted);letter-spacing:.04em}
+.stat .v{font-size:16px;font-weight:700;margin-top:2px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>손실 함수를 그림으로</h1>
+  <p class="lead">가로축은 예측, 세로축은 손실입니다. 정답을 고정한 뒤 예측만 바꿔 곡선이 어떻게 벌하는지 봅니다.</p>
+  <div class="hash-targets" aria-hidden="true">
+    <span id="mse"></span><span id="bce"></span>
+    <span id="compare"></span><span id="ce"></span>
+  </div>
+  <div class="tabs" id="tabs"></div>
+  <div class="hint" id="hint"></div>
+  <div id="chart"></div>
+  <div class="stats" id="stats"></div>
+</div>
+<script>
+const COL = {a:"#2471a3", b:"#c0392b", g:"#1e8449", gold:"#d68910", gray:"#85929e"};
+
+function setStats(items){
+  document.getElementById("stats").innerHTML = items.map(it =>
+    `<div class="stat"><div class="k">${it.k}</div><div class="v">${it.v}</div></div>`
+  ).join("");
+}
+
+const layoutBase = {
+  margin: {t: 28, r: 18, b: 48, l: 52},
+  paper_bgcolor: "#fff",
+  plot_bgcolor: "#fff",
+  font: {family: "Noto Sans KR, sans-serif", size: 12, color: "#1b2430"},
+  legend: {orientation: "h", y: 1.08, x: 0},
+  xaxis: {zeroline: true, gridcolor: "#eef2f5"},
+  yaxis: {zeroline: true, gridcolor: "#eef2f5", title: "손실 L"}
+};
+
+const TABS = [
+  {id: "mse", label: "1. MSE·MAE"},
+  {id: "bce", label: "2. 이진 CE"},
+  {id: "compare", label: "3. BCE vs MSE"},
+  {id: "ce", label: "4. 다중 CE"}
+];
+
+const HINT = {
+  mse: "정답 y=80. 파란 곡선은 (y−ŷ)², 금색은 |y−ŷ|입니다. ŷ=70과 ŷ=90의 MSE는 둘 다 <b>100</b>입니다. 멀리 틀릴수록 제곱이 더 가파릅니다.",
+  bce: "파란 선은 y=1일 때 −log ŷ, 금색은 y=0일 때 −log(1−ŷ)입니다. 틀린 쪽에 확률을 몰면 손실이 급증합니다.",
+  compare: "정답 y=1. 같은 ŷ에서 교차엔트로피와 MSE를 겹칩니다. ŷ=0.1이면 BCE≈2.30, MSE=0.81입니다. 틀린 확신을 BCE가 더 세게 봅니다.",
+  ce: "원-핫이면 L=−log p_정답. 앞 글 소프트맥스 예 p=0.245일 때 L≈1.406입니다. p→0이면 무한대입니다."
+};
+
+const yTrue = 80;
+const pred = [];
+for (let i = 0; i <= 200; i++) pred.push(50 + i * 60 / 200);
+const mseY = pred.map(p => (yTrue - p) * (yTrue - p));
+const maeY = pred.map(p => Math.abs(yTrue - p));
+
+const p = [];
+for (let i = 1; i <= 399; i++) p.push(i / 400);
+const bce1 = p.map(v => -Math.log(v));
+const bce0 = p.map(v => -Math.log(1 - v));
+const mseCls = p.map(v => (1 - v) * (1 - v));
+
+function draw(id){
+  document.getElementById("hint").innerHTML = HINT[id];
+  let traces, layout, stats;
+
+  if (id === "mse"){
+    traces = [
+      {x:pred, y:mseY, name:"MSE (y−ŷ)²", mode:"lines", line:{color:COL.a, width:3}},
+      {x:pred, y:maeY, name:"MAE |y−ŷ|", mode:"lines", line:{color:COL.gold, width:3}},
+      {x:[70,90], y:[100,100], name:"ŷ=70,90", mode:"markers",
+        marker:{size:10, color:COL.b}}
+    ];
+    layout = Object.assign({}, layoutBase, {
+      xaxis: Object.assign({}, layoutBase.xaxis, {title: "예측 ŷ", range:[50,110]}),
+      yaxis: Object.assign({}, layoutBase.yaxis, {range:[-5, 420]})
+    });
+    stats = [
+      {k:"정답 y", v:"80"},
+      {k:"MSE(70)", v:"100"},
+      {k:"MSE(90)", v:"100"},
+      {k:"MAE(70)", v:"10"}
+    ];
+  }
+
+  if (id === "bce"){
+    traces = [
+      {x:p, y:bce1, name:"y=1, −log ŷ", mode:"lines", line:{color:COL.a, width:3}},
+      {x:p, y:bce0, name:"y=0, −log(1−ŷ)", mode:"lines", line:{color:COL.gold, width:3}},
+      {x:[0.9,0.1], y:[-Math.log(0.9), -Math.log(0.1)], name:"ŷ=0.9 / 0.1",
+        mode:"markers", marker:{size:10, color:COL.b}}
+    ];
+    layout = Object.assign({}, layoutBase, {
+      xaxis: Object.assign({}, layoutBase.xaxis, {title: "예측 확률 ŷ", range:[0,1]}),
+      yaxis: Object.assign({}, layoutBase.yaxis, {range:[0, 5]})
+    });
+    stats = [
+      {k:"y=1, ŷ=0.9", v:"≈ 0.105"},
+      {k:"y=1, ŷ=0.1", v:"≈ 2.303"},
+      {k:"y=0, ŷ=0.1", v:"≈ 0.105"},
+      {k:"y=0, ŷ=0.9", v:"≈ 2.303"}
+    ];
+  }
+
+  if (id === "compare"){
+    traces = [
+      {x:p, y:bce1, name:"BCE −log ŷ", mode:"lines", line:{color:COL.a, width:3}},
+      {x:p, y:mseCls, name:"MSE (1−ŷ)²", mode:"lines", line:{color:COL.b, width:3}},
+      {x:[0.1], y:[-Math.log(0.1)], name:"ŷ=0.1 BCE", mode:"markers",
+        marker:{size:10, color:COL.a}},
+      {x:[0.1], y:[0.81], name:"ŷ=0.1 MSE", mode:"markers",
+        marker:{size:10, color:COL.b}}
+    ];
+    layout = Object.assign({}, layoutBase, {
+      xaxis: Object.assign({}, layoutBase.xaxis, {title: "ŷ (정답 y=1)", range:[0,1]}),
+      yaxis: Object.assign({}, layoutBase.yaxis, {range:[0, 5]})
+    });
+    stats = [
+      {k:"BCE(0.1)", v:"≈ 2.303"},
+      {k:"MSE(0.1)", v:"0.81"},
+      {k:"BCE(0.9)", v:"≈ 0.105"},
+      {k:"MSE(0.9)", v:"0.01"}
+    ];
+  }
+
+  if (id === "ce"){
+    traces = [
+      {x:p, y:bce1, name:"−log p_정답", mode:"lines", line:{color:COL.g, width:3}},
+      {x:[0.245], y:[-Math.log(0.245)], name:"예: p=0.245", mode:"markers",
+        marker:{size:11, color:COL.b}},
+      {x:[0.9], y:[-Math.log(0.9)], name:"p=0.9", mode:"markers",
+        marker:{size:10, color:COL.a}}
+    ];
+    layout = Object.assign({}, layoutBase, {
+      xaxis: Object.assign({}, layoutBase.xaxis, {title: "정답 클래스 확률", range:[0,1]}),
+      yaxis: Object.assign({}, layoutBase.yaxis, {range:[0, 5]})
+    });
+    stats = [
+      {k:"p=0.245", v:"≈ 1.406"},
+      {k:"p=0.9", v:"≈ 0.105"},
+      {k:"p=0.01", v:"≈ 4.605"},
+      {k:"원-핫", v:"정답 항만 남음"}
+    ];
+  }
+
+  setStats(stats);
+  Plotly.react("chart", traces, layout, {displayModeBar: false, responsive: true});
+}
+
+const tabsEl = document.getElementById("tabs");
+TABS.forEach((t) => {
+  const b = document.createElement("button");
+  b.textContent = t.label;
+  b.onclick = () => {
+    document.querySelectorAll(".tabs button").forEach(x => x.classList.remove("on"));
+    b.classList.add("on");
+    history.replaceState(null, "", "#" + t.id);
+    draw(t.id);
+  };
+  tabsEl.appendChild(b);
+});
+
+const start = (location.hash || "#mse").slice(1);
+const ix = Math.max(0, TABS.findIndex(t => t.id === start));
+document.querySelectorAll(".tabs button").forEach((b, i) => {
+  b.classList.toggle("on", i === ix);
+});
+draw(TABS[ix].id);
+</script>
+</body>
+</html>
