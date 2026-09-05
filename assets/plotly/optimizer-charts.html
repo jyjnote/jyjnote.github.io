@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>최적화기 차트</title>
+<script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+<style>
+:root{
+  --ink:#1b2430; --muted:#5d6d7e; --line:#e6ebf0; --bg:#f7f9fb;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans KR",sans-serif}
+.wrap{max-width:1080px;margin:0 auto;padding:14px 16px 24px}
+h1{font-size:20px;margin:4px 0 8px}
+.lead{color:var(--muted);font-size:14px;line-height:1.55;margin:0 0 14px}
+.tabs{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 12px}
+.tabs button{border:1px solid var(--line,#e6ebf0);background:#fff;border-radius:999px;padding:7px 12px;font-size:13px;cursor:pointer}
+.tabs button.on{background:#1b2430;color:#fff;border-color:#1b2430}
+.hint{background:#fff;border:1px solid #e6ebf0;border-radius:12px;padding:10px 14px;font-size:13.5px;line-height:1.55;margin-bottom:10px}
+.hint b{color:#c0392b}
+#chart{width:100%;height:540px;background:#fff;border:1px solid #e6ebf0;border-radius:12px}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px;margin-top:10px}
+.stat{background:#fff;border:1px solid #e6ebf0;border-radius:10px;padding:10px 12px}
+.stat .k{font-size:11px;color:#5d6d7e}
+.stat .v{font-size:16px;font-weight:700;margin-top:2px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>최적화기 움직임</h1>
+  <p class="lead">같은 골짜기, 같은 출발. 탭에서 한 방법만 재생하거나 궤적을 겹칩니다.</p>
+  <div class="hash-targets" aria-hidden="true">
+    <span id="all"></span><span id="sgd"></span><span id="mom"></span>
+    <span id="adagrad"></span><span id="rms"></span><span id="adam"></span>
+  </div>
+  <div class="tabs" id="tabs"></div>
+  <div class="hint" id="hint"></div>
+  <div id="chart"></div>
+  <div class="stats" id="stats"></div>
+</div>
+<script>
+const COL={sgd:"#85929e",mom:"#2471a3",ada:"#7d3c98",rms:"#d68910",adam:"#c0392b",star:"#1e8449"};
+function setStats(items){document.getElementById("stats").innerHTML=items.map(it=>`<div class="stat"><div class="k">${it.k}</div><div class="v">${it.v}</div></div>`).join("");}
+function L(x,y){return (x-1)*(x-1)+8*(y-1)*(y-1);}
+function G(x,y){return [2*(x-1),16*(y-1)];}
+function runSGD(w,eta,n){const x=[w[0]],y=[w[1]],loss=[L(w[0],w[1])];let a=w[0],b=w[1];for(let i=0;i<n;i++){const g=G(a,b);a-=eta*g[0];b-=eta*g[1];x.push(a);y.push(b);loss.push(L(a,b));}return {x,y,loss};}
+function runMom(w,eta,beta,n){const x=[w[0]],y=[w[1]],loss=[L(w[0],w[1])];let a=w[0],b=w[1],va=0,vb=0;for(let i=0;i<n;i++){const g=G(a,b);va=beta*va+g[0];vb=beta*vb+g[1];a-=eta*va;b-=eta*vb;x.push(a);y.push(b);loss.push(L(a,b));}return {x,y,loss};}
+function runAda(w,eta,n){const x=[w[0]],y=[w[1]],loss=[L(w[0],w[1])];let a=w[0],b=w[1],Ga=0,Gb=0,eps=1e-8;for(let i=0;i<n;i++){const g=G(a,b);Ga+=g[0]*g[0];Gb+=g[1]*g[1];a-=eta*g[0]/(Math.sqrt(Ga)+eps);b-=eta*g[1]/(Math.sqrt(Gb)+eps);x.push(a);y.push(b);loss.push(L(a,b));}return {x,y,loss};}
+function runRMS(w,eta,rho,n){const x=[w[0]],y=[w[1]],loss=[L(w[0],w[1])];let a=w[0],b=w[1],ea=0,eb=0,eps=1e-8;for(let i=0;i<n;i++){const g=G(a,b);ea=rho*ea+(1-rho)*g[0]*g[0];eb=rho*eb+(1-rho)*g[1]*g[1];a-=eta*g[0]/(Math.sqrt(ea)+eps);b-=eta*g[1]/(Math.sqrt(eb)+eps);x.push(a);y.push(b);loss.push(L(a,b));}return {x,y,loss};}
+function runAdam(w,eta,b1,b2,n){const x=[w[0]],y=[w[1]],loss=[L(w[0],w[1])];let a=w[0],b=w[1],m1=0,m2=0,v1=0,v2=0,eps=1e-8;for(let t=1;t<=n;t++){const g=G(a,b);m1=b1*m1+(1-b1)*g[0];m2=b1*m2+(1-b1)*g[1];v1=b2*v1+(1-b2)*g[0]*g[0];v2=b2*v2+(1-b2)*g[1]*g[1];const mh1=m1/(1-Math.pow(b1,t)),mh2=m2/(1-Math.pow(b1,t));const vh1=v1/(1-Math.pow(b2,t)),vh2=v2/(1-Math.pow(b2,t));a-=eta*mh1/(Math.sqrt(vh1)+eps);b-=eta*mh2/(Math.sqrt(vh2)+eps);x.push(a);y.push(b);loss.push(L(a,b));}return {x,y,loss};}
+function contour(){const n=60,lo=-2.6,hi=3.6,xs=[],ys=[],z=[];for(let i=0;i<n;i++){xs.push(lo+(hi-lo)*i/(n-1));ys.push(lo+(hi-lo)*i/(n-1));}for(let i=0;i<n;i++){const row=[];for(let j=0;j<n;j++)row.push(L(xs[j],ys[i]));z.push(row);}return {xs,ys,z};}
+const GRID=contour(),START=[-1.0,2.0],STEPS=28,ETA=0.08;
+const PATHS={sgd:runSGD(START,ETA,STEPS),mom:runMom(START,ETA,0.9,STEPS),adagrad:runAda(START,ETA,STEPS),rms:runRMS(START,0.08,0.9,STEPS),adam:runAdam(START,0.08,0.9,0.999,STEPS)};
+const TABS=[{id:"all",label:"1. 네 방법"},{id:"sgd",label:"2. SGD"},{id:"mom",label:"3. 모멘텀"},{id:"adagrad",label:"4. AdaGrad"},{id:"rms",label:"5. RMSProp"},{id:"adam",label:"6. Adam"}];
+const HINT={all:"같은 η=0.08, 28걸음. SGD는 w2 진동, 모멘텀은 그 진동을 밀고, AdaGrad는 후반이 짧아지고, RMSProp·Adam은 골짜기를 따라갑니다.",sgd:"재생: SGD만. w2 기울기가 커 <b>세로 진동</b>합니다.",mom:"v=0.9v+g. 같은 방향이 쌓여 SGD보다 골짜기로 들어갑니다.",adagrad:"분모 √Σg². 초반 이후 <b>걸음이 짧아집니다.</b>",rms:"지수평균이라 오래된 g²를 잊습니다.",adam:"모멘텀+RMS+보정. 가파른 축은 짧게, 완만한 축은 꾸준히."};
+function contourTr(){return {type:"contour",x:GRID.xs,y:GRID.ys,z:GRID.z,colorscale:[[0,"#fdebd0"],[0.4,"#aed6f1"],[1,"#1a5276"]],showscale:false,ncontours:18,hoverinfo:"skip"};}
+function star(){return {x:[1],y:[1],mode:"markers",marker:{size:12,color:COL.star,symbol:"diamond"},name:"최소 (1,1)"};}
+function line(path,name,color,width){return {x:path.x,y:path.y,mode:"lines+markers",name,line:{color,width:width||2.5},marker:{size:5,color}};}
+function baseLayout(animate){const lay={margin:{t:28,r:16,b:48,l:48},paper_bgcolor:"#fff",plot_bgcolor:"#fff",font:{family:"Noto Sans KR, sans-serif",size:12,color:"#1b2430"},xaxis:{title:"w1",range:[-2.6,3.6],zeroline:true,gridcolor:"#eef2f5"},yaxis:{title:"w2",range:[-2.6,3.6],zeroline:true,gridcolor:"#eef2f5",scaleanchor:"x"},legend:{orientation:"h",y:1.1,x:0}};if(animate){lay.updatemenus=[{type:"buttons",showactive:false,x:0.02,y:1.16,xanchor:"left",yanchor:"top",buttons:[{label:"재생",method:"animate",args:[null,{mode:"immediate",fromcurrent:true,frame:{duration:220,redraw:true},transition:{duration:0}}]},{label:"정지",method:"animate",args:[[null],{mode:"immediate",frame:{duration:0,redraw:false},transition:{duration:0}}]}]}];lay.sliders=[{pad:{t:28},currentvalue:{prefix:"걸음 "},steps:[]}];}return lay;}
+function animateOne(path,color,name){const frames=[];for(let t=0;t<path.x.length;t++){frames.push({name:String(t),data:[{},{x:path.x.slice(0,t+1),y:path.y.slice(0,t+1)},{x:[path.x[t]],y:[path.y[t]]},{}]});}const layout=baseLayout(true);layout.sliders[0].steps=frames.map(fr=>({label:fr.name,method:"animate",args:[[fr.name],{mode:"immediate",frame:{duration:0,redraw:true},transition:{duration:0}}]}));return {traces:[contourTr(),{x:[path.x[0]],y:[path.y[0]],mode:"lines",name:name+" 궤적",line:{color,width:3}},{x:[path.x[0]],y:[path.y[0]],mode:"markers",name:"현재",marker:{size:11,color:"#c0392b"}},star()],layout,frames};}
+function draw(id){document.getElementById("hint").innerHTML=HINT[id];const last=p=>`(${p.x[p.x.length-1].toFixed(2)}, ${p.y[p.y.length-1].toFixed(2)})`;if(id==="all"){Plotly.purge("chart");Plotly.react("chart",[contourTr(),line(PATHS.sgd,"SGD",COL.sgd),line(PATHS.mom,"모멘텀",COL.mom),line(PATHS.adagrad,"AdaGrad",COL.ada),line(PATHS.rms,"RMSProp",COL.rms),line(PATHS.adam,"Adam",COL.adam,3),star()],baseLayout(false),{displayModeBar:false,responsive:true});setStats([{k:"출발",v:"(-1.0, 2.0)"},{k:"η",v:"0.08"},{k:"걸음",v:"28"},{k:"최소",v:"(1, 1)"}]);return;}const map={sgd:["SGD",COL.sgd,PATHS.sgd],mom:["모멘텀",COL.mom,PATHS.mom],adagrad:["AdaGrad",COL.ada,PATHS.adagrad],rms:["RMSProp",COL.rms,PATHS.rms],adam:["Adam",COL.adam,PATHS.adam]};const pack=animateOne(map[id][2],map[id][1],map[id][0]);Plotly.purge("chart");Plotly.react("chart",pack.traces,pack.layout,{displayModeBar:false,responsive:true});Plotly.addFrames("chart",pack.frames);const path=map[id][2];setStats([{k:"방법",v:map[id][0]},{k:"시작 L",v:path.loss[0].toFixed(2)},{k:"끝 L",v:path.loss[path.loss.length-1].toFixed(2)},{k:"끝 위치",v:last(path)}]);}
+TABS.forEach(t=>{const b=document.createElement("button");b.textContent=t.label;b.onclick=()=>{document.querySelectorAll(".tabs button").forEach(x=>x.classList.remove("on"));b.classList.add("on");history.replaceState(null,"","#"+t.id);draw(t.id);};document.getElementById("tabs").appendChild(b);});
+const start=(location.hash||"#all").slice(1);const ix=Math.max(0,TABS.findIndex(t=>t.id===start));
+document.querySelectorAll(".tabs button").forEach((b,i)=>b.classList.toggle("on",i===ix));draw(TABS[ix].id);
+</script>
+</body>
+</html>
