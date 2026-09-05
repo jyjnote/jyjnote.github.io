@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>경사하강법 차트</title>
+<script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+<style>
+:root{
+  --ink:#1b2430; --muted:#5d6d7e; --line:#e6ebf0;
+  --blue:#2471a3; --red:#c0392b; --gold:#d68910; --green:#1e8449;
+  --bg:#f7f9fb;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans KR",sans-serif}
+.wrap{max-width:1080px;margin:0 auto;padding:14px 16px 28px}
+h1{font-size:20px;margin:4px 0 8px;letter-spacing:-.02em}
+.lead{color:var(--muted);font-size:14px;line-height:1.55;margin:0 0 14px}
+.tabs{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 12px}
+.tabs button{
+  border:1px solid var(--line);background:#fff;color:#2c3e50;
+  border-radius:999px;padding:7px 12px;font-size:13px;cursor:pointer
+}
+.tabs button.on{background:#1b2430;color:#fff;border-color:#1b2430}
+.hint{background:#fff;border:1px solid var(--line);border-radius:12px;
+  padding:10px 14px;font-size:13.5px;line-height:1.55;color:#34495e;margin-bottom:10px}
+.hint b{color:var(--red)}
+#chart{width:100%;height:560px;background:#fff;border:1px solid var(--line);border-radius:12px}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px;margin-top:10px}
+.stat{background:#fff;border:1px solid var(--line);border-radius:10px;padding:10px 12px}
+.stat .k{font-size:11px;color:var(--muted);letter-spacing:.04em}
+.stat .v{font-size:16px;font-weight:700;margin-top:2px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>경사하강을 3D로</h1>
+  <p class="lead">손실 곡면 L(w₁, w₂) 위를 점이 움직입니다. 재생을 누르면 기울기 반대 방향으로 한 걸음씩 내려갑니다.</p>
+  <div class="hash-targets" aria-hidden="true">
+    <span id="bowl"></span><span id="large"></span><span id="valley"></span>
+  </div>
+  <div class="tabs" id="tabs"></div>
+  <div class="hint" id="hint"></div>
+  <div id="chart"></div>
+  <div class="stats" id="stats"></div>
+</div>
+<script>
+const COL = {a:"#2471a3", b:"#c0392b", g:"#1e8449", gold:"#d68910"};
+
+function setStats(items){
+  document.getElementById("stats").innerHTML = items.map(it =>
+    `<div class="stat"><div class="k">${it.k}</div><div class="v">${it.v}</div></div>`
+  ).join("");
+}
+
+function linspace(a,b,n){
+  const o=[];
+  for(let i=0;i<n;i++) o.push(a+(b-a)*i/(n-1));
+  return o;
+}
+
+function surfaceGrid(fn, lo, hi, n){
+  const xs=linspace(lo,hi,n), ys=linspace(lo,hi,n), z=[];
+  for(let i=0;i<n;i++){
+    const row=[];
+    for(let j=0;j<n;j++) row.push(fn(xs[j], ys[i]));
+    z.push(row);
+  }
+  return {xs,ys,z};
+}
+
+function pathGD(fn, gfn, w0, eta, steps){
+  const w1=[w0[0]], w2=[w0[1]], L=[fn(w0[0],w0[1])];
+  let a=w0[0], b=w0[1];
+  for(let t=0;t<steps;t++){
+    const g=gfn(a,b);
+    a=a-eta*g[0];
+    b=b-eta*g[1];
+    w1.push(a); w2.push(b); L.push(fn(a,b));
+  }
+  return {w1,w2,L};
+}
+
+function Lbowl(x,y){ return (x-1)*(x-1)+(y-1)*(y-1); }
+function Gbowl(x,y){ return [2*(x-1), 2*(y-1)]; }
+function Lval(x,y){ return (x-1)*(x-1)+8*(y-1)*(y-1); }
+function Gval(x,y){ return [2*(x-1), 16*(y-1)]; }
+
+const TABS = [
+  {id:"bowl", label:"1. 적당한 η"},
+  {id:"large", label:"2. 큰 η"},
+  {id:"valley", label:"3. 좁은 골짜기"}
+];
+
+const HINT = {
+  bowl: "L=(w₁−1)²+(w₂−1)². 최솟값은 <b>(1, 1)</b>입니다. η=0.15로 20걸음이면 바닥 근처로 붙습니다. 재생 버튼을 누르세요.",
+  large: "같은 곡면인데 η=1.05입니다. 한 걸음이 너무 커서 바닥을 지나치고 <b>반대편으로 튀었습니다.</b> 학습률이 크면 발산할 수 있습니다.",
+  valley: "L=(w₁−1)²+8(w₂−1)². w₂ 방향이 훨씬 가파릅니다. 같은 η=0.12여도 w₂는 진동하고 w₁은 천천히 갑니다."
+};
+
+function sceneLayout(titleZ){
+  return {
+    margin:{t:10,r:10,b:10,l:10},
+    paper_bgcolor:"#fff",
+    font:{family:"Noto Sans KR, sans-serif", size:12, color:"#1b2430"},
+    scene:{
+      xaxis:{title:"w₁", backgroundcolor:"#f7f9fb", gridcolor:"#e6ebf0"},
+      yaxis:{title:"w₂", backgroundcolor:"#f7f9fb", gridcolor:"#e6ebf0"},
+      zaxis:{title:titleZ, backgroundcolor:"#f7f9fb", gridcolor:"#e6ebf0"},
+      camera:{eye:{x:1.55,y:1.55,z:1.05}},
+      aspectmode:"cube"
+    },
+    showlegend:false,
+    updatemenus:[{
+      type:"buttons",
+      showactive:false,
+      x:0.02, y:0.98, xanchor:"left", yanchor:"top",
+      buttons:[
+        {label:"재생", method:"animate",
+          args:[null,{mode:"immediate", fromcurrent:true,
+            frame:{duration:280, redraw:true},
+            transition:{duration:0}}]},
+        {label:"정지", method:"animate",
+          args:[[null],{mode:"immediate", frame:{duration:0, redraw:false},
+            transition:{duration:0}}]}
+      ]
+    }],
+    sliders:[{
+      pad:{t:30},
+      currentvalue:{prefix:"걸음 ", xanchor:"left"},
+      steps:[]
+    }]
+  };
+}
+
+function buildFrames(path){
+  const frames=[];
+  for(let t=0;t<path.w1.length;t++){
+    frames.push({
+      name:String(t),
+      data:[
+        {},
+        {
+          x:path.w1.slice(0,t+1),
+          y:path.w2.slice(0,t+1),
+          z:path.L.slice(0,t+1)
+        },
+        {
+          x:[path.w1[t]],
+          y:[path.w2[t]],
+          z:[path.L[t]]
+        }
+      ]
+    });
+  }
+  return frames;
+}
+
+function draw(id){
+  document.getElementById("hint").innerHTML = HINT[id];
+  let fn, gfn, eta, start, lo, hi, steps, stats;
+
+  if(id==="bowl"){
+    fn=Lbowl; gfn=Gbowl; eta=0.15; start=[-1.2, 2.2]; lo=-2.2; hi=3.2; steps=20;
+    stats=[
+      {k:"최솟값", v:"(1, 1)"},
+      {k:"시작", v:"(−1.2, 2.2)"},
+      {k:"η", v:"0.15"},
+      {k:"걸음", v:"20"}
+    ];
+  }
+  if(id==="large"){
+    fn=Lbowl; gfn=Gbowl; eta=1.05; start=[-1.2, 2.2]; lo=-3.5; hi=4.2; steps=8;
+    stats=[
+      {k:"최솟값", v:"(1, 1)"},
+      {k:"시작", v:"(−1.2, 2.2)"},
+      {k:"η", v:"1.05"},
+      {k:"현상", v:"발산·진동"}
+    ];
+  }
+  if(id==="valley"){
+    fn=Lval; gfn=Gval; eta=0.12; start=[-1.0, 2.0]; lo=-2.2; hi=3.2; steps=18;
+    stats=[
+      {k:"최솟값", v:"(1, 1)"},
+      {k:"시작", v:"(−1.0, 2.0)"},
+      {k:"η", v:"0.12"},
+      {k:"w₂ 곡률", v:"8배"}
+    ];
+  }
+
+  const grid=surfaceGrid(fn, lo, hi, 42);
+  const path=pathGD(fn, gfn, start, eta, steps);
+  const frames=buildFrames(path);
+  const layout=sceneLayout("L(w₁, w₂)");
+  layout.sliders[0].steps = frames.map((fr)=>({
+    label:fr.name,
+    method:"animate",
+    args:[[fr.name],{mode:"immediate", frame:{duration:0, redraw:true}, transition:{duration:0}}]
+  }));
+
+  const surf={
+    type:"surface",
+    x:grid.xs, y:grid.ys, z:grid.z,
+    showscale:false,
+    opacity:0.78,
+    colorscale:[[0,"#d6eaf8"],[0.5,"#5dade2"],[1,"#1a5276"]],
+    contours:{z:{show:true, usecolormap:true, project:{z:false}}}
+  };
+  const trail={
+    type:"scatter3d",
+    mode:"lines",
+    x:path.w1.slice(0,1),
+    y:path.w2.slice(0,1),
+    z:path.L.slice(0,1),
+    line:{color:COL.gold, width:8}
+  };
+  const dot={
+    type:"scatter3d",
+    mode:"markers",
+    x:[path.w1[0]], y:[path.w2[0]], z:[path.L[0]],
+    marker:{size:6, color:COL.b}
+  };
+  const star={
+    type:"scatter3d",
+    mode:"markers",
+    x:[1], y:[1], z:[fn(1,1)],
+    marker:{size:5, color:COL.g, symbol:"diamond"}
+  };
+
+  setStats(stats);
+  Plotly.react("chart", [surf, trail, dot, star], layout, {displayModeBar:false, responsive:true});
+  Plotly.addFrames("chart", frames);
+}
+
+const tabsEl=document.getElementById("tabs");
+TABS.forEach((t)=>{
+  const b=document.createElement("button");
+  b.textContent=t.label;
+  b.onclick=()=>{
+    document.querySelectorAll(".tabs button").forEach(x=>x.classList.remove("on"));
+    b.classList.add("on");
+    history.replaceState(null,"","#"+t.id);
+    draw(t.id);
+  };
+  tabsEl.appendChild(b);
+});
+
+const start=(location.hash||"#bowl").slice(1);
+const ix=Math.max(0, TABS.findIndex(t=>t.id===start));
+document.querySelectorAll(".tabs button").forEach((b,i)=>b.classList.toggle("on", i===ix));
+draw(TABS[ix].id);
+</script>
+</body>
+</html>
