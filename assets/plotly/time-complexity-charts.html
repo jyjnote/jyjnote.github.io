@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>시간 복잡도 증가 속도</title>
+<script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+<style>
+:root{--ink:#1b2430;--muted:#5d6d7e;--line:#e6ebf0;--red:#c0392b;--bg:#f7f9fb}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans KR",sans-serif}
+.wrap{max-width:1080px;margin:0 auto;padding:14px 16px 28px}
+h1{font-size:20px;margin:4px 0 8px}
+.lead{color:var(--muted);font-size:14px;line-height:1.55;margin:0 0 14px}
+.tabs{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 12px}
+.tabs button{border:1px solid var(--line);background:#fff;color:#2c3e50;
+  border-radius:999px;padding:7px 12px;font-size:13px;cursor:pointer}
+.tabs button.on{background:#1b2430;color:#fff;border-color:#1b2430}
+.hint{background:#fff;border:1px solid var(--line);border-radius:12px;
+  padding:10px 14px;font-size:13.5px;line-height:1.55;color:#34495e;margin-bottom:10px}
+.hint b{color:var(--red)}
+#chart{width:100%;height:560px;background:#fff;border:1px solid var(--line);border-radius:12px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>시간 복잡도 증가 속도</h1>
+  <p class="lead">같은 n에서 상수·로그·선형·선형로그·제곱·지수 연산 횟수가 얼마나 갈라지는지 봅니다.</p>
+  <div class="hash-targets" aria-hidden="true">
+    <span id="lin"></span><span id="logy"></span><span id="small"></span>
+  </div>
+  <div class="tabs" id="tabs"></div>
+  <div class="hint" id="hint"></div>
+  <div id="chart"></div>
+</div>
+<script>
+const COL = {c:"#85929e", log:"#1e8449", n:"#2471a3", nl:"#8e44ad", n2:"#d68910", exp:"#c0392b"};
+function log2(x){return Math.log(x)/Math.log(2)}
+function series(ns, fn, name, color, dash){
+  return {x:ns, y:ns.map(fn), name, mode:"lines+markers",
+    line:{color, width:2.5, dash:dash||"solid"}, marker:{size:6, color}};
+}
+const HINT = {
+  lin: "<b>선형 축.</b> n=1..16. 2<sup>n</sup>이 제곱을 금방 앞지릅니다. n=16에서 2<sup>16</sup>=65536, n<sup>2</sup>=256.",
+  logy: "<b>세로축 로그.</b> 기울기가 곧 증가 속도입니다. 상수·로그는 거의 평평하고, 지수는 곧게 올라갑니다.",
+  small: "<b>작은 n.</b> n=1..8. 100n 같은 큰 상수 선형이 잠시 n<sup>2</sup>보다 클 수 있습니다. 점근은 큰 n의 이야기입니다."
+};
+const TABS = [
+  {id:"lin", label:"1. n=1..16"},
+  {id:"logy", label:"2. 로그 세로축"},
+  {id:"small", label:"3. 작은 n 함정"}
+];
+function draw(id){
+  document.getElementById("hint").innerHTML = HINT[id];
+  let data, layout;
+  if(id==="small"){
+    const ns=[1,2,3,4,5,6,7,8];
+    data=[
+      series(ns, n=>100*n, "100n", COL.n),
+      series(ns, n=>n*n, "n²", COL.n2),
+      series(ns, n=>n*log2(n)||0, "n log n", COL.nl, "dot")
+    ];
+    layout={yaxis:{title:"연산 횟수"}, xaxis:{title:"n"},
+      title:"n=3에서 100n=300, n²=9"};
+  }else{
+    const ns=[]; for(let n=1;n<=16;n++) ns.push(n);
+    data=[
+      series(ns, ()=>1, "1", COL.c, "dot"),
+      series(ns, n=>log2(n)||0, "log n", COL.log),
+      series(ns, n=>n, "n", COL.n),
+      series(ns, n=>n*log2(n)||0, "n log n", COL.nl),
+      series(ns, n=>n*n, "n²", COL.n2),
+      series(ns, n=>Math.pow(2,n), "2ⁿ", COL.exp)
+    ];
+    layout={xaxis:{title:"n"},
+      yaxis:{title:"연산 횟수", type:id==="logy"?"log":"linear"}};
+  }
+  layout.margin={l:55,r:20,t:40,b:48};
+  layout.legend={orientation:"h", y:1.12};
+  layout.plot_bgcolor="#fff"; layout.paper_bgcolor="#fff";
+  Plotly.newPlot("chart", data, layout, {responsive:true, displayModeBar:false});
+}
+const tabs=document.getElementById("tabs");
+TABS.forEach(t=>{
+  const b=document.createElement("button");
+  b.textContent=t.label; b.dataset.id=t.id;
+  b.onclick=()=>{
+    [...tabs.children].forEach(x=>x.classList.remove("on"));
+    b.classList.add("on");
+    history.replaceState(null,"","#"+t.id);
+    draw(t.id);
+  };
+  tabs.appendChild(b);
+});
+const start=(location.hash||"#lin").slice(1);
+const first=[...tabs.children].find(b=>b.dataset.id===start)||tabs.children[0];
+first.classList.add("on");
+draw(first.dataset.id);
+</script>
+</body>
+</html>
