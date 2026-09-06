@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>버블 정렬 단계</title>
+<script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+<style>
+:root{--ink:#1b2430;--muted:#5d6d7e;--line:#e6ebf0;--red:#c0392b;--bg:#f7f9fb}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans KR",sans-serif}
+.wrap{max-width:1080px;margin:0 auto;padding:14px 16px 24px}
+h1{font-size:20px;margin:4px 0 8px}
+.lead{color:var(--muted);font-size:14px;line-height:1.55;margin:0 0 12px}
+.tabs{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 10px}
+.tabs button{border:1px solid var(--line);background:#fff;color:#2c3e50;
+  border-radius:999px;padding:7px 12px;font-size:13px;cursor:pointer}
+.tabs button.on{background:#1b2430;color:#fff;border-color:#1b2430}
+.hint{background:#fff;border:1px solid var(--line);border-radius:12px;
+  padding:10px 14px;font-size:13.5px;line-height:1.55;color:#34495e;margin-bottom:10px}
+.hint b{color:var(--red)}
+.row{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 8px}
+.row button{border:1px solid var(--line);background:#fff;border-radius:8px;
+  padding:6px 12px;cursor:pointer;font-size:13px}
+#chart{width:100%;height:420px;background:#fff;border:1px solid var(--line);border-radius:12px}
+.legend{display:flex;gap:14px;flex-wrap:wrap;margin-top:8px;font-size:13px;color:#34495e}
+.sw{width:12px;height:12px;border-radius:3px;display:inline-block;margin-right:4px;vertical-align:-1px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>버블 정렬이 한 번에 하는 일</h1>
+  <p class="lead">인접한 두 점수를 비교해 앞이 더 크면 교환합니다. 한 패스가 끝나면 가장 큰 값이 맨 뒤로 확정됩니다.</p>
+  <div class="hash-targets" aria-hidden="true">
+    <span id="step"></span><span id="pass"></span>
+  </div>
+  <div class="tabs" id="tabs"></div>
+  <div class="hint" id="hint"></div>
+  <div class="row">
+    <button type="button" id="prev">이전</button>
+    <button type="button" id="next">다음</button>
+    <button type="button" id="play">자동</button>
+    <button type="button" id="reset">처음</button>
+  </div>
+  <div id="chart"></div>
+  <div class="legend">
+    <span><i class="sw" style="background:#2471a3"></i>대기</span>
+    <span><i class="sw" style="background:#d68910"></i>비교 중</span>
+    <span><i class="sw" style="background:#c0392b"></i>방금 교환</span>
+    <span><i class="sw" style="background:#1e8449"></i>뒤에 확정</span>
+  </div>
+</div>
+<script>
+const A0 = [80, 55, 90, 70, 60];
+const NAMES = ["A","B","C","D","E"];
+function buildSteps(){
+  const a = A0.slice();
+  const out = [{arr:a.slice(), lo:-1, hi:-1, swap:false, locked:0, pass:0,
+    msg:"시작 배열 [80, 55, 90, 70, 60]. 아직 비교 없음."}];
+  let cmp = 0, swp = 0;
+  for(let p=0; p<A0.length-1; p++){
+    let any = false;
+    for(let j=0; j<A0.length-1-p; j++){
+      cmp++;
+      out.push({arr:a.slice(), lo:j, hi:j+1, swap:false, locked:p, pass:p+1,
+        msg:`패스 ${p+1} · 비교 ${cmp}회. ${a[j]} 와 ${a[j+1]}`});
+      if(a[j] > a[j+1]){
+        const t=a[j]; a[j]=a[j+1]; a[j+1]=t; any=true; swp++;
+        out.push({arr:a.slice(), lo:j, hi:j+1, swap:true, locked:p, pass:p+1,
+          msg:`교환 ${swp}회. 큰 값 ${a[j+1]}이 바로 뒤로.`});
+      }
+    }
+    out.push({arr:a.slice(), lo:-1, hi:-1, swap:false, locked:p+1, pass:p+1,
+      msg:`패스 ${p+1} 종료. 맨 뒤 ${p+1}개 확정. 지금까지 비교 ${cmp} · 교환 ${swp}.`});
+    if(!any) break;
+  }
+  out.push({arr:a.slice(), lo:-1, hi:-1, swap:false, locked:A0.length, pass:4,
+    msg:`정렬 끝 [55, 60, 70, 80, 90]. 비교 ${cmp}회, 교환 ${swp}회.`});
+  return out;
+}
+function buildPasses(){
+  const steps = buildSteps();
+  return steps.filter((s,i)=> i===0 || s.msg.indexOf("종료")>=0 || s.msg.indexOf("정렬 끝")>=0);
+}
+const PACK = {step: buildSteps(), pass: buildPasses()};
+let mode = "step", idx = 0, timer = null;
+function colors(f){
+  const n = f.arr.length;
+  return f.arr.map((_,i)=>{
+    if(i >= n - f.locked) return "#1e8449";
+    if(i===f.lo || i===f.hi) return f.swap ? "#c0392b" : "#d68910";
+    return "#2471a3";
+  });
+}
+function draw(){
+  const f = PACK[mode][idx];
+  document.getElementById("hint").innerHTML = "<b>"+(idx+1)+"/"+PACK[mode].length+".</b> "+f.msg;
+  Plotly.react("chart", [{
+    x: NAMES, y: f.arr, type:"bar",
+    text: f.arr.map(String), textposition:"outside",
+    marker:{color: colors(f)},
+    hovertemplate:"%{x} = %{y}<extra></extra>"
+  }], {
+    yaxis:{title:"점수", range:[0,110]},
+    xaxis:{title:"학생 위치"},
+    margin:{t:16,r:16,b:48,l:48},
+    plot_bgcolor:"#fff", paper_bgcolor:"#fff",
+    showlegend:false
+  }, {responsive:true, displayModeBar:false});
+}
+function stop(){ if(timer){clearInterval(timer); timer=null; document.getElementById("play").textContent="자동";} }
+function setMode(id){
+  mode = id; idx = 0; stop();
+  [...document.getElementById("tabs").children].forEach(b=>b.classList.toggle("on", b.dataset.id===id));
+  history.replaceState(null,"","#"+id);
+  draw();
+}
+function next(){ if(idx<PACK[mode].length-1){idx++; draw();} else stop(); }
+document.getElementById("next").onclick=next;
+document.getElementById("prev").onclick=()=>{ if(idx>0){idx--; draw();} };
+document.getElementById("reset").onclick=()=>{idx=0; stop(); draw();};
+document.getElementById("play").onclick=function(){
+  if(timer){stop(); return;}
+  this.textContent="정지";
+  timer=setInterval(next, 900);
+};
+[{id:"step",label:"1. 비교 한 번씩"},{id:"pass",label:"2. 패스 종료만"}].forEach(t=>{
+  const b=document.createElement("button");
+  b.textContent=t.label; b.dataset.id=t.id;
+  b.onclick=()=>setMode(t.id);
+  document.getElementById("tabs").appendChild(b);
+});
+setMode((location.hash||"#step").slice(1)==="pass"?"pass":"step");
+</script>
+</body>
+</html>
