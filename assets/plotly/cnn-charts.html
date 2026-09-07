@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>CNN 차트</title>
+<script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+<style>
+:root{
+  --ink:#1b2430; --muted:#5d6d7e; --line:#e6ebf0;
+  --blue:#2471a3; --red:#c0392b; --gold:#d68910; --green:#1e8449;
+  --bg:#f7f9fb;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans KR",sans-serif}
+.wrap{max-width:1080px;margin:0 auto;padding:14px 16px 28px}
+h1{font-size:20px;margin:4px 0 8px;letter-spacing:-.02em}
+.lead{color:var(--muted);font-size:14px;line-height:1.55;margin:0 0 14px}
+.tabs{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 12px}
+.tabs button{
+  border:1px solid var(--line);background:#fff;color:#2c3e50;
+  border-radius:999px;padding:7px 12px;font-size:13px;cursor:pointer
+}
+.tabs button.on{background:#1b2430;color:#fff;border-color:#1b2430}
+.hint{background:#fff;border:1px solid var(--line);border-radius:12px;
+  padding:10px 14px;font-size:13.5px;line-height:1.55;color:#34495e;margin-bottom:10px}
+.hint b{color:var(--red)}
+#chart{width:100%;height:620px;background:#fff;border:1px solid var(--line);border-radius:12px}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin-top:10px}
+.stat{background:#fff;border:1px solid var(--line);border-radius:10px;padding:10px 12px}
+.stat .k{font-size:11px;color:var(--muted);letter-spacing:.04em}
+.stat .v{font-size:16px;font-weight:700;margin-top:2px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>바닐라 CNN을 그림으로</h1>
+  <p class="lead">5×5 입력에 3×3 커널을 밀고, 출력 크기·풀링·파라미터 수를 같은 숫자로 봅니다.</p>
+  <div class="hash-targets" aria-hidden="true">
+    <span id="slide"></span>
+    <span id="shape"></span>
+    <span id="pool"></span>
+    <span id="param"></span>
+    <span id="stack"></span>
+  </div>
+  <div class="tabs" id="tabs"></div>
+  <div class="hint" id="hint"></div>
+  <div id="chart"></div>
+  <div class="stats" id="stats"></div>
+</div>
+<script>
+const COL = {a:"#2471a3", b:"#c0392b", g:"#1e8449", gold:"#d68910", gray:"#85929e"};
+
+const X = [
+  [2,2,0,0,0],
+  [2,2,0,0,0],
+  [2,2,0,0,0],
+  [0,0,0,0,0],
+  [0,0,0,0,0]
+];
+const K = [
+  [1,0,-1],
+  [1,0,-1],
+  [1,0,-1]
+];
+
+function convAt(r,c){
+  let s = 0, terms = [];
+  for(let i=0;i<3;i++){
+    for(let j=0;j<3;j++){
+      const v = X[r+i][c+j], w = K[i][j];
+      s += v*w;
+      terms.push(v+"×"+w);
+    }
+  }
+  return {s, terms};
+}
+
+function fullConv(){
+  const out = [];
+  for(let r=0;r<3;r++){
+    const row=[];
+    for(let c=0;c<3;c++) row.push(convAt(r,c).s);
+    out.push(row);
+  }
+  return out;
+}
+
+function setStats(items){
+  document.getElementById("stats").innerHTML = items.map(it =>
+    `<div class="stat"><div class="k">${it.k}</div><div class="v">${it.v}</div></div>`
+  ).join("");
+}
+
+function heat(z, name, colorscale, showscale){
+  return {
+    z, type:"heatmap", name,
+    colorscale: colorscale || [[0,"#f4f6f7"],[0.5,"#2471a3"],[1,"#1b2430"]],
+    showscale: !!showscale,
+    xgap:2, ygap:2,
+    hovertemplate: name+" [%{y}, %{x}] = %{z}<extra></extra>"
+  };
+}
+
+const TABS = [
+  {id:"slide", label:"1. 커널이 밀림"},
+  {id:"shape", label:"2. 출력 크기"},
+  {id:"pool", label:"3. 풀링"},
+  {id:"param", label:"4. 파라미터 수"},
+  {id:"stack", label:"5. 층 쌓기"}
+];
+
+const HINT = {
+  slide: "<b>왼쪽이 입력 5×5, 가운데가 커널 3×3, 오른쪽이 출력 3×3.</b> 슬라이더가 커널의 왼쪽 위 위치입니다. 출력 한 값은 겹친 9칸을 곱해서 더한 값입니다. 이 커널은 세로 경계를 봅니다.",
+  shape: "<b>O = ⌊(I − K + 2P) / S⌋ + 1.</b> 패딩을 키우면 출력이 커지고, 스트라이드를 키우면 출력이 줄어듭니다. I=5, K=3에서 P=0,S=1이면 O=3입니다.",
+  pool: "<b>2×2 최대 풀링</b>은 네 값 중 가장 큰 값만 남깁니다. 평균 풀링은 네 값의 평균입니다. 위치는 대략 유지하고 한 변을 절반으로 줄입니다.",
+  param: "<b>합성곱은 커널만 저장합니다.</b> 같은 3×3을 모든 위치에 재사용합니다. 전결합은 입력 위치마다 가중치가 따로입니다. 5×5×1 → 3×3×1만 봐도 차이가 납니다.",
+  stack: "<b>Conv → ReLU → Pool을 반복한 뒤 펼쳐서 전결합.</b> 앞 층은 경계·무늬, 뒤 층은 더 넓은 수용 영역을 봅니다. 분류 점수는 마지막 전결합이 냅니다."
+};
+
+function draw(id){
+  document.getElementById("hint").innerHTML = HINT[id];
+  let data, layout;
+
+  if(id==="slide"){
+    const frames = [];
+    const steps = [];
+    let pos = 0;
+    for(let r=0;r<3;r++){
+      for(let c=0;c<3;c++){
+        const out = [[null,null,null],[null,null,null],[null,null,null]];
+        out[r][c] = convAt(r,c).s;
+        const mask = X.map((row,i)=>row.map((v,j)=>{
+          const inWin = i>=r && i<r+3 && j>=c && j<c+3;
+          return inWin ? v : v;
+        }));
+        frames.push({
+          name: String(pos),
+          data: [
+            {z: X},
+            {z: K},
+            {z: out}
+          ]
+        });
+        steps.push({
+          method:"animate",
+          args:[[String(pos)], {mode:"immediate", frame:{duration:0, redraw:true}, transition:{duration:0}}],
+          label: "("+r+","+c+")"
+        });
+        pos++;
+      }
+    }
+    const first = convAt(0,0);
+    data = [
+      Object.assign(heat(X, "입력", [[0,"#eaf2f8"],[1,"#2471a3"]], false), {xaxis:"x1", yaxis:"y1"}),
+      Object.assign(heat(K, "커널", [[0,"#fdebd0"],[0.5,"#fff"],[1,"#c0392b"]], false), {xaxis:"x2", yaxis:"y2"}),
+      Object.assign(heat([[first.s,null,null],[null,null,null],[null,null,null]], "출력", [[0,"#e8f8f5"],[1,"#1e8449"]], false), {xaxis:"x3", yaxis:"y3"})
+    ];
+    layout = {
+      grid:{rows:1, columns:3, pattern:"independent"},
+      xaxis:{title:"입력 열", dtick:1, scaleanchor:"y", domain:[0,0.30]},
+      yaxis:{title:"입력 행", dtick:1, autorange:"reversed"},
+      xaxis2:{title:"커널 열", dtick:1, scaleanchor:"y2", domain:[0.35,0.57]},
+      yaxis2:{title:"커널 행", dtick:1, autorange:"reversed"},
+      xaxis3:{title:"출력 열", dtick:1, scaleanchor:"y3", domain:[0.64,1]},
+      yaxis3:{title:"출력 행", dtick:1, autorange:"reversed"},
+      sliders:[{
+        active:0, pad:{t:50}, currentvalue:{prefix:"커널 왼쪽 위 "},
+        steps
+      }],
+      annotations:[
+        {text:"입력 5×5", x:0.15, y:1.08, xref:"paper", yref:"paper", showarrow:false},
+        {text:"커널 3×3", x:0.46, y:1.08, xref:"paper", yref:"paper", showarrow:false},
+        {text:"특징맵 3×3", x:0.82, y:1.08, xref:"paper", yref:"paper", showarrow:false}
+      ]
+    };
+    Plotly.newPlot("chart", data, Object.assign({
+      margin:{t:60,r:20,l:48,b:80}, plot_bgcolor:"#fff", paper_bgcolor:"#fff",
+      font:{family:"Noto Sans KR, Segoe UI, sans-serif", size:12, color:"#1b2430"}
+    }, layout), {responsive:true, displayModeBar:false}).then(()=>{
+      const allOut = [];
+      for(let r=0;r<3;r++){
+        for(let c=0;c<3;c++){
+          const z = [[null,null,null],[null,null,null],[null,null,null]];
+          for(let rr=0;rr<=r;rr++){
+            for(let cc=0;cc<3;cc++){
+              if(rr<r || cc<=c) z[rr][cc] = convAt(rr,cc).s;
+            }
+          }
+          allOut.push({name:String(r*3+c), data:[{z:X},{z:K},{z}]});
+        }
+      }
+      Plotly.addFrames("chart", allOut);
+    });
+    const Y = fullConv();
+    setStats([
+      {k:"(0,0) 출력", v:String(first.s)},
+      {k:"특징맵 합", v:String(Y.flat().reduce((a,b)=>a+b,0))},
+      {k:"커널 역할", v:"세로 경계"}
+    ]);
+    return;
+  }
+
+  if(id==="shape"){
+    const I=5, Ksz=3;
+    const Ps=[0,1,2], Ss=[1,2];
+    const traces = Ss.map((S, idx)=>({
+      x: Ps,
+      y: Ps.map(P => Math.floor((I - Ksz + 2*P)/S) + 1),
+      name: "S="+S,
+      mode:"lines+markers",
+      line:{color: idx? COL.b : COL.a, width:3},
+      marker:{size:10}
+    }));
+    data = traces;
+    layout = {
+      xaxis:{title:"패딩 P", dtick:1},
+      yaxis:{title:"출력 한 변 O", dtick:1, range:[0,8]},
+      legend:{orientation:"h", y:1.12},
+      annotations:[{
+        x:0, y:3, text:"P=0,S=1 → O=3", showarrow:true, ax:40, ay:-30,
+        font:{color:COL.a}
+      }]
+    };
+    setStats([
+      {k:"I, K", v:"5, 3"},
+      {k:"P=0,S=1", v:"O=3"},
+      {k:"P=1,S=1", v:"O=5"}
+    ]);
+  }
+
+  if(id==="pool"){
+    const feat = fullConv();
+    const maxP = [
+      [Math.max(feat[0][0],feat[0][1],feat[1][0],feat[1][1]),
+       Math.max(feat[0][1],feat[0][2],feat[1][1],feat[1][2])],
+      [Math.max(feat[1][0],feat[1][1],feat[2][0],feat[2][1]),
+       Math.max(feat[1][1],feat[1][2],feat[2][1],feat[2][2])]
+    ];
+    const avg = (a,b,c,d)=>+((a+b+c+d)/4).toFixed(2);
+    const avgP = [
+      [avg(feat[0][0],feat[0][1],feat[1][0],feat[1][1]),
+       avg(feat[0][1],feat[0][2],feat[1][1],feat[1][2])],
+      [avg(feat[1][0],feat[1][1],feat[2][0],feat[2][1]),
+       avg(feat[1][1],feat[1][2],feat[2][1],feat[2][2])]
+    ];
+    data = [
+      Object.assign(heat(feat, "특징맵", [[0,"#eaf2f8"],[1,"#2471a3"]], false), {xaxis:"x1", yaxis:"y1"}),
+      Object.assign(heat(maxP, "최대 풀링", [[0,"#e8f8f5"],[1,"#1e8449"]], false), {xaxis:"x2", yaxis:"y2"}),
+      Object.assign(heat(avgP, "평균 풀링", [[0,"#fdebd0"],[1,"#d68910"]], false), {xaxis:"x3", yaxis:"y3"})
+    ];
+    layout = {
+      xaxis:{title:"열", dtick:1, scaleanchor:"y", domain:[0,0.30]},
+      yaxis:{title:"행", dtick:1, autorange:"reversed"},
+      xaxis2:{title:"열", dtick:1, scaleanchor:"y2", domain:[0.35,0.62]},
+      yaxis2:{title:"행", dtick:1, autorange:"reversed"},
+      xaxis3:{title:"열", dtick:1, scaleanchor:"y3", domain:[0.70,1]},
+      yaxis3:{title:"행", dtick:1, autorange:"reversed"},
+      annotations:[
+        {text:"특징맵 3×3", x:0.15, y:1.08, xref:"paper", yref:"paper", showarrow:false},
+        {text:"최대 2×2", x:0.48, y:1.08, xref:"paper", yref:"paper", showarrow:false},
+        {text:"평균 2×2", x:0.85, y:1.08, xref:"paper", yref:"paper", showarrow:false}
+      ]
+    };
+    setStats([
+      {k:"최대 (0,0)", v:String(maxP[0][0])},
+      {k:"평균 (0,0)", v:String(avgP[0][0])},
+      {k:"한 변", v:"3 → 2"}
+    ]);
+  }
+
+  if(id==="param"){
+    const conv = 3*3*1*1 + 1;
+    const fc = 5*5*1 * 3*3*1 + 3*3;
+    data = [{
+      x:["합성곱 3×3","같은 크기를 전결합"],
+      y:[conv, fc],
+      type:"bar",
+      marker:{color:[COL.a, COL.b]},
+      text:[String(conv), String(fc)],
+      textposition:"outside"
+    }];
+    layout = {
+      yaxis:{title:"학습할 수 (가중치+편향)", range:[0, Math.max(fc,conv)*1.25]},
+      xaxis:{title:""}
+    };
+    setStats([
+      {k:"합성곱", v: String(conv)+"개"},
+      {k:"전결합", v: String(fc)+"개"},
+      {k:"비율", v: "약 "+(fc/conv).toFixed(0)+"배"}
+    ]);
+  }
+
+  if(id==="stack"){
+    data = [
+      {x:["입력","Conv1","Pool1","Conv2","Pool2","전결합"],
+       y:[5,5,2,2,1,1],
+       name:"한 변",
+       mode:"lines+markers",
+       line:{color:COL.a, width:3},
+       marker:{size:10}},
+      {x:["입력","Conv1","Pool1","Conv2","Pool2","전결합"],
+       y:[1,4,4,8,8,2],
+       name:"채널 / 클래스",
+       mode:"lines+markers",
+       line:{color:COL.b, width:3},
+       marker:{size:10},
+       yaxis:"y2"}
+    ];
+    layout = {
+      yaxis:{title:"공간 한 변", range:[0,6]},
+      yaxis2:{title:"채널 또는 클래스", overlaying:"y", side:"right", range:[0,10]},
+      legend:{orientation:"h", y:1.14},
+      xaxis:{title:"층 순서"}
+    };
+    setStats([
+      {k:"공간", v:"줄어듦"},
+      {k:"채널", v:"늘어남"},
+      {k:"마지막", v:"클래스 점수"}
+    ]);
+  }
+
+  layout.margin = layout.margin || {t:56, r:56, l:56, b:56};
+  layout.plot_bgcolor = "#fff";
+  layout.paper_bgcolor = "#fff";
+  layout.font = {family:"Noto Sans KR, Segoe UI, sans-serif", size:12, color:"#1b2430"};
+  Plotly.newPlot("chart", data, layout, {responsive:true, displayModeBar:false});
+}
+
+const tabsEl = document.getElementById("tabs");
+TABS.forEach((t,i)=>{
+  const b = document.createElement("button");
+  b.textContent = t.label;
+  b.onclick = ()=>{
+    [...tabsEl.children].forEach(x=>x.classList.remove("on"));
+    b.classList.add("on");
+    history.replaceState(null,"","#"+t.id);
+    draw(t.id);
+  };
+  if(i===0) b.classList.add("on");
+  tabsEl.appendChild(b);
+});
+function fromHash(){
+  const h = (location.hash||"#slide").slice(1);
+  const idx = TABS.findIndex(t=>t.id===h);
+  const id = idx>=0 ? TABS[idx].id : "slide";
+  [...tabsEl.children].forEach(x=>x.classList.remove("on"));
+  tabsEl.children[Math.max(idx,0)].classList.add("on");
+  draw(id);
+}
+window.addEventListener("hashchange", fromHash);
+fromHash();
+</script>
+</body>
+</html>
