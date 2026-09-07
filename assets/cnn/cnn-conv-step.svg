@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="480" viewBox="0 0 1080 480" role="img" aria-label="합성곱 한 칸">
+  <rect width="1080" height="480" fill="#f7f9fb"/>
+  <style>
+    .t { font-family: 'Noto Sans KR', 'Segoe UI', sans-serif; fill: #1b2430; }
+    .m { font-family: 'Noto Sans KR', 'Segoe UI', sans-serif; fill: #5d6d7e; }
+  </style>
+  <text class="t" x="180" y="36" text-anchor="middle" font-size="18" font-weight="700" fill="#1b2430">입력 x  ·  5×5</text>
+<text class="m" x="180" y="56" text-anchor="middle" font-size="13">왼쪽이 밝기 2, 오른쪽이 0</text>
+<rect x="40" y="78" width="48" height="48" rx="6" fill="#fdecea" stroke="#c0392b" stroke-width="2.4"/><text class="t" x="64.0" y="108.0" text-anchor="middle" font-size="18" font-weight="700" fill="#c0392b">2</text>
+<rect x="88" y="78" width="48" height="48" rx="6" fill="#fdecea" stroke="#c0392b" stroke-width="2.4"/><text class="t" x="112.0" y="108.0" text-anchor="middle" font-size="18" font-weight="700" fill="#c0392b">2</text>
+<rect x="136" y="78" width="48" height="48" rx="6" fill="#fff3f0" stroke="#c0392b" stroke-width="2.4"/><text class="t" x="160.0" y="108.0" text-anchor="middle" font-size="18" font-weight="700" fill="#1b2430">0</text>
+<rect x="184" y="78" width="48" height="48" rx="6" fill="#ffffff" stroke="#c5ced6" stroke-width="1.4"/><text class="t" x="208.0" y="108.0" text-anchor="middle" font-size="18" font-weight="600" fill="#1b2430">0</text>
+<rect x="232" y="78" width="48" height="48" rx="6" fill="#ffffff" stroke="#c5ced6" stroke-width="1.4"/><text class="t" x="256.0" y="108.0" text-anchor="middle" font-size="18" font-weight="600" fill="#1b2430">0</text>
+<rect x="40" y="126" width="48" height="48" rx="6" fill="#fdecea" stroke="#c0392b" stroke-width="2.4"/><text class="t" x="64.0" y="156.0" text-anchor="middle" font-size="18" font-weight="700" fill="#c0392b">2</text>
+<rect x="88" y="126" width="48" height="48" rx="6" fill="#fdecea" stroke="#c0392b" stroke-width="2.4"/><text class="t" x="112.0" y="156.0" text-anchor="middle" font-size="18" font-weight="700" fill="#c0392b">2</text>
+<rect x="136" y="126" width="48" height="48" rx="6" fill="#fff3f0" stroke="#c0392b" stroke-width="2.4"/><text class="t" x="160.0" y="156.0" text-anchor="middle" font-size="18" font-weight="700" fill="#1b2430">0</text>
+<rect x="184" y="126" width="48" height="48" rx="6" fill="#ffffff" stroke="#c5ced6" stroke-width="1.4"/><text class="t" x="208.0" y="156.0" text-anchor="middle" font-size="18" font-weight="600" fill="#1b2430">0</text>
+<rect x="232" y="126" width="48" height="48" rx="6" fill="#ffffff" stroke="#c5ced6" stroke-width="1.4"/><text class="t" x="256.0" y="156.0" text-anchor="middle" font-size="18" font-weight="600" fill="#1b2430">0</text>
+<rect x="40" y="174" width="48" height="48" rx="6" fill="#fdecea" stroke="#c0392b" stroke-width="2.4"/><text class="t" x="64.0" y="204.0" text-anchor="middle" font-size="18" font-weight="700" fill="#c0392b">2</text>
+<rect x="88" y="174" width="48" height="48" rx="6" fill="#fdecea" stroke="#c0392b" stroke-width="2.4"/><text class="t" x="112.0" y="204.0" text-anchor="middle" font-size="18" font-weight="700" fill="#c0392b">2</text>
+<rect x="136" y="174" width="48" height="48" rx="6" fill="#fff3f0" stroke="#c0392b" stroke-width="2.4"/><text class="t" x="160.0" y="204.0" text-anchor="middle" font-size="18" font-weight="700" fill="#1b2430">0</text>
+<rect x="184" y="174" width="48" height="48" rx="6" fill="#ffffff" stroke="#c5ced6" stroke-width="1.4"/><text class="t" x="208.0" y="204.0" text-anchor="middle" font-size="18" font-weight="600" fill="#1b2430">0</text>
+<rect x="232" y="174" width="48" height="48" rx="6" fill="#ffffff" stroke="#c5ced6" stroke-width="1.4"/><text class="t" x="256.0" y="204.0" text-anchor="middle" font-size="18" font-weight="600" fill="#1b2430">0</text>
+<rect x="40" y="222" width="48" height="48" rx="6" fill="#ffffff" stroke="#c5ced6" stroke-width="1.4"/><text class="t" x="64.0" y="252.0" text-anchor="middle" font-size="18" font-weight="600" fill="#1b2430">0</text>
+<rect x="88" y="222" width="48" height="48" rx="6" fill="#ffffff" stroke="#c5ced6" stroke-width="1.4"/><text class="t" x="112.0" y="252.0" text-anchor="middle" font-size="18" font-weight="600" fill="#1b2430">0</text>
+<rect x="136" y="222" width="48" height="48" rx="6" fill="#ffffff" stroke="#c5ced6" stroke-width="1.4"/><text class="t" x="160.0" y="252.0" text-anchor="middle" font-size="18" font-weight="600" fill="#1b2430">0</text>
+<rect x="184" y="222" width="48" height="48" rx="6" fill="#ffffff" stroke="#c5ced6" stroke-width="1.4"/><text class="t" x="208.0" y="252.0" text-anchor="middle" font-size="18" font-weight="600" fill="#1b2430">0</text>
+<rect x="232" y="222" width="48" height="48" rx="6" fill="#ffffff" stroke="#c5ced6" stroke-width="1.4"/><text class="t" x="256.0" y="252.0" text-anchor="middle" font-size="18" font-weight="600" fill="#1b2430">0</text>
+<rect x="40" y="270" width="48" height="48" rx="6" fill="#ffffff" stroke="#c5ced6" stroke-width="1.4"/><text class="t" x="64.0" y="300.0" text-anchor="middle" font-size="18" font-weight="600" fill="#1b2430">0</text>
+<rect x="88" y="270" width="48" height="48" rx="6" fill="#ffffff" stroke="#c5ced6" stroke-width="1.4"/><text class="t" x="112.0" y="300.0" text-anchor="middle" font-size="18" font-weight="600" fill="#1b2430">0</text>
+<rect x="136" y="270" width="48" height="48" rx="6" fill="#ffffff" stroke="#c5ced6" stroke-width="1.4"/><text class="t" x="160.0" y="300.0" text-anchor="middle" font-size="18" font-weight="600" fill="#1b2430">0</text>
+<rect x="184" y="270" width="48" height="48" rx="6" fill="#ffffff" stroke="#c5ced6" stroke-width="1.4"/><text class="t" x="208.0" y="300.0" text-anchor="middle" font-size="18" font-weight="600" fill="#1b2430">0</text>
+<rect x="232" y="270" width="48" height="48" rx="6" fill="#ffffff" stroke="#c5ced6" stroke-width="1.4"/><text class="t" x="256.0" y="300.0" text-anchor="middle" font-size="18" font-weight="600" fill="#1b2430">0</text>
+<text class="t" x="180" y="340" text-anchor="middle" font-size="13" font-weight="500" fill="#5d6d7e">빨간 테두리 = 지금 커널이 덮은 3×3</text>
+<text class="t" x="520" y="36" text-anchor="middle" font-size="18" font-weight="700" fill="#1b2430">커널 w  ·  3×3</text>
+<text class="m" x="520" y="56" text-anchor="middle" font-size="13">세로 경계: 왼쪽 +1, 오른쪽 −1</text>
+<rect x="448" y="110" width="48" height="48" rx="6" fill="#eaf2f8" stroke="#c5ced6" stroke-width="1.4"/><text class="t" x="472.0" y="140.0" text-anchor="middle" font-size="18" font-weight="600" fill="#1b2430">1</text>
+<rect x="496" y="110" width="48" height="48" rx="6" fill="#ffffff" stroke="#c5ced6" stroke-width="1.4"/><text class="t" x="520.0" y="140.0" text-anchor="middle" font-size="18" font-weight="600" fill="#1b2430">0</text>
+<rect x="544" y="110" width="48" height="48" rx="6" fill="#eaf2f8" stroke="#c5ced6" stroke-width="1.4"/><text class="t" x="568.0" y="140.0" text-anchor="middle" font-size="18" font-weight="600" fill="#1b2430">-1</text>
+<rect x="448" y="158" width="48" height="48" rx="6" fill="#eaf2f8" stroke="#c5ced6" stroke-width="1.4"/><text class="t" x="472.0" y="188.0" text-anchor="middle" font-size="18" font-weight="600" fill="#1b2430">1</text>
+<rect x="496" y="158" width="48" height="48" rx="6" fill="#ffffff" stroke="#c5ced6" stroke-width="1.4"/><text class="t" x="520.0" y="188.0" text-anchor="middle" font-size="18" font-weight="600" fill="#1b2430">0</text>
+<rect x="544" y="158" width="48" height="48" rx="6" fill="#eaf2f8" stroke="#c5ced6" stroke-width="1.4"/><text class="t" x="568.0" y="188.0" text-anchor="middle" font-size="18" font-weight="600" fill="#1b2430">-1</text>
+<rect x="448" y="206" width="48" height="48" rx="6" fill="#eaf2f8" stroke="#c5ced6" stroke-width="1.4"/><text class="t" x="472.0" y="236.0" text-anchor="middle" font-size="18" font-weight="600" fill="#1b2430">1</text>
+<rect x="496" y="206" width="48" height="48" rx="6" fill="#ffffff" stroke="#c5ced6" stroke-width="1.4"/><text class="t" x="520.0" y="236.0" text-anchor="middle" font-size="18" font-weight="600" fill="#1b2430">0</text>
+<rect x="544" y="206" width="48" height="48" rx="6" fill="#eaf2f8" stroke="#c5ced6" stroke-width="1.4"/><text class="t" x="568.0" y="236.0" text-anchor="middle" font-size="18" font-weight="600" fill="#1b2430">-1</text>
+<text class="t" x="860" y="36" text-anchor="middle" font-size="18" font-weight="700" fill="#1b2430">특징맵 z  ·  3×3</text>
+<text class="m" x="860" y="56" text-anchor="middle" font-size="13">왼쪽 위 한 칸만 먼저 채움</text>
+<rect x="788" y="110" width="48" height="48" rx="6" fill="#e8f8f5" stroke="#1e8449" stroke-width="2.6"/><text class="t" x="812.0" y="140.0" text-anchor="middle" font-size="18" font-weight="700" fill="#1e8449">6</text>
+<rect x="836" y="110" width="48" height="48" rx="6" fill="#ffffff" stroke="#c5ced6" stroke-width="1.2"/><text class="t" x="860.0" y="140.0" text-anchor="middle" font-size="18" font-weight="500" fill="#5d6d7e">·</text>
+<rect x="884" y="110" width="48" height="48" rx="6" fill="#ffffff" stroke="#c5ced6" stroke-width="1.2"/><text class="t" x="908.0" y="140.0" text-anchor="middle" font-size="18" font-weight="500" fill="#5d6d7e">·</text>
+<rect x="788" y="158" width="48" height="48" rx="6" fill="#ffffff" stroke="#c5ced6" stroke-width="1.2"/><text class="t" x="812.0" y="188.0" text-anchor="middle" font-size="18" font-weight="500" fill="#5d6d7e">·</text>
+<rect x="836" y="158" width="48" height="48" rx="6" fill="#ffffff" stroke="#c5ced6" stroke-width="1.2"/><text class="t" x="860.0" y="188.0" text-anchor="middle" font-size="18" font-weight="500" fill="#5d6d7e">·</text>
+<rect x="884" y="158" width="48" height="48" rx="6" fill="#ffffff" stroke="#c5ced6" stroke-width="1.2"/><text class="t" x="908.0" y="188.0" text-anchor="middle" font-size="18" font-weight="500" fill="#5d6d7e">·</text>
+<rect x="788" y="206" width="48" height="48" rx="6" fill="#ffffff" stroke="#c5ced6" stroke-width="1.2"/><text class="t" x="812.0" y="236.0" text-anchor="middle" font-size="18" font-weight="500" fill="#5d6d7e">·</text>
+<rect x="836" y="206" width="48" height="48" rx="6" fill="#ffffff" stroke="#c5ced6" stroke-width="1.2"/><text class="t" x="860.0" y="236.0" text-anchor="middle" font-size="18" font-weight="500" fill="#5d6d7e">·</text>
+<rect x="884" y="206" width="48" height="48" rx="6" fill="#ffffff" stroke="#c5ced6" stroke-width="1.2"/><text class="t" x="908.0" y="236.0" text-anchor="middle" font-size="18" font-weight="500" fill="#5d6d7e">·</text>
+<path d="M290 200 L430 180" stroke="#c0392b" stroke-width="2.2" fill="none"/>
+<path d="M430 180 L444 176 L430 188 Z" fill="#c0392b"/>
+<path d="M598 180 L770 180" stroke="#1e8449" stroke-width="2.2" fill="none"/>
+<path d="M770 180 L756 174 L756 186 Z" fill="#1e8449"/>
+<rect x="40" y="370" width="1000" height="86" rx="14" fill="#ffffff" stroke="#c5ced6"/>
+<text class="t" x="540" y="406" text-anchor="middle" font-size="16" font-weight="700" fill="#1b2430">z₀₀ = 2·1 + 2·0 + 0·(−1) + 2·1 + 2·0 + 0·(−1) + 2·1 + 2·0 + 0·(−1) = 6</text>
+<text class="m" x="540" y="432" text-anchor="middle" font-size="13">덮인 9칸을 곱해서 더한 값. 같은 커널을 옮겨 가며 나머지 8칸을 채운다.</text>
+</svg>

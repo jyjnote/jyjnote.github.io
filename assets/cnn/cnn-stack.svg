@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="390" viewBox="0 0 1080 390" role="img" aria-label="CNN 층 쌓기">
+  <rect width="1080" height="390" fill="#f7f9fb"/>
+  <style>
+    .t { font-family: 'Noto Sans KR', 'Segoe UI', sans-serif; fill: #1b2430; }
+    .m { font-family: 'Noto Sans KR', 'Segoe UI', sans-serif; fill: #5d6d7e; }
+  </style>
+  <text class="t" x="540" y="40" text-anchor="middle" font-size="18" font-weight="700" fill="#1b2430">바닐라 CNN 골격  ·  Conv → ReLU → Pool 반복 후 전결합</text>
+<rect x="50" y="110" width="155" height="120" rx="16" fill="#ffffff" stroke="#2471a3" stroke-width="2.4"/>
+<text class="t" x="127" y="160" text-anchor="middle" font-size="16" font-weight="800" fill="#2471a3">입력</text>
+<text class="t" x="127" y="190" text-anchor="middle" font-size="15" font-weight="600" fill="#1b2430">5×5×1</text>
+<path d="210 170 L225 170" stroke="#1b2430" stroke-width="2"/>
+<path d="M220 164 L228 170 L220 176 Z" fill="#1b2430"/>
+<rect x="225" y="110" width="155" height="120" rx="16" fill="#ffffff" stroke="#1e8449" stroke-width="2.4"/>
+<text class="t" x="302" y="160" text-anchor="middle" font-size="16" font-weight="800" fill="#1e8449">Conv+ReLU</text>
+<text class="t" x="302" y="190" text-anchor="middle" font-size="15" font-weight="600" fill="#1b2430">5×5×4</text>
+<path d="385 170 L400 170" stroke="#1b2430" stroke-width="2"/>
+<path d="M395 164 L403 170 L395 176 Z" fill="#1b2430"/>
+<rect x="400" y="110" width="155" height="120" rx="16" fill="#ffffff" stroke="#d68910" stroke-width="2.4"/>
+<text class="t" x="477" y="160" text-anchor="middle" font-size="16" font-weight="800" fill="#d68910">Pool</text>
+<text class="t" x="477" y="190" text-anchor="middle" font-size="15" font-weight="600" fill="#1b2430">2×2×4</text>
+<path d="560 170 L575 170" stroke="#1b2430" stroke-width="2"/>
+<path d="M570 164 L578 170 L570 176 Z" fill="#1b2430"/>
+<rect x="575" y="110" width="155" height="120" rx="16" fill="#ffffff" stroke="#1e8449" stroke-width="2.4"/>
+<text class="t" x="652" y="160" text-anchor="middle" font-size="16" font-weight="800" fill="#1e8449">Conv+ReLU</text>
+<text class="t" x="652" y="190" text-anchor="middle" font-size="15" font-weight="600" fill="#1b2430">2×2×8</text>
+<path d="735 170 L750 170" stroke="#1b2430" stroke-width="2"/>
+<path d="M745 164 L753 170 L745 176 Z" fill="#1b2430"/>
+<rect x="750" y="110" width="155" height="120" rx="16" fill="#ffffff" stroke="#d68910" stroke-width="2.4"/>
+<text class="t" x="827" y="160" text-anchor="middle" font-size="16" font-weight="800" fill="#d68910">Pool</text>
+<text class="t" x="827" y="190" text-anchor="middle" font-size="15" font-weight="600" fill="#1b2430">1×1×8</text>
+<path d="910 170 L925 170" stroke="#1b2430" stroke-width="2"/>
+<path d="M920 164 L928 170 L920 176 Z" fill="#1b2430"/>
+<rect x="925" y="110" width="155" height="120" rx="16" fill="#ffffff" stroke="#c0392b" stroke-width="2.4"/>
+<text class="t" x="1002" y="160" text-anchor="middle" font-size="16" font-weight="800" fill="#c0392b">전결합</text>
+<text class="t" x="1002" y="190" text-anchor="middle" font-size="15" font-weight="600" fill="#1b2430">클래스 2</text>
+<rect x="50" y="270" width="980" height="96" rx="14" fill="#ffffff" stroke="#c5ced6"/>
+<text class="t" x="540" y="306" text-anchor="middle" font-size="16" font-weight="700" fill="#1b2430">공간 한 변은 줄고, 채널은 늘고, 마지막만 클래스 점수가 된다.</text>
+<text class="m" x="540" y="334" text-anchor="middle" font-size="13">5×5×1 → 5×5×4 → 2×2×4 → 2×2×8 → 1×1×8 → 2   (예시 숫자)</text>
+</svg>
