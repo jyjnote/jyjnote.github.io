@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>셸 정렬 단계</title>
+<script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+<style>
+:root{--ink:#1b2430;--muted:#5d6d7e;--line:#e6ebf0;--red:#c0392b;--bg:#f7f9fb}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans KR",sans-serif}
+.wrap{max-width:1080px;margin:0 auto;padding:14px 16px 24px}
+h1{font-size:20px;margin:4px 0 8px}
+.lead{color:var(--muted);font-size:14px;line-height:1.55;margin:0 0 12px}
+.tabs{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 10px}
+.tabs button{border:1px solid var(--line);background:#fff;color:#2c3e50;
+  border-radius:999px;padding:7px 12px;font-size:13px;cursor:pointer}
+.tabs button.on{background:#1b2430;color:#fff;border-color:#1b2430}
+.hint{background:#fff;border:1px solid var(--line);border-radius:12px;
+  padding:10px 14px;font-size:13.5px;line-height:1.55;color:#34495e;margin-bottom:10px}
+.hint b{color:var(--red)}
+.row{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 8px}
+.row button{border:1px solid var(--line);background:#fff;border-radius:8px;
+  padding:6px 12px;cursor:pointer;font-size:13px}
+#chart{width:100%;height:420px;background:#fff;border:1px solid var(--line);border-radius:12px}
+.legend{display:flex;gap:14px;flex-wrap:wrap;margin-top:8px;font-size:13px;color:#34495e}
+.sw{width:12px;height:12px;border-radius:3px;display:inline-block;margin-right:4px;vertical-align:-1px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>셸 정렬이 한 번에 하는 일</h1>
+  <p class="lead">간격 h만큼 떨어진 값만 모아 삽입 정렬합니다. h를 반으로 줄이다가 마지막 h=1에서 일반 삽입이 됩니다.</p>
+  <div class="hash-targets" aria-hidden="true">
+    <span id="step"></span><span id="gap"></span>
+  </div>
+  <div class="tabs" id="tabs"></div>
+  <div class="hint" id="hint"></div>
+  <div class="row">
+    <button type="button" id="prev">이전</button>
+    <button type="button" id="next">다음</button>
+    <button type="button" id="play">자동</button>
+    <button type="button" id="reset">처음</button>
+  </div>
+  <div id="chart"></div>
+  <div class="legend">
+    <span><i class="sw" style="background:#1e8449"></i>같은 부분배열의 앞쪽</span>
+    <span><i class="sw" style="background:#8e44ad"></i>이번에 넣을 키</span>
+    <span><i class="sw" style="background:#d68910"></i>지금 비교 (h칸 앞)</span>
+    <span><i class="sw" style="background:#c0392b"></i>간격만큼 이동</span>
+    <span><i class="sw" style="background:#2471a3"></i>이번 간격에서 대기</span>
+  </div>
+</div>
+<script>
+const A0 = [80, 55, 90, 70, 60];
+const NAMES = ["A","B","C","D","E"];
+function buildSteps(){
+  const a = A0.slice();
+  const n = a.length;
+  const out = [{arr:a.slice(), i:-1, j:-1, key:-1, hole:-1, h:0, shift:false,
+    msg:"시작 배열 [80, 55, 90, 70, 60]. 셸 간격은 n/2 부터. n=5이므로 h=2, 그다음 h=1."}];
+  let cmp = 0, shf = 0;
+  for(let h = Math.floor(n/2); h>=1; h=Math.floor(h/2)){
+    out.push({arr:a.slice(), i:-1, j:-1, key:-1, hole:-1, h:h, shift:false,
+      msg:`간격 h=${h} 시작. 인덱스가 ${h}만큼 떨어진 값끼리만 삽입합니다.`});
+    for(let i=h; i<n; i++){
+      const key = a[i];
+      let j = i - h;
+      out.push({arr:a.slice(), i:i, j:-1, key:key, hole:i, h:h, shift:false,
+        msg:`h=${h} · 위치 ${i}의 키 ${key}. ${h} 앞과 비교합니다.`});
+      while(j >= 0){
+        cmp++;
+        out.push({arr:a.slice(), i:i, j:j, key:key, hole:j+h, h:h, shift:false,
+          msg:`h=${h} · 비교 ${cmp}회. 앞값 ${a[j]}(위치 ${j}) 와 키 ${key}`});
+        if(a[j] > key){
+          a[j+h] = a[j];
+          shf++;
+          out.push({arr:a.slice(), i:i, j:j, key:key, hole:j, h:h, shift:true,
+            msg:`이동 ${shf}회. ${a[j+h]}을 위치 ${j+h}로 밀어 위치 ${j}를 비웁니다.`});
+          j -= h;
+        } else break;
+      }
+      a[j+h] = key;
+      out.push({arr:a.slice(), i:i, j:-1, key:key, hole:j+h, h:h, shift:false,
+        msg:`키 ${key}를 위치 ${j+h}에 삽입. [${a.join(", ")}]`});
+    }
+    out.push({arr:a.slice(), i:-1, j:-1, key:-1, hole:-1, h:h, shift:false,
+      msg:`간격 h=${h} 종료. [${a.join(", ")}]. 지금까지 비교 ${cmp} · 이동 ${shf}.`});
+  }
+  out.push({arr:a.slice(), i:-1, j:-1, key:-1, hole:-1, h:1, shift:false,
+    msg:`정렬 끝 [55, 60, 70, 80, 90]. 비교 ${cmp}회, 이동 ${shf}회.`});
+  return out;
+}
+function buildGaps(){
+  const steps = buildSteps();
+  return steps.filter((s,i)=> i===0 || s.msg.indexOf("종료")>=0 || s.msg.indexOf("정렬 끝")>=0 || (s.msg.indexOf("간격 h=")>=0 && s.msg.indexOf("시작")>=0));
+}
+const PACK = {step: buildSteps(), gap: buildGaps()};
+let mode = "step", idx = 0, timer = null;
+
+function colors(f){
+  return f.arr.map((_,k)=>{
+    if(f.h>0 && f.shift && k===f.j+f.h) return "#c0392b";
+    if(k===f.j) return "#d68910";
+    if(f.hole===k && f.key>=0 && !f.shift) return "#8e44ad";
+    if(f.h>0 && f.i>=0 && (f.i-k)%f.h===0 && k<=f.i && k!==f.j && k!==f.hole) return "#1e8449";
+    return "#2471a3";
+  });
+}
+function draw(){
+  const f = PACK[mode][idx];
+  document.getElementById("hint").innerHTML = "<b>"+(idx+1)+"/"+PACK[mode].length+".</b> "+f.msg;
+  const trace = {
+    x: NAMES, y: f.arr, type:"bar",
+    text: f.arr.map(String), textposition:"outside",
+    marker:{color: colors(f)},
+    hovertemplate:"%{x} = %{y}<extra></extra>"
+  };
+  Plotly.react("chart", [trace], {
+    yaxis:{title:"점수", range:[0,110]},
+    xaxis:{title:"학생 위치"},
+    margin:{t:16,r:16,b:48,l:48},
+    plot_bgcolor:"#fff", paper_bgcolor:"#fff",
+    showlegend:false
+  }, {responsive:true, displayModeBar:false});
+}
+function setMode(id){
+  mode = id; idx = 0; stop();
+  [...document.getElementById("tabs").children].forEach(b=>b.classList.toggle("on", b.dataset.id===id));
+  history.replaceState(null,"","#"+id);
+  draw();
+}
+function stop(){ if(timer){clearInterval(timer); timer=null; document.getElementById("play").textContent="자동";} }
+function next(){ if(idx<PACK[mode].length-1){idx++; draw();} else stop(); }
+function prev(){ if(idx>0){idx--; draw();} }
+document.getElementById("next").onclick=next;
+document.getElementById("prev").onclick=prev;
+document.getElementById("reset").onclick=()=>{idx=0; stop(); draw();};
+document.getElementById("play").onclick=function(){
+  if(timer){stop(); return;}
+  this.textContent="정지";
+  timer=setInterval(next, 900);
+};
+const TABS=[{id:"step",label:"1. 비교·이동 한 번씩"},{id:"gap",label:"2. 간격 종료만"}];
+TABS.forEach(t=>{
+  const b=document.createElement("button");
+  b.textContent=t.label; b.dataset.id=t.id;
+  b.onclick=()=>setMode(t.id);
+  document.getElementById("tabs").appendChild(b);
+});
+setMode((location.hash||"#step").slice(1)==="gap"?"gap":"step");
+</script>
+</body>
+</html>
