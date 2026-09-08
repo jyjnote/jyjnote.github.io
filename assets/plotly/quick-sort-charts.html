@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>퀵 정렬 단계</title>
+<script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+<style>
+:root{--ink:#1b2430;--muted:#5d6d7e;--line:#e6ebf0;--red:#c0392b;--bg:#f7f9fb}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans KR",sans-serif}
+.wrap{max-width:1080px;margin:0 auto;padding:14px 16px 24px}
+h1{font-size:20px;margin:4px 0 8px}
+.lead{color:var(--muted);font-size:14px;line-height:1.55;margin:0 0 12px}
+.tabs{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 10px}
+.tabs button{border:1px solid var(--line);background:#fff;color:#2c3e50;
+  border-radius:999px;padding:7px 12px;font-size:13px;cursor:pointer}
+.tabs button.on{background:#1b2430;color:#fff;border-color:#1b2430}
+.hint{background:#fff;border:1px solid var(--line);border-radius:12px;
+  padding:10px 14px;font-size:13.5px;line-height:1.55;color:#34495e;margin-bottom:10px}
+.hint b{color:var(--red)}
+.row{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 8px}
+.row button{border:1px solid var(--line);background:#fff;border-radius:8px;
+  padding:6px 12px;cursor:pointer;font-size:13px}
+#chart{width:100%;height:420px;background:#fff;border:1px solid var(--line);border-radius:12px}
+.legend{display:flex;gap:14px;flex-wrap:wrap;margin-top:8px;font-size:13px;color:#34495e}
+.sw{width:12px;height:12px;border-radius:3px;display:inline-block;margin-right:4px;vertical-align:-1px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>퀵 정렬이 한 번에 하는 일</h1>
+  <p class="lead">맨 끝 값을 피벗으로 둡니다. 피벗 이하를 왼쪽으로 모은 뒤 피벗을 그 경계에 두면, 피벗의 최종 위치가 확정됩니다.</p>
+  <div class="hash-targets" aria-hidden="true">
+    <span id="step"></span><span id="part"></span>
+  </div>
+  <div class="tabs" id="tabs"></div>
+  <div class="hint" id="hint"></div>
+  <div class="row">
+    <button type="button" id="prev">이전</button>
+    <button type="button" id="next">다음</button>
+    <button type="button" id="play">자동</button>
+    <button type="button" id="reset">처음</button>
+  </div>
+  <div id="chart"></div>
+  <div class="legend">
+    <span><i class="sw" style="background:#95a5a6"></i>구간 밖·확정</span>
+    <span><i class="sw" style="background:#8e44ad"></i>피벗</span>
+    <span><i class="sw" style="background:#1e8449"></i>피벗 이하 구간</span>
+    <span><i class="sw" style="background:#d68910"></i>지금 비교</span>
+    <span><i class="sw" style="background:#c0392b"></i>방금 교환</span>
+    <span><i class="sw" style="background:#2471a3"></i>아직 미분류</span>
+  </div>
+</div>
+<script>
+const A0 = [80, 55, 90, 70, 60];
+const NAMES = ["A","B","C","D","E"];
+function buildSteps(){
+  const a = A0.slice();
+  const n = a.length;
+  const done = Array(n).fill(false);
+  const out = [];
+  let cmp = 0, swp = 0;
+  out.push({arr:a.slice(), lo:-1, hi:-1, i:-1, j:-1, p:-1, swap:false, done:done.slice(),
+    msg:"시작 배열 [80, 55, 90, 70, 60]. 피벗은 구간의 마지막 값입니다."});
+  function qs(lo, hi){
+    if(lo > hi) return;
+    if(lo === hi){
+      done[lo] = true;
+      out.push({arr:a.slice(), lo:lo, hi:hi, i:-1, j:-1, p:lo, swap:false, done:done.slice(),
+        msg:`구간 [${lo}, ${hi}] 값 ${a[lo]}. 길이 1이라 확정.`});
+      return;
+    }
+    const pivot = a[hi];
+    let i = lo - 1;
+    out.push({arr:a.slice(), lo:lo, hi:hi, i:i, j:-1, p:hi, swap:false, done:done.slice(),
+      msg:`분할 시작 [${lo}, ${hi}]. 피벗 ${pivot} (위치 ${hi}). i=${i}.`});
+    for(let j=lo; j<hi; j++){
+      cmp++;
+      out.push({arr:a.slice(), lo:lo, hi:hi, i:i, j:j, p:hi, swap:false, done:done.slice(),
+        msg:`비교 ${cmp}회. ${a[j]} 와 피벗 ${pivot}`});
+      if(a[j] <= pivot){
+        i++;
+        if(i !== j){
+          const t=a[i]; a[i]=a[j]; a[j]=t; swp++;
+          out.push({arr:a.slice(), lo:lo, hi:hi, i:i, j:j, p:hi, swap:true, done:done.slice(),
+            msg:`교환 ${swp}회. 위치 ${i}와 ${j}. 피벗 이하를 왼쪽으로.`});
+        } else {
+          out.push({arr:a.slice(), lo:lo, hi:hi, i:i, j:j, p:hi, swap:false, done:done.slice(),
+            msg:`위치 ${j}는 이미 이하 구간의 끝. 교환 없음.`});
+        }
+      }
+    }
+    const pv = i + 1;
+    if(pv !== hi){
+      const t=a[pv]; a[pv]=a[hi]; a[hi]=t; swp++;
+      out.push({arr:a.slice(), lo:lo, hi:hi, i:i, j:hi, p:pv, swap:true, done:done.slice(),
+        msg:`피벗 교환 ${swp}회. 위치 ${pv}에 피벗 ${a[pv]} 확정.`});
+    } else {
+      out.push({arr:a.slice(), lo:lo, hi:hi, i:i, j:hi, p:pv, swap:false, done:done.slice(),
+        msg:`피벗이 이미 위치 ${pv}. 교환 없음.`});
+    }
+    done[pv] = true;
+    out.push({arr:a.slice(), lo:lo, hi:hi, i:-1, j:-1, p:pv, swap:false, done:done.slice(),
+      msg:`분할 종료. 피벗 ${a[pv]} @ ${pv}. 왼쪽 [${lo}, ${pv-1}], 오른쪽 [${pv+1}, ${hi}]. 비교 ${cmp} · 교환 ${swp}.`});
+    qs(lo, pv-1);
+    qs(pv+1, hi);
+  }
+  qs(0, n-1);
+  out.push({arr:a.slice(), lo:0, hi:n-1, i:-1, j:-1, p:-1, swap:false, done:Array(n).fill(true),
+    msg:`정렬 끝 [55, 60, 70, 80, 90]. 비교 ${cmp}회, 교환 ${swp}회.`});
+  return out;
+}
+function buildParts(){
+  return buildSteps().filter(s =>
+    s.msg.indexOf("시작")>=0 || s.msg.indexOf("분할 종료")>=0 ||
+    s.msg.indexOf("정렬 끝")>=0 || s.msg.indexOf("길이 1")>=0);
+}
+const PACK = {step: buildSteps(), part: buildParts()};
+let mode = "step", idx = 0, timer = null;
+
+function colors(f){
+  return f.arr.map((_,k)=>{
+    if(f.done[k] && k!==f.p && k!==f.j && k!==f.i) return "#7f8c8d";
+    if(f.swap && (k===f.i || k===f.j)) return "#c0392b";
+    if(k===f.p) return "#8e44ad";
+    if(k===f.j) return "#d68910";
+    if(f.lo>=0 && k>=f.lo && k<=f.i) return "#1e8449";
+    if(f.lo>=0 && (k<f.lo || k>f.hi)) return "#95a5a6";
+    if(f.done[k]) return "#7f8c8d";
+    return "#2471a3";
+  });
+}
+function draw(){
+  const f = PACK[mode][idx];
+  document.getElementById("hint").innerHTML = "<b>"+(idx+1)+"/"+PACK[mode].length+".</b> "+f.msg;
+  Plotly.react("chart", [{
+    x: NAMES, y: f.arr, type:"bar",
+    text: f.arr.map(String), textposition:"outside",
+    marker:{color: colors(f)},
+    hovertemplate:"%{x} = %{y}<extra></extra>"
+  }], {
+    yaxis:{title:"점수", range:[0,110]},
+    xaxis:{title:"학생 위치"},
+    margin:{t:16,r:16,b:48,l:48},
+    plot_bgcolor:"#fff", paper_bgcolor:"#fff",
+    showlegend:false
+  }, {responsive:true, displayModeBar:false});
+}
+function setMode(id){
+  mode = id; idx = 0; stop();
+  [...document.getElementById("tabs").children].forEach(b=>b.classList.toggle("on", b.dataset.id===id));
+  history.replaceState(null,"","#"+id);
+  draw();
+}
+function stop(){ if(timer){clearInterval(timer); timer=null; document.getElementById("play").textContent="자동";} }
+function next(){ if(idx<PACK[mode].length-1){idx++; draw();} else stop(); }
+function prev(){ if(idx>0){idx--; draw();} }
+document.getElementById("next").onclick=next;
+document.getElementById("prev").onclick=prev;
+document.getElementById("reset").onclick=()=>{idx=0; stop(); draw();};
+document.getElementById("play").onclick=function(){
+  if(timer){stop(); return;}
+  this.textContent="정지";
+  timer=setInterval(next, 900);
+};
+const TABS=[{id:"step",label:"1. 비교·교환 한 번씩"},{id:"part",label:"2. 분할 종료만"}];
+TABS.forEach(t=>{
+  const b=document.createElement("button");
+  b.textContent=t.label; b.dataset.id=t.id;
+  b.onclick=()=>setMode(t.id);
+  document.getElementById("tabs").appendChild(b);
+});
+setMode((location.hash||"#step").slice(1)==="part"?"part":"step");
+</script>
+</body>
+</html>
