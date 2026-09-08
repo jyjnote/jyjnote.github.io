@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>계수 정렬 단계</title>
+<script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+<style>
+:root{--ink:#1b2430;--muted:#5d6d7e;--line:#e6ebf0;--red:#c0392b;--bg:#f7f9fb}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans KR",sans-serif}
+.wrap{max-width:1080px;margin:0 auto;padding:14px 16px 24px}
+h1{font-size:20px;margin:4px 0 8px}
+.lead{color:var(--muted);font-size:14px;line-height:1.55;margin:0 0 12px}
+.tabs{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 10px}
+.tabs button{border:1px solid var(--line);background:#fff;color:#2c3e50;
+  border-radius:999px;padding:7px 12px;font-size:13px;cursor:pointer}
+.tabs button.on{background:#1b2430;color:#fff;border-color:#1b2430}
+.hint{background:#fff;border:1px solid var(--line);border-radius:12px;
+  padding:10px 14px;font-size:13.5px;line-height:1.55;color:#34495e;margin-bottom:10px}
+.hint b{color:var(--red)}
+.row{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 8px}
+.row button{border:1px solid var(--line);background:#fff;border-radius:8px;
+  padding:6px 12px;cursor:pointer;font-size:13px}
+#chart{width:100%;height:460px;background:#fff;border:1px solid var(--line);border-radius:12px}
+.legend{display:flex;gap:14px;flex-wrap:wrap;margin-top:8px;font-size:13px;color:#34495e}
+.sw{width:12px;height:12px;border-radius:3px;display:inline-block;margin-right:4px;vertical-align:-1px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>계수 정렬이 한 번에 하는 일</h1>
+  <p class="lead">값마다 등장 횟수를 센 뒤, 누적으로 “이 값 이하가 몇 명인지”를 만듭니다. 뒤에서부터 그 위치에 넣으면 같은 값의 원래 순서가 유지됩니다.</p>
+  <div class="hash-targets" aria-hidden="true">
+    <span id="step"></span><span id="phase"></span>
+  </div>
+  <div class="tabs" id="tabs"></div>
+  <div class="hint" id="hint"></div>
+  <div class="row">
+    <button type="button" id="prev">이전</button>
+    <button type="button" id="next">다음</button>
+    <button type="button" id="play">자동</button>
+    <button type="button" id="reset">처음</button>
+  </div>
+  <div id="chart"></div>
+  <div class="legend">
+    <span><i class="sw" style="background:#d68910"></i>지금 보는 값</span>
+    <span><i class="sw" style="background:#8e44ad"></i>방금 기록한 위치</span>
+    <span><i class="sw" style="background:#2471a3"></i>입력</span>
+    <span><i class="sw" style="background:#1e8449"></i>출력에 확정</span>
+    <span><i class="sw" style="background:#95a5a6"></i>아직 빈 출력</span>
+  </div>
+</div>
+<script>
+const A0 = [80, 55, 90, 70, 60];
+const NAMES = ["A","B","C","D","E"];
+const KEYS = [55,60,70,80,90];
+function buildSteps(){
+  const a = A0.slice();
+  const n = a.length;
+  const mn = 55, mx = 90;
+  const Cmap = {55:0,60:0,70:0,80:0,90:0};
+  const out = [];
+  const B = Array(n).fill(null);
+  out.push({a:a.slice(), B:B.slice(), C:{...Cmap}, hi:-1, bi:-1, key:null, phase:"start",
+    msg:"시작 배열 [80, 55, 90, 70, 60]. 최솟값 55, 최댓값 90. 범위 k=36."});
+  for(let i=0;i<n;i++){
+    Cmap[a[i]]++;
+    out.push({a:a.slice(), B:B.slice(), C:{...Cmap}, hi:i, bi:-1, key:a[i], phase:"count",
+      msg:`입력 위치 ${i}의 ${a[i]}를 센다. count[${a[i]}]=${Cmap[a[i]]}.`});
+  }
+  const order = KEYS;
+  let run = 0;
+  const pref = {};
+  for(const k of order){
+    run += Cmap[k];
+    pref[k] = run;
+    const Cshow = {...Cmap, ...pref};
+    out.push({a:a.slice(), B:B.slice(), C:Cshow, hi:-1, bi:-1, key:k, phase:"prefix",
+      msg:`누적. ${k} 이하인 인원 = ${run}. 마지막 자리는 인덱스 ${run-1}.`});
+  }
+  let C = {...pref};
+  for(let i=n-1;i>=0;i--){
+    const x = a[i];
+    C[x]--;
+    const pos = C[x];
+    B[pos] = x;
+    out.push({a:a.slice(), B:B.slice(), C:{...C}, hi:i, bi:pos, key:x, phase:"place",
+      msg:`뒤에서 위치 ${i}의 ${x}. 누적을 ${C[x]+1}→${C[x]}로 줄이고 출력[${pos}]에 넣음.`});
+  }
+  out.push({a:a.slice(), B:B.slice(), C:{...C}, hi:-1, bi:-1, key:null, phase:"done",
+    msg:"정렬 끝 [55, 60, 70, 80, 90]. 비교 없이 횟수와 누적만 사용."});
+  return out;
+}
+function buildPhases(){
+  return buildSteps().filter(s =>
+    s.phase==="start" || s.phase==="prefix" || s.phase==="done" ||
+    (s.phase==="count" && s.hi===4) || s.phase==="place");
+}
+const PACK = {step: buildSteps(), phase: buildPhases()};
+let mode = "step", idx = 0, timer = null;
+
+function draw(){
+  const f = PACK[mode][idx];
+  document.getElementById("hint").innerHTML = "<b>"+(idx+1)+"/"+PACK[mode].length+".</b> "+f.msg;
+  const colA = f.a.map((_,i)=> i===f.hi ? "#d68910" : "#2471a3");
+  const colB = f.B.map((v,i)=>{
+    if(i===f.bi) return "#8e44ad";
+    if(v===null) return "#d5d8dc";
+    return "#1e8449";
+  });
+  const yB = f.B.map(v => v===null ? 0 : v);
+  const tB = f.B.map(v => v===null ? "" : String(v));
+  const cKeys = KEYS.map(k => k===f.key ? "#d68910" : "#5dade2");
+  const traces = [
+    {x:NAMES, y:f.a, type:"bar", name:"입력",
+      text:f.a.map(String), textposition:"outside",
+      marker:{color:colA}, hovertemplate:"입력 %{x}=%{y}<extra></extra>"},
+    {x:NAMES, y:yB, type:"bar", name:"출력",
+      text:tB, textposition:"outside",
+      marker:{color:colB}, hovertemplate:"출력 %{x}=%{y}<extra></extra>",
+      xaxis:"x2", yaxis:"y2"}
+  ];
+  Plotly.react("chart", traces, {
+    grid:{rows:2, columns:1, pattern:"independent", roworder:"top to bottom"},
+    yaxis:{title:"입력", range:[0,110], domain:[0.52,1]},
+    yaxis2:{title:"출력", range:[0,110], domain:[0,0.42]},
+    xaxis:{anchor:"y"},
+    xaxis2:{anchor:"y2", title:"학생 위치"},
+    margin:{t:16,r:16,b:40,l:48},
+    plot_bgcolor:"#fff", paper_bgcolor:"#fff",
+    showlegend:false,
+    annotations:[{
+      text:"누적(이하 인원) 55:"+f.C[55]+" · 60:"+f.C[60]+" · 70:"+f.C[70]+" · 80:"+f.C[80]+" · 90:"+f.C[90],
+      xref:"paper", yref:"paper", x:0, y:1.08, showarrow:false,
+      font:{size:12, color:"#5d6d7e"}, xanchor:"left"
+    }]
+  }, {responsive:true, displayModeBar:false});
+}
+function setMode(id){
+  mode = id; idx = 0; stop();
+  [...document.getElementById("tabs").children].forEach(b=>b.classList.toggle("on", b.dataset.id===id));
+  history.replaceState(null,"","#"+id);
+  draw();
+}
+function stop(){ if(timer){clearInterval(timer); timer=null; document.getElementById("play").textContent="자동";} }
+function next(){ if(idx<PACK[mode].length-1){idx++; draw();} else stop(); }
+function prev(){ if(idx>0){idx--; draw();} }
+document.getElementById("next").onclick=next;
+document.getElementById("prev").onclick=prev;
+document.getElementById("reset").onclick=()=>{idx=0; stop(); draw();};
+document.getElementById("play").onclick=function(){
+  if(timer){stop(); return;}
+  this.textContent="정지";
+  timer=setInterval(next, 900);
+};
+const TABS=[{id:"step",label:"1. 세기·누적·배치 한 번씩"},{id:"phase",label:"2. 단계 요약"}];
+TABS.forEach(t=>{
+  const b=document.createElement("button");
+  b.textContent=t.label; b.dataset.id=t.id;
+  b.onclick=()=>setMode(t.id);
+  document.getElementById("tabs").appendChild(b);
+});
+setMode((location.hash||"#step").slice(1)==="phase"?"phase":"step");
+</script>
+</body>
+</html>
