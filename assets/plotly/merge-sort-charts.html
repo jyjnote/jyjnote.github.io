@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>병합 정렬 단계</title>
+<script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+<style>
+:root{--ink:#1b2430;--muted:#5d6d7e;--line:#e6ebf0;--red:#c0392b;--bg:#f7f9fb}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans KR",sans-serif}
+.wrap{max-width:1080px;margin:0 auto;padding:14px 16px 24px}
+h1{font-size:20px;margin:4px 0 8px}
+.lead{color:var(--muted);font-size:14px;line-height:1.55;margin:0 0 12px}
+.tabs{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 10px}
+.tabs button{border:1px solid var(--line);background:#fff;color:#2c3e50;
+  border-radius:999px;padding:7px 12px;font-size:13px;cursor:pointer}
+.tabs button.on{background:#1b2430;color:#fff;border-color:#1b2430}
+.hint{background:#fff;border:1px solid var(--line);border-radius:12px;
+  padding:10px 14px;font-size:13.5px;line-height:1.55;color:#34495e;margin-bottom:10px}
+.hint b{color:var(--red)}
+.row{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 8px}
+.row button{border:1px solid var(--line);background:#fff;border-radius:8px;
+  padding:6px 12px;cursor:pointer;font-size:13px}
+#chart{width:100%;height:460px;background:#fff;border:1px solid var(--line);border-radius:12px}
+.legend{display:flex;gap:14px;flex-wrap:wrap;margin-top:8px;font-size:13px;color:#34495e}
+.sw{width:12px;height:12px;border-radius:3px;display:inline-block;margin-right:4px;vertical-align:-1px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>병합 정렬이 한 번에 하는 일</h1>
+  <p class="lead">구간을 반으로 나눠 각각 정렬한 뒤, 두 정렬 줄을 앞에서부터 비교해 보조 배열에 합칩니다. 합친 결과를 원래 구간에 되돌립니다.</p>
+  <div class="hash-targets" aria-hidden="true">
+    <span id="step"></span><span id="merge"></span>
+  </div>
+  <div class="tabs" id="tabs"></div>
+  <div class="hint" id="hint"></div>
+  <div class="row">
+    <button type="button" id="prev">이전</button>
+    <button type="button" id="next">다음</button>
+    <button type="button" id="play">자동</button>
+    <button type="button" id="reset">처음</button>
+  </div>
+  <div id="chart"></div>
+  <div class="legend">
+    <span><i class="sw" style="background:#95a5a6"></i>구간 밖</span>
+    <span><i class="sw" style="background:#1e8449"></i>왼쪽 줄</span>
+    <span><i class="sw" style="background:#2471a3"></i>오른쪽 줄</span>
+    <span><i class="sw" style="background:#d68910"></i>지금 비교</span>
+    <span><i class="sw" style="background:#8e44ad"></i>보조 배열에 기록</span>
+    <span><i class="sw" style="background:#c0392b"></i>방금 되돌린 구간</span>
+  </div>
+</div>
+<script>
+const A0 = [80, 55, 90, 70, 60];
+const NAMES = ["A","B","C","D","E"];
+function buildSteps(){
+  const a = A0.slice();
+  const n = a.length;
+  const out = [];
+  let cmp = 0, wr = 0;
+  out.push({arr:a.slice(), tmp:Array(n).fill(null), L:-1, R:-1, i:-1, j:-1, k:-1, lo:-1, hi:-1,
+    phase:"start", msg:"시작 배열 [80, 55, 90, 70, 60]. 길이 5는 2의 거듭제곱이 아니라 3과 2로 나뉩니다."});
+  function sort(lo, hi){
+    if(lo >= hi){
+      out.push({arr:a.slice(), tmp:Array(n).fill(null), L:-1, R:-1, i:-1, j:-1, k:-1, lo:lo, hi:hi,
+        phase:"leaf", msg:`구간 [${lo}, ${hi}] 값 ${a[lo]}. 길이 1은 이미 정렬.`});
+      return;
+    }
+    const mid = Math.floor((lo+hi)/2);
+    out.push({arr:a.slice(), tmp:Array(n).fill(null), L:-1, R:-1, i:-1, j:-1, k:-1, lo:lo, hi:hi,
+      phase:"split", msg:`구간 [${lo}, ${hi}]를 mid=${mid}에서 분할. 왼쪽 [${lo}, ${mid}], 오른쪽 [${mid+1}, ${hi}].`});
+    sort(lo, mid);
+    sort(mid+1, hi);
+    const left = a.slice(lo, mid+1);
+    const right = a.slice(mid+1, hi+1);
+    const tmp = Array(n).fill(null);
+    let i=0, j=0, k=lo;
+    out.push({arr:a.slice(), tmp:tmp.slice(), L:lo, R:mid+1, i:lo, j:mid+1, k:k, lo:lo, hi:hi,
+      phase:"merge", msg:`병합 시작. 왼쪽 [${left.join(", ")}], 오른쪽 [${right.join(", ")}].`});
+    while(i<left.length && j<right.length){
+      cmp++;
+      out.push({arr:a.slice(), tmp:tmp.slice(), L:lo, R:mid+1, i:lo+i, j:mid+1+j, k:k, lo:lo, hi:hi,
+        phase:"cmp", msg:`비교 ${cmp}회. ${left[i]} 와 ${right[j]}`});
+      if(left[i] <= right[j]){
+        tmp[k] = left[i]; wr++;
+        out.push({arr:a.slice(), tmp:tmp.slice(), L:lo, R:mid+1, i:lo+i, j:mid+1+j, k:k, lo:lo, hi:hi,
+          phase:"write", msg:`보조[${k}] ← ${left[i]} (왼쪽). 기록 ${wr}회.`});
+        i++; k++;
+      } else {
+        tmp[k] = right[j]; wr++;
+        out.push({arr:a.slice(), tmp:tmp.slice(), L:lo, R:mid+1, i:lo+i, j:mid+1+j, k:k, lo:lo, hi:hi,
+          phase:"write", msg:`보조[${k}] ← ${right[j]} (오른쪽). 기록 ${wr}회.`});
+        j++; k++;
+      }
+    }
+    while(i<left.length){
+      tmp[k] = left[i]; wr++;
+      out.push({arr:a.slice(), tmp:tmp.slice(), L:lo, R:mid+1, i:lo+i, j:-1, k:k, lo:lo, hi:hi,
+        phase:"write", msg:`왼쪽 남은 ${left[i]}를 보조[${k}]에 복사. 기록 ${wr}회.`});
+      i++; k++;
+    }
+    while(j<right.length){
+      tmp[k] = right[j]; wr++;
+      out.push({arr:a.slice(), tmp:tmp.slice(), L:lo, R:mid+1, i:-1, j:mid+1+j, k:k, lo:lo, hi:hi,
+        phase:"write", msg:`오른쪽 남은 ${right[j]}를 보조[${k}]에 복사. 기록 ${wr}회.`});
+      j++; k++;
+    }
+    for(let t=lo; t<=hi; t++) a[t] = tmp[t];
+    out.push({arr:a.slice(), tmp:tmp.slice(), L:-1, R:-1, i:-1, j:-1, k:-1, lo:lo, hi:hi,
+      phase:"back", msg:`구간 [${lo}, ${hi}] 되돌림 [${a.slice(lo,hi+1).join(", ")}]. 비교 ${cmp} · 기록 ${wr}.`});
+  }
+  sort(0, n-1);
+  out.push({arr:a.slice(), tmp:Array(n).fill(null), L:-1, R:-1, i:-1, j:-1, k:-1, lo:0, hi:n-1,
+    phase:"done", msg:`정렬 끝 [55, 60, 70, 80, 90]. 비교 ${cmp}회, 보조 기록 ${wr}회.`});
+  return out;
+}
+function buildMerges(){
+  const steps = buildSteps();
+  return steps.filter(s => s.phase==="start" || s.phase==="back" || s.phase==="done" || s.phase==="split");
+}
+const PACK = {step: buildSteps(), merge: buildMerges()};
+let mode = "step", idx = 0, timer = null;
+
+function colorsTop(f){
+  return f.arr.map((_,k)=>{
+    if(f.lo<0) return "#2471a3";
+    if(k<f.lo || k>f.hi) return "#95a5a6";
+    if(f.phase==="back" || f.phase==="done") return "#c0392b";
+    if(k===f.i || k===f.j) return "#d68910";
+    if(f.phase==="leaf") return "#1e8449";
+    if(f.phase==="split" && k<=Math.floor((f.lo+f.hi)/2)) return "#1e8449";
+    if(f.phase==="split") return "#2471a3";
+    if(f.R>=0 && k>=f.R && k<=f.hi) return "#2471a3";
+    if(f.L>=0 && k>=f.lo && k<f.R) return "#1e8449";
+    return "#5dade2";
+  });
+}
+function draw(){
+  const f = PACK[mode][idx];
+  document.getElementById("hint").innerHTML = "<b>"+(idx+1)+"/"+PACK[mode].length+".</b> "+f.msg;
+  const yTmp = f.tmp.map(v => v===null ? 0 : v);
+  const cTmp = f.tmp.map((v,k)=>{
+    if(v===null) return "#ecf0f1";
+    if(k===f.k && f.phase==="write") return "#8e44ad";
+    return "#bb8fce";
+  });
+  const traces = [
+    {x: NAMES, y: f.arr, type:"bar", name:"배열",
+      text: f.arr.map(String), textposition:"outside",
+      marker:{color: colorsTop(f)},
+      hovertemplate:"배열 %{x}=%{y}<extra></extra>"},
+    {x: NAMES, y: yTmp, type:"bar", name:"보조",
+      text: f.tmp.map(v => v===null ? "" : String(v)), textposition:"outside",
+      marker:{color: cTmp},
+      hovertemplate:"보조 %{x}=%{y}<extra></extra>",
+      xaxis:"x2", yaxis:"y2"}
+  ];
+  Plotly.react("chart", traces, {
+    grid:{rows:2, columns:1, pattern:"independent", roworder:"top to bottom"},
+    yaxis:{title:"배열", range:[0,110], domain:[0.52,1]},
+    yaxis2:{title:"보조", range:[0,110], domain:[0,0.42]},
+    xaxis:{anchor:"y"},
+    xaxis2:{anchor:"y2", title:"학생 위치"},
+    margin:{t:16,r:16,b:40,l:48},
+    plot_bgcolor:"#fff", paper_bgcolor:"#fff",
+    showlegend:false
+  }, {responsive:true, displayModeBar:false});
+}
+function setMode(id){
+  mode = id; idx = 0; stop();
+  [...document.getElementById("tabs").children].forEach(b=>b.classList.toggle("on", b.dataset.id===id));
+  history.replaceState(null,"","#"+id);
+  draw();
+}
+function stop(){ if(timer){clearInterval(timer); timer=null; document.getElementById("play").textContent="자동";} }
+function next(){ if(idx<PACK[mode].length-1){idx++; draw();} else stop(); }
+function prev(){ if(idx>0){idx--; draw();} }
+document.getElementById("next").onclick=next;
+document.getElementById("prev").onclick=prev;
+document.getElementById("reset").onclick=()=>{idx=0; stop(); draw();};
+document.getElementById("play").onclick=function(){
+  if(timer){stop(); return;}
+  this.textContent="정지";
+  timer=setInterval(next, 900);
+};
+const TABS=[{id:"step",label:"1. 비교·기록 한 번씩"},{id:"merge",label:"2. 분할·병합 종료만"}];
+TABS.forEach(t=>{
+  const b=document.createElement("button");
+  b.textContent=t.label; b.dataset.id=t.id;
+  b.onclick=()=>setMode(t.id);
+  document.getElementById("tabs").appendChild(b);
+});
+setMode((location.hash||"#step").slice(1)==="merge"?"merge":"step");
+</script>
+</body>
+</html>
