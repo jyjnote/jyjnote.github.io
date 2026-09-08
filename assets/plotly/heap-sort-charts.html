@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>힙 정렬 단계</title>
+<script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+<style>
+:root{--ink:#1b2430;--muted:#5d6d7e;--line:#e6ebf0;--red:#c0392b;--bg:#f7f9fb}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans KR",sans-serif}
+.wrap{max-width:1080px;margin:0 auto;padding:14px 16px 24px}
+h1{font-size:20px;margin:4px 0 8px}
+.lead{color:var(--muted);font-size:14px;line-height:1.55;margin:0 0 12px}
+.tabs{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 10px}
+.tabs button{border:1px solid var(--line);background:#fff;color:#2c3e50;
+  border-radius:999px;padding:7px 12px;font-size:13px;cursor:pointer}
+.tabs button.on{background:#1b2430;color:#fff;border-color:#1b2430}
+.hint{background:#fff;border:1px solid var(--line);border-radius:12px;
+  padding:10px 14px;font-size:13.5px;line-height:1.55;color:#34495e;margin-bottom:10px}
+.hint b{color:var(--red)}
+.row{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 8px}
+.row button{border:1px solid var(--line);background:#fff;border-radius:8px;
+  padding:6px 12px;cursor:pointer;font-size:13px}
+#chart{width:100%;height:420px;background:#fff;border:1px solid var(--line);border-radius:12px}
+.legend{display:flex;gap:14px;flex-wrap:wrap;margin-top:8px;font-size:13px;color:#34495e}
+.sw{width:12px;height:12px;border-radius:3px;display:inline-block;margin-right:4px;vertical-align:-1px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>힙 정렬이 한 번에 하는 일</h1>
+  <p class="lead">배열을 최대 힙으로 만든 뒤, 루트(최댓값)를 힙의 맨 끝과 바꾸고 남은 구간만 다시 힙으로 만듭니다. 뒤에 붙는 값이 하나씩 확정됩니다.</p>
+  <div class="hash-targets" aria-hidden="true">
+    <span id="step"></span><span id="phase"></span>
+  </div>
+  <div class="tabs" id="tabs"></div>
+  <div class="hint" id="hint"></div>
+  <div class="row">
+    <button type="button" id="prev">이전</button>
+    <button type="button" id="next">다음</button>
+    <button type="button" id="play">자동</button>
+    <button type="button" id="reset">처음</button>
+  </div>
+  <div id="chart"></div>
+  <div class="legend">
+    <span><i class="sw" style="background:#8e44ad"></i>지금 내리는 노드</span>
+    <span><i class="sw" style="background:#d68910"></i>자식 비교</span>
+    <span><i class="sw" style="background:#c0392b"></i>방금 교환</span>
+    <span><i class="sw" style="background:#2471a3"></i>힙 구간</span>
+    <span><i class="sw" style="background:#1e8449"></i>뒤에 확정</span>
+  </div>
+</div>
+<script>
+const A0 = [80, 55, 90, 70, 60];
+const NAMES = ["A","B","C","D","E"];
+function buildSteps(){
+  const a = A0.slice();
+  const n0 = a.length;
+  const out = [];
+  let cmp = 0, swp = 0;
+  out.push({arr:a.slice(), heap:n0, i:-1, L:-1, R:-1, swap:false, phase:"start",
+    msg:"시작 배열 [80, 55, 90, 70, 60]. 인덱스 0이 루트, 왼쪽 자식 2i+1, 오른쪽 2i+2."});
+  function sift(i, heap){
+    while(true){
+      const L = 2*i+1, R = 2*i+2;
+      let largest = i;
+      out.push({arr:a.slice(), heap:heap, i:i, L:L<heap?L:-1, R:R<heap?R:-1, swap:false, phase:"cmp",
+        msg:`위치 ${i} 값 ${a[i]}를 내립니다. 왼쪽 ${L<heap?a[L]+" @"+L:"없음"}, 오른쪽 ${R<heap?a[R]+" @"+R:"없음"}.`});
+      if(L < heap){
+        cmp++;
+        if(a[L] > a[largest]) largest = L;
+      }
+      if(R < heap){
+        cmp++;
+        if(a[R] > a[largest]) largest = R;
+      }
+      if(largest === i){
+        out.push({arr:a.slice(), heap:heap, i:i, L:-1, R:-1, swap:false, phase:"ok",
+          msg:`위치 ${i}가 자식보다 크거나 같아 멈춤. 비교 ${cmp}.`});
+        return;
+      }
+      const t=a[i]; a[i]=a[largest]; a[largest]=t; swp++;
+      out.push({arr:a.slice(), heap:heap, i:largest, L:i, R:largest, swap:true, phase:"swap",
+        msg:`교환 ${swp}회. 위치 ${i}와 ${largest}. ${a[largest]}을 아래로.`});
+      i = largest;
+    }
+  }
+  const lastParent = Math.floor(n0/2)-1;
+  out.push({arr:a.slice(), heap:n0, i:-1, L:-1, R:-1, swap:false, phase:"build",
+    msg:`힙 구성 시작. 마지막 부모 인덱스 ${lastParent}부터 0까지 내립니다.`});
+  for(let i=lastParent; i>=0; i--) sift(i, n0);
+  out.push({arr:a.slice(), heap:n0, i:-1, L:-1, R:-1, swap:false, phase:"built",
+    msg:`최대 힙 완성 [${a.join(", ")}]. 루트 ${a[0]}이 최댓값. 비교 ${cmp} · 교환 ${swp}.`});
+  for(let heap=n0; heap>1; heap--){
+    const t=a[0]; a[0]=a[heap-1]; a[heap-1]=t; swp++;
+    out.push({arr:a.slice(), heap:heap-1, i:0, L:heap-1, R:-1, swap:true, phase:"extract",
+      msg:`루트 ${t}와 위치 ${heap-1} 교환 ${swp}회. ${t}를 뒤에 확정.`});
+    if(heap-1>1) sift(0, heap-1);
+  }
+  out.push({arr:a.slice(), heap:0, i:-1, L:-1, R:-1, swap:false, phase:"done",
+    msg:`정렬 끝 [55, 60, 70, 80, 90]. 비교 ${cmp}회, 교환 ${swp}회.`});
+  return out;
+}
+function buildPhases(){
+  return buildSteps().filter(s =>
+    s.phase==="start" || s.phase==="build" || s.phase==="built" ||
+    s.phase==="extract" || s.phase==="done");
+}
+const PACK = {step: buildSteps(), phase: buildPhases()};
+let mode = "step", idx = 0, timer = null;
+
+function colors(f){
+  const n = f.arr.length;
+  return f.arr.map((_,k)=>{
+    if(k >= f.heap && f.heap>=0) return "#1e8449";
+    if(f.swap && (k===f.i || k===f.L || k===f.R)) return "#c0392b";
+    if(k===f.i) return "#8e44ad";
+    if(k===f.L || k===f.R) return "#d68910";
+    if(k < f.heap) return "#2471a3";
+    return "#95a5a6";
+  });
+}
+function draw(){
+  const f = PACK[mode][idx];
+  document.getElementById("hint").innerHTML = "<b>"+(idx+1)+"/"+PACK[mode].length+".</b> "+f.msg;
+  Plotly.react("chart", [{
+    x: NAMES, y: f.arr, type:"bar",
+    text: f.arr.map(String), textposition:"outside",
+    marker:{color: colors(f)},
+    hovertemplate:"%{x} = %{y}<extra></extra>"
+  }], {
+    yaxis:{title:"점수", range:[0,110]},
+    xaxis:{title:"학생 위치 (배열 인덱스)"},
+    margin:{t:16,r:16,b:48,l:48},
+    plot_bgcolor:"#fff", paper_bgcolor:"#fff",
+    showlegend:false
+  }, {responsive:true, displayModeBar:false});
+}
+function setMode(id){
+  mode = id; idx = 0; stop();
+  [...document.getElementById("tabs").children].forEach(b=>b.classList.toggle("on", b.dataset.id===id));
+  history.replaceState(null,"","#"+id);
+  draw();
+}
+function stop(){ if(timer){clearInterval(timer); timer=null; document.getElementById("play").textContent="자동";} }
+function next(){ if(idx<PACK[mode].length-1){idx++; draw();} else stop(); }
+function prev(){ if(idx>0){idx--; draw();} }
+document.getElementById("next").onclick=next;
+document.getElementById("prev").onclick=prev;
+document.getElementById("reset").onclick=()=>{idx=0; stop(); draw();};
+document.getElementById("play").onclick=function(){
+  if(timer){stop(); return;}
+  this.textContent="정지";
+  timer=setInterval(next, 900);
+};
+const TABS=[{id:"step",label:"1. 비교·교환 한 번씩"},{id:"phase",label:"2. 구성·추출만"}];
+TABS.forEach(t=>{
+  const b=document.createElement("button");
+  b.textContent=t.label; b.dataset.id=t.id;
+  b.onclick=()=>setMode(t.id);
+  document.getElementById("tabs").appendChild(b);
+});
+setMode((location.hash||"#step").slice(1)==="phase"?"phase":"step");
+</script>
+</body>
+</html>
