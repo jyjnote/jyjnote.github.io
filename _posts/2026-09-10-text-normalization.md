@@ -66,6 +66,7 @@ Vocabulary
 <blockquote class="prompt-warning">
   <p>정제와 정규화의 경계는 구현마다 다릅니다. 둘을 완전히 분리된 단계로 외울 필요는 없습니다.</p>
 </blockquote>
+
 ## 대소문자 통일
 ```text
 Apple
