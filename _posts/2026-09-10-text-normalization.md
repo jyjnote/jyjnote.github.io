@@ -253,7 +253,7 @@ text = unicodedata.normalize("NFC", text)
 
 - 정규화: 표현 통일
 - 형태소 분석: 언어 구조 분석
-- 
+  
 ## 정규화와 Tokenization
 ```text
 AI     is GOOD!!!
@@ -296,6 +296,7 @@ i love this
 <blockquote class="prompt-warning">
   <p>정규화는 많이 할수록 좋은 것이 아닙니다. 예측에 필요한 정보까지 지우면 성능이 떨어질 수 있습니다.</p>
 </blockquote>
+
 ## 전통 NLP와 LLM
 전통 NLP에서는 Vocabulary를 줄이기 위해 정규화를 강하게 하는 경우가 많았습니다.
 
