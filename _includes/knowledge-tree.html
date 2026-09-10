@@ -1,170 +1,564 @@
 <style>
-.truthmap{margin:0 0 2.4rem;padding:1.4rem 1rem 1.3rem;border:1px solid var(--main-border-color,#ddd);border-radius:20px;background:
-radial-gradient(1200px 280px at 50% -40px,rgba(180,140,80,.14),transparent 55%),
-var(--card-bg,transparent)}
-.truth-gate{position:relative;margin:0 auto 1.15rem;max-width:22rem;text-align:center;padding:1rem .9rem .95rem;border:1px solid var(--main-border-color,#ddd);border-radius:18px 18px 12px 12px;background:rgba(127,127,127,.06)}
-.truth-gate:before,.truth-gate:after{content:"";position:absolute;top:12px;width:10px;height:calc(100% - 24px);border:1px solid var(--main-border-color,#ddd);border-radius:8px;opacity:.7}
-.truth-gate:before{left:10px} .truth-gate:after{right:10px}
-.truth-kicker{margin:0;font-size:.72rem;letter-spacing:.16em;text-transform:uppercase;color:var(--text-muted-color,#888)}
-.truth-title{margin:.15rem 0 .2rem;font-size:1.45rem}
-.truth-desc{margin:0;color:var(--text-muted-color,#888);font-size:.9rem}
-.truth-trunk{position:relative;margin:0 auto;max-width:52rem;padding:0 0 0 1.15rem}
-.truth-trunk:before{content:"";position:absolute;left:18px;top:0;bottom:8px;width:2px;background:linear-gradient(180deg,rgba(180,140,80,.85),var(--main-border-color,#ddd))}
-.troot,.troot-children{list-style:none;margin:0;padding:0}
-.troot-item{position:relative;margin:.18rem 0}
-.troot-item:before{content:"";position:absolute;left:-13px;top:1.05rem;width:13px;height:1px;background:var(--main-border-color,#c9b07a)}
-.troot-item:after{content:"";position:absolute;left:-16px;top:.92rem;width:7px;height:7px;border-radius:50%;background:var(--card-bg,#111);border:1.5px solid rgba(180,140,80,.95)}
-.troot-folder,.troot-link{display:flex;align-items:center;gap:.5rem;width:100%;border:0;border-radius:11px;text-align:left;text-decoration:none;color:inherit;background:transparent;transition:background .18s,transform .18s}
-.troot-folder{padding:.58rem .65rem;cursor:pointer;font-weight:700}
-.troot-folder em{margin-left:auto;font-style:normal;font-weight:500;font-size:.76rem;color:var(--text-muted-color,#888)}
-.troot-link{padding:.42rem .65rem;font-size:.95rem}
-.troot-folder:hover,.troot-link:hover,.troot-folder:focus-visible,.troot-link:focus-visible{background:rgba(180,140,80,.12);box-shadow:inset 3px 0 0 rgba(180,140,80,.85);outline:none;transform:translateX(2px)}
-.troot-children{display:none;margin:.1rem 0 .25rem 1.05rem;padding-left:.95rem;border-left:1px dashed rgba(180,140,80,.45)}
-.troot-item.is-open > .troot-children{display:block}
-.troot-mark{width:1rem;height:1rem;flex:0 0 auto;position:relative}
-.troot-mark:before,.troot-mark:after{content:"";position:absolute;left:50%;top:50%;background:currentColor;transform:translate(-50%,-50%)}
-.troot-mark:before{width:8px;height:1.5px}
-.troot-mark:after{width:1.5px;height:8px}
-.troot-item.is-open > .troot-folder .troot-mark:after{display:none}
+.truthmap{
+  margin:0 0 2.4rem;
+  padding:1.4rem 1rem 1.3rem;
+  border:1px solid var(--main-border-color,#ddd);
+  border-radius:20px;
+  background:
+    radial-gradient(1200px 280px at 50% -40px,rgba(180,140,80,.14),transparent 55%),
+    var(--card-bg,transparent);
+}
+
+.truth-gate{
+  position:relative;
+  margin:0 auto 1.15rem;
+  max-width:24rem;
+  text-align:center;
+  padding:1rem .9rem .95rem;
+  border:1px solid var(--main-border-color,#ddd);
+  border-radius:18px 18px 12px 12px;
+  background:rgba(127,127,127,.06);
+}
+
+.truth-gate:before,
+.truth-gate:after{
+  content:"";
+  position:absolute;
+  top:12px;
+  width:10px;
+  height:calc(100% - 24px);
+  border:1px solid var(--main-border-color,#ddd);
+  border-radius:8px;
+  opacity:.7;
+}
+
+.truth-gate:before{left:10px}
+.truth-gate:after{right:10px}
+
+.truth-kicker{
+  margin:0;
+  font-size:.72rem;
+  letter-spacing:.16em;
+  text-transform:uppercase;
+  color:var(--text-muted-color,#888);
+}
+
+.truth-title{
+  margin:.15rem 0 .2rem;
+  font-size:1.45rem;
+}
+
+.truth-desc{
+  margin:0;
+  color:var(--text-muted-color,#888);
+  font-size:.9rem;
+}
+
+.truth-trunk{
+  position:relative;
+  margin:0 auto;
+  max-width:58rem;
+  padding:0 0 0 1.15rem;
+}
+
+.truth-trunk:before{
+  content:"";
+  position:absolute;
+  left:18px;
+  top:0;
+  bottom:8px;
+  width:2px;
+  background:linear-gradient(
+    180deg,
+    rgba(180,140,80,.85),
+    var(--main-border-color,#ddd)
+  );
+}
+
+.troot,
+.troot-children{
+  list-style:none;
+  margin:0;
+  padding:0;
+}
+
+.troot-item{
+  position:relative;
+  margin:.18rem 0;
+}
+
+.troot-item:before{
+  content:"";
+  position:absolute;
+  left:-13px;
+  top:1.05rem;
+  width:13px;
+  height:1px;
+  background:var(--main-border-color,#c9b07a);
+}
+
+.troot-item:after{
+  content:"";
+  position:absolute;
+  left:-16px;
+  top:.92rem;
+  width:7px;
+  height:7px;
+  border-radius:50%;
+  background:var(--card-bg,#111);
+  border:1.5px solid rgba(180,140,80,.95);
+}
+
+.troot-folder,
+.troot-link{
+  display:flex;
+  align-items:center;
+  gap:.5rem;
+  width:100%;
+  border:0;
+  border-radius:11px;
+  text-align:left;
+  text-decoration:none;
+  color:inherit;
+  background:transparent;
+  transition:background .18s,transform .18s;
+}
+
+.troot-folder{
+  padding:.58rem .65rem;
+  cursor:pointer;
+  font-weight:700;
+}
+
+.troot-folder em{
+  margin-left:auto;
+  font-style:normal;
+  font-weight:500;
+  font-size:.76rem;
+  color:var(--text-muted-color,#888);
+}
+
+.troot-link{
+  padding:.42rem .65rem;
+  font-size:.95rem;
+}
+
+.troot-folder:hover,
+.troot-link:hover,
+.troot-folder:focus-visible,
+.troot-link:focus-visible{
+  background:rgba(180,140,80,.12);
+  box-shadow:inset 3px 0 0 rgba(180,140,80,.85);
+  outline:none;
+  transform:translateX(2px);
+}
+
+.troot-children{
+  display:none;
+  margin:.1rem 0 .25rem 1.05rem;
+  padding-left:.95rem;
+  border-left:1px dashed rgba(180,140,80,.45);
+}
+
+.troot-item.is-open > .troot-children{
+  display:block;
+}
+
+.troot-mark{
+  width:1rem;
+  height:1rem;
+  flex:0 0 auto;
+  position:relative;
+}
+
+.troot-mark:before,
+.troot-mark:after{
+  content:"";
+  position:absolute;
+  left:50%;
+  top:50%;
+  background:currentColor;
+  transform:translate(-50%,-50%);
+}
+
+.troot-mark:before{
+  width:8px;
+  height:1.5px;
+}
+
+.troot-mark:after{
+  width:1.5px;
+  height:8px;
+}
+
+.troot-item.is-open > .troot-folder .troot-mark:after{
+  display:none;
+}
+
+.troot > .troot-item > .troot-folder{
+  font-size:1.03rem;
+}
+
+@media (max-width: 576px){
+  .truthmap{
+    padding:1rem .65rem;
+  }
+
+  .truth-trunk{
+    padding-left:.9rem;
+  }
+
+  .troot-folder em{
+    display:none;
+  }
+
+  .troot-children{
+    margin-left:.65rem;
+    padding-left:.7rem;
+  }
+}
 </style>
-<section class="truthmap" aria-label="개요">
+
+<section class="truthmap" aria-label="학습 개요">
   <div class="truth-gate">
     <p class="truth-kicker">Porta Veritatis</p>
-    <h2 class="truth-title">개요</h2>
+    <h2 class="truth-title">Knowledge Tree</h2>
     <p class="truth-desc">줄기를 눌러 가지를 펼치세요. 글이 있는 항목은 해당 글로 이동합니다.</p>
   </div>
+
   <div class="truth-trunk">
     <ul class="troot">
-      <li class="troot-item is-open">
-        <button class="troot-folder" type="button"><span class="troot-mark"></span><span>기초</span><em>통계 · 확률 · 수학</em></button>
+
+      <!-- =========================================================
+           1. 기초
+      ========================================================== -->
+      <li class="troot-item">
+        <button class="troot-folder" type="button" aria-expanded="false">
+          <span class="troot-mark"></span>
+          <span>기초</span>
+          <em>수학 · 확률 · 통계</em>
+        </button>
+
         <ul class="troot-children">
-          <li class="troot-item"><a class="troot-link" href="#">통계</a></li>
-          <li class="troot-item"><a class="troot-link" href="#">확률</a></li>
-          <li class="troot-item"><a class="troot-link" href="#">수학</a></li>
+
+          <li class="troot-item">
+            <button class="troot-folder" type="button" aria-expanded="false">
+              <span class="troot-mark"></span><span>수학</span>
+            </button>
+            <ul class="troot-children">
+              <li class="troot-item"><a class="troot-link" href="#">선형대수</a></li>
+              <li class="troot-item"><a class="troot-link" href="#">미적분</a></li>
+              <li class="troot-item"><a class="troot-link" href="#">이산수학</a></li>
+              <li class="troot-item"><a class="troot-link" href="#">최적화</a></li>
+            </ul>
+          </li>
+
+          <li class="troot-item">
+            <button class="troot-folder" type="button" aria-expanded="false">
+              <span class="troot-mark"></span><span>확률</span>
+            </button>
+            <ul class="troot-children">
+              <li class="troot-item"><a class="troot-link" href="#">확률의 기초</a></li>
+              <li class="troot-item"><a class="troot-link" href="#">확률변수</a></li>
+              <li class="troot-item"><a class="troot-link" href="#">확률분포</a></li>
+              <li class="troot-item"><a class="troot-link" href="#">조건부확률</a></li>
+              <li class="troot-item"><a class="troot-link" href="#">베이즈 정리</a></li>
+            </ul>
+          </li>
+
+          <li class="troot-item">
+            <button class="troot-folder" type="button" aria-expanded="false">
+              <span class="troot-mark"></span><span>통계</span>
+            </button>
+            <ul class="troot-children">
+              <li class="troot-item"><a class="troot-link" href="#">기술통계</a></li>
+              <li class="troot-item"><a class="troot-link" href="#">표본과 모집단</a></li>
+              <li class="troot-item"><a class="troot-link" href="#">추정</a></li>
+              <li class="troot-item"><a class="troot-link" href="#">가설검정</a></li>
+              <li class="troot-item"><a class="troot-link" href="#">상관분석</a></li>
+              <li class="troot-item"><a class="troot-link" href="#">회귀 기초</a></li>
+            </ul>
+          </li>
+
         </ul>
       </li>
+
+      <!-- =========================================================
+           2. 컴퓨터과학
+      ========================================================== -->
       <li class="troot-item">
-        <button class="troot-folder" type="button"><span class="troot-mark"></span><span>컴퓨터</span><em>정처기 뼈대</em></button>
+        <button class="troot-folder" type="button" aria-expanded="false">
+          <span class="troot-mark"></span>
+          <span>컴퓨터과학</span>
+          <em>CS · 자료구조 · 알고리즘</em>
+        </button>
+
         <ul class="troot-children">
+
+          <li class="troot-item">
+            <button class="troot-folder" type="button" aria-expanded="false">
+              <span class="troot-mark"></span><span>프로그래밍</span>
+            </button>
+            <ul class="troot-children">
+              <li class="troot-item"><a class="troot-link" href="#">C</a></li>
+              <li class="troot-item"><a class="troot-link" href="#">Java</a></li>
+              <li class="troot-item"><a class="troot-link" href="#">Python</a></li>
+              <li class="troot-item"><a class="troot-link" href="#">객체지향 프로그래밍</a></li>
+            </ul>
+          </li>
+
+          <li class="troot-item">
+            <button class="troot-folder" type="button" aria-expanded="false">
+              <span class="troot-mark"></span><span>자료구조</span>
+            </button>
+            <ul class="troot-children">
+              <li class="troot-item"><a class="troot-link" href="#">배열</a></li>
+              <li class="troot-item"><a class="troot-link" href="#">연결리스트</a></li>
+              <li class="troot-item"><a class="troot-link" href="#">스택</a></li>
+              <li class="troot-item"><a class="troot-link" href="#">큐</a></li>
+              <li class="troot-item"><a class="troot-link" href="#">해시 테이블</a></li>
+              <li class="troot-item"><a class="troot-link" href="#">트리</a></li>
+              <li class="troot-item"><a class="troot-link" href="#">힙</a></li>
+              <li class="troot-item"><a class="troot-link" href="#">그래프</a></li>
+            </ul>
+          </li>
+
+          <li class="troot-item">
+            <button class="troot-folder" type="button" aria-expanded="false">
+              <span class="troot-mark"></span>
+              <span>알고리즘</span>
+            </button>
+
+            <ul class="troot-children">
+
+              <li class="troot-item">
+                <button class="troot-folder" type="button" aria-expanded="false">
+                  <span class="troot-mark"></span><span>분석</span>
+                </button>
+                <ul class="troot-children">
+                  <li class="troot-item"><a class="troot-link" href="/posts/algorithm-basics/">알고리즘 개념</a></li>
+                  <li class="troot-item"><a class="troot-link" href="/posts/time-complexity/">시간복잡도</a></li>
+                  <li class="troot-item"><a class="troot-link" href="/posts/space-complexity/">공간복잡도</a></li>
+                  <li class="troot-item"><a class="troot-link" href="/posts/asymptotic-notation/">점근 표기</a></li>
+                  <li class="troot-item"><a class="troot-link" href="/posts/master-theorem/">점화식 · 마스터 정리</a></li>
+                  <li class="troot-item"><a class="troot-link" href="#">P · NP</a></li>
+                </ul>
+              </li>
+
+              <li class="troot-item">
+                <button class="troot-folder" type="button" aria-expanded="false">
+                  <span class="troot-mark"></span><span>정렬</span>
+                </button>
+                <ul class="troot-children">
+                  <li class="troot-item"><a class="troot-link" href="/posts/bubble-sort/">버블 정렬</a></li>
+                  <li class="troot-item"><a class="troot-link" href="/posts/selection-sort/">선택 정렬</a></li>
+                  <li class="troot-item"><a class="troot-link" href="/posts/insertion-sort/">삽입 정렬</a></li>
+                  <li class="troot-item"><a class="troot-link" href="/posts/shell-sort/">셸 정렬</a></li>
+                  <li class="troot-item"><a class="troot-link" href="/posts/merge-sort/">병합 정렬</a></li>
+                  <li class="troot-item"><a class="troot-link" href="/posts/quick-sort/">퀵 정렬</a></li>
+                  <li class="troot-item"><a class="troot-link" href="/posts/heap-sort/">힙 정렬</a></li>
+                  <li class="troot-item"><a class="troot-link" href="/posts/counting-sort/">계수 정렬</a></li>
+                  <li class="troot-item"><a class="troot-link" href="/posts/radix-sort/">기수 정렬</a></li>
+                </ul>
+              </li>
+
+              <li class="troot-item">
+                <button class="troot-folder" type="button" aria-expanded="false">
+                  <span class="troot-mark"></span><span>탐색</span>
+                </button>
+                <ul class="troot-children">
+                  <li class="troot-item"><a class="troot-link" href="#">순차 탐색</a></li>
+                  <li class="troot-item"><a class="troot-link" href="#">이진 탐색</a></li>
+                  <li class="troot-item"><a class="troot-link" href="#">해시 탐색</a></li>
+                </ul>
+              </li>
+
+              <li class="troot-item">
+                <button class="troot-folder" type="button" aria-expanded="false">
+                  <span class="troot-mark"></span><span>설계 기법</span>
+                </button>
+                <ul class="troot-children">
+                  <li class="troot-item"><a class="troot-link" href="#">재귀</a></li>
+                  <li class="troot-item"><a class="troot-link" href="#">분할정복</a></li>
+                  <li class="troot-item"><a class="troot-link" href="#">그리디</a></li>
+
+                  <li class="troot-item">
+                    <button class="troot-folder" type="button" aria-expanded="false">
+                      <span class="troot-mark"></span><span>동적 계획법</span>
+                    </button>
+                    <ul class="troot-children">
+                      <li class="troot-item"><a class="troot-link" href="#">메모이제이션</a></li>
+                      <li class="troot-item"><a class="troot-link" href="#">타뷸레이션</a></li>
+                    </ul>
+                  </li>
+
+                  <li class="troot-item"><a class="troot-link" href="#">백트래킹</a></li>
+                  <li class="troot-item"><a class="troot-link" href="#">분기한정</a></li>
+                </ul>
+              </li>
+
+              <li class="troot-item">
+                <button class="troot-folder" type="button" aria-expanded="false">
+                  <span class="troot-mark"></span><span>그래프 알고리즘</span>
+                </button>
+                <ul class="troot-children">
+                  <li class="troot-item"><a class="troot-link" href="#">BFS</a></li>
+                  <li class="troot-item"><a class="troot-link" href="#">DFS</a></li>
+                  <li class="troot-item"><a class="troot-link" href="#">위상 정렬</a></li>
+
+                  <li class="troot-item">
+                    <button class="troot-folder" type="button" aria-expanded="false">
+                      <span class="troot-mark"></span><span>최단 경로</span>
+                    </button>
+                    <ul class="troot-children">
+                      <li class="troot-item"><a class="troot-link" href="#">다익스트라</a></li>
+                      <li class="troot-item"><a class="troot-link" href="#">벨만-포드</a></li>
+                      <li class="troot-item"><a class="troot-link" href="#">플로이드-워셜</a></li>
+                    </ul>
+                  </li>
+
+                  <li class="troot-item">
+                    <button class="troot-folder" type="button" aria-expanded="false">
+                      <span class="troot-mark"></span><span>최소 신장 트리</span>
+                    </button>
+                    <ul class="troot-children">
+                      <li class="troot-item"><a class="troot-link" href="#">프림</a></li>
+                      <li class="troot-item"><a class="troot-link" href="#">크루스칼</a></li>
+                    </ul>
+                  </li>
+
+                  <li class="troot-item"><a class="troot-link" href="#">유니온 파인드</a></li>
+                </ul>
+              </li>
+
+              <li class="troot-item">
+                <button class="troot-folder" type="button" aria-expanded="false">
+                  <span class="troot-mark"></span><span>문자열</span>
+                </button>
+                <ul class="troot-children">
+                  <li class="troot-item"><a class="troot-link" href="#">단순 매칭</a></li>
+                  <li class="troot-item"><a class="troot-link" href="#">KMP</a></li>
+                  <li class="troot-item"><a class="troot-link" href="#">라빈-카프</a></li>
+                </ul>
+              </li>
+
+              <li class="troot-item">
+                <button class="troot-folder" type="button" aria-expanded="false">
+                  <span class="troot-mark"></span><span>문제 해결 기법</span>
+                </button>
+                <ul class="troot-children">
+                  <li class="troot-item"><a class="troot-link" href="#">투 포인터</a></li>
+                  <li class="troot-item"><a class="troot-link" href="#">슬라이딩 윈도우</a></li>
+                </ul>
+              </li>
+
+            </ul>
+          </li>
+
           <li class="troot-item"><a class="troot-link" href="#">운영체제</a></li>
           <li class="troot-item"><a class="troot-link" href="#">데이터베이스</a></li>
           <li class="troot-item"><a class="troot-link" href="#">네트워크</a></li>
           <li class="troot-item"><a class="troot-link" href="#">소프트웨어공학</a></li>
-          <li class="troot-item"><a class="troot-link" href="#">자료구조</a></li>
+
         </ul>
       </li>
+
+      <!-- =========================================================
+           3. 데이터
+      ========================================================== -->
       <li class="troot-item">
-        <button class="troot-folder" type="button"><span class="troot-mark"></span><span>알고리즘</span><em>정처기 · 학부</em></button>
+        <button class="troot-folder" type="button" aria-expanded="false">
+          <span class="troot-mark"></span>
+          <span>데이터</span>
+          <em>수집 · 전처리 · 분석</em>
+        </button>
+
         <ul class="troot-children">
+
+          <li class="troot-item"><a class="troot-link" href="#">데이터 수집</a></li>
+
           <li class="troot-item">
-            <button class="troot-folder" type="button"><span class="troot-mark"></span><span>기초</span></button>
+            <button class="troot-folder" type="button" aria-expanded="false">
+              <span class="troot-mark"></span><span>데이터 전처리</span>
+            </button>
             <ul class="troot-children">
-              <li class="troot-item"><a class="troot-link" href="/posts/algorithm-basics/">알고리즘 개념</a></li>
-              <li class="troot-item"><a class="troot-link" href="/posts/time-complexity/">시간복잡도</a></li>
-              <li class="troot-item"><a class="troot-link" href="/posts/space-complexity/">공간복잡도</a></li>
-              <li class="troot-item"><a class="troot-link" href="/posts/asymptotic-notation/">점근 표기</a></li>
-              <li class="troot-item"><a class="troot-link" href="/posts/master-theorem/">점화식 · 마스터 정리</a></li>
+              <li class="troot-item"><a class="troot-link" href="#">결측치 처리</a></li>
+              <li class="troot-item"><a class="troot-link" href="#">이상치 처리</a></li>
+              <li class="troot-item"><a class="troot-link" href="#">인코딩</a></li>
+              <li class="troot-item"><a class="troot-link" href="#">스케일링</a></li>
+              <li class="troot-item"><a class="troot-link" href="#">Feature Engineering</a></li>
             </ul>
           </li>
-          <li class="troot-item">
-            <button class="troot-folder" type="button"><span class="troot-mark"></span><span>정렬</span></button>
-            <ul class="troot-children">
-              <li class="troot-item"><a class="troot-link" href="/posts/bubble-sort/">버블 정렬</a></li>
-              <li class="troot-item"><a class="troot-link" href="/posts/selection-sort/">선택 정렬</a></li>
-              <li class="troot-item"><a class="troot-link" href="/posts/insertion-sort/">삽입 정렬</a></li>
-              <li class="troot-item"><a class="troot-link" href="/posts/shell-sort/">셸 정렬</a></li>
-              <li class="troot-item"><a class="troot-link" href="/posts/merge-sort/">병합 정렬</a></li>
-              <li class="troot-item"><a class="troot-link" href="/posts/quick-sort/">퀵 정렬</a></li>
-              <li class="troot-item"><a class="troot-link" href="/posts/heap-sort/">힙 정렬</a></li>
-              <li class="troot-item"><a class="troot-link" href="/posts/counting-sort/">계수 정렬</a></li>
-              <li class="troot-item"><a class="troot-link" href="/posts/radix-sort/">기수 정렬</a></li>
-            </ul>
-          </li>
-          <li class="troot-item">
-            <button class="troot-folder" type="button"><span class="troot-mark"></span><span>탐색</span></button>
-            <ul class="troot-children">
-              <li class="troot-item"><a class="troot-link" href="#">순차 탐색</a></li>
-              <li class="troot-item"><a class="troot-link" href="#">이진 탐색</a></li>
-              <li class="troot-item"><a class="troot-link" href="#">해시 탐색</a></li>
-            </ul>
-          </li>
-          <li class="troot-item">
-            <button class="troot-folder" type="button"><span class="troot-mark"></span><span>설계 기법</span></button>
-            <ul class="troot-children">
-              <li class="troot-item"><a class="troot-link" href="#">재귀</a></li>
-              <li class="troot-item"><a class="troot-link" href="#">분할정복</a></li>
-              <li class="troot-item"><a class="troot-link" href="#">그리디</a></li>
-              <li class="troot-item">
-                <button class="troot-folder" type="button"><span class="troot-mark"></span><span>동적 계획법</span></button>
-                <ul class="troot-children">
-                  <li class="troot-item"><a class="troot-link" href="#">메모이제이션</a></li>
-                  <li class="troot-item"><a class="troot-link" href="#">타뷸레이션</a></li>
-                </ul>
-              </li>
-              <li class="troot-item"><a class="troot-link" href="#">백트래킹</a></li>
-              <li class="troot-item"><a class="troot-link" href="#">분기한정</a></li>
-            </ul>
-          </li>
-          <li class="troot-item">
-            <button class="troot-folder" type="button"><span class="troot-mark"></span><span>그래프</span></button>
-            <ul class="troot-children">
-              <li class="troot-item"><a class="troot-link" href="#">그래프 기본</a></li>
-              <li class="troot-item"><a class="troot-link" href="#">BFS</a></li>
-              <li class="troot-item"><a class="troot-link" href="#">DFS</a></li>
-              <li class="troot-item"><a class="troot-link" href="#">위상 정렬</a></li>
-              <li class="troot-item">
-                <button class="troot-folder" type="button"><span class="troot-mark"></span><span>최단 경로</span></button>
-                <ul class="troot-children">
-                  <li class="troot-item"><a class="troot-link" href="#">다익스트라</a></li>
-                  <li class="troot-item"><a class="troot-link" href="#">벨만-포드</a></li>
-                  <li class="troot-item"><a class="troot-link" href="#">플로이드-워셜</a></li>
-                </ul>
-              </li>
-              <li class="troot-item">
-                <button class="troot-folder" type="button"><span class="troot-mark"></span><span>최소 신장 트리</span></button>
-                <ul class="troot-children">
-                  <li class="troot-item"><a class="troot-link" href="#">프림</a></li>
-                  <li class="troot-item"><a class="troot-link" href="#">크루스칼</a></li>
-                </ul>
-              </li>
-              <li class="troot-item"><a class="troot-link" href="#">유니온 파인드</a></li>
-            </ul>
-          </li>
-          <li class="troot-item">
-            <button class="troot-folder" type="button"><span class="troot-mark"></span><span>문자열</span></button>
-            <ul class="troot-children">
-              <li class="troot-item"><a class="troot-link" href="#">단순 매칭</a></li>
-              <li class="troot-item"><a class="troot-link" href="#">KMP</a></li>
-              <li class="troot-item"><a class="troot-link" href="#">라빈-카프</a></li>
-            </ul>
-          </li>
-          <li class="troot-item">
-            <button class="troot-folder" type="button"><span class="troot-mark"></span><span>코딩 기법</span></button>
-            <ul class="troot-children">
-              <li class="troot-item"><a class="troot-link" href="#">투 포인터</a></li>
-              <li class="troot-item"><a class="troot-link" href="#">슬라이딩 윈도우</a></li>
-              <li class="troot-item"><a class="troot-link" href="#">P · NP</a></li>
-            </ul>
-          </li>
-        </ul>
-      </li>
-      <li class="troot-item">
-        <button class="troot-folder" type="button"><span class="troot-mark"></span><span>데이터</span><em>빅분기 뼈대</em></button>
-        <ul class="troot-children">
-          <li class="troot-item"><a class="troot-link" href="#">전처리</a></li>
+
           <li class="troot-item"><a class="troot-link" href="#">SQL</a></li>
+
+          <li class="troot-item">
+            <button class="troot-folder" type="button" aria-expanded="false">
+              <span class="troot-mark"></span><span>데이터 분석</span>
+            </button>
+            <ul class="troot-children">
+              <li class="troot-item"><a class="troot-link" href="#">EDA</a></li>
+              <li class="troot-item"><a class="troot-link" href="#">상관분석</a></li>
+              <li class="troot-item"><a class="troot-link" href="#">통계 분석</a></li>
+            </ul>
+          </li>
+
           <li class="troot-item"><a class="troot-link" href="#">시각화</a></li>
-          <li class="troot-item"><a class="troot-link" href="#">빅데이터</a></li>
+
+          <li class="troot-item">
+            <button class="troot-folder" type="button" aria-expanded="false">
+              <span class="troot-mark"></span><span>빅데이터</span>
+            </button>
+            <ul class="troot-children">
+              <li class="troot-item"><a class="troot-link" href="#">분산처리</a></li>
+              <li class="troot-item"><a class="troot-link" href="#">Hadoop</a></li>
+              <li class="troot-item"><a class="troot-link" href="#">Spark</a></li>
+            </ul>
+          </li>
+
         </ul>
       </li>
-      <li class="troot-item is-open">
-        <button class="troot-folder" type="button"><span class="troot-mark"></span><span>AI</span><em>전공 · 생성형</em></button>
+
+      <!-- =========================================================
+           4. 인공지능
+      ========================================================== -->
+      <li class="troot-item">
+        <button class="troot-folder" type="button" aria-expanded="false">
+          <span class="troot-mark"></span>
+          <span>인공지능</span>
+          <em>ML · DL · LLM · 시스템</em>
+        </button>
+
         <ul class="troot-children">
+
+          <!-- 머신러닝 -->
           <li class="troot-item">
-            <button class="troot-folder" type="button"><span class="troot-mark"></span><span>머신러닝</span></button>
+            <button class="troot-folder" type="button" aria-expanded="false">
+              <span class="troot-mark"></span><span>머신러닝</span>
+            </button>
+
             <ul class="troot-children">
+
               <li class="troot-item">
-                <button class="troot-folder" type="button"><span class="troot-mark"></span><span>선형 모델</span></button>
+                <button class="troot-folder" type="button" aria-expanded="false">
+                  <span class="troot-mark"></span><span>기초</span>
+                </button>
+                <ul class="troot-children">
+                  <li class="troot-item"><a class="troot-link" href="#">지도학습</a></li>
+                  <li class="troot-item"><a class="troot-link" href="#">비지도학습</a></li>
+                  <li class="troot-item"><a class="troot-link" href="#">회귀 · 분류</a></li>
+                  <li class="troot-item"><a class="troot-link" href="#">Train · Validation · Test</a></li>
+                  <li class="troot-item"><a class="troot-link" href="#">교차검증</a></li>
+                  <li class="troot-item"><a class="troot-link" href="#">Bias · Variance</a></li>
+                  <li class="troot-item"><a class="troot-link" href="#">과적합 · 과소적합</a></li>
+                  <li class="troot-item"><a class="troot-link" href="#">평가 지표</a></li>
+                </ul>
+              </li>
+
+              <li class="troot-item">
+                <button class="troot-folder" type="button" aria-expanded="false">
+                  <span class="troot-mark"></span><span>선형 모델</span>
+                </button>
                 <ul class="troot-children">
                   <li class="troot-item"><a class="troot-link" href="/posts/simple-linear-regression/">단순선형회귀</a></li>
                   <li class="troot-item"><a class="troot-link" href="/posts/multiple-linear-regression/">다중선형회귀</a></li>
@@ -176,16 +570,22 @@ var(--card-bg,transparent)}
                   <li class="troot-item"><a class="troot-link" href="/posts/elastic-net/">Elastic Net</a></li>
                 </ul>
               </li>
+
               <li class="troot-item">
-                <button class="troot-folder" type="button"><span class="troot-mark"></span><span>거리 기반</span></button>
+                <button class="troot-folder" type="button" aria-expanded="false">
+                  <span class="troot-mark"></span><span>거리 기반</span>
+                </button>
                 <ul class="troot-children">
                   <li class="troot-item"><a class="troot-link" href="/posts/knn/">KNN</a></li>
                   <li class="troot-item"><a class="troot-link" href="/posts/weighted-knn/">Weighted KNN</a></li>
                   <li class="troot-item"><a class="troot-link" href="/posts/radius-neighbors/">Radius Neighbors</a></li>
                 </ul>
               </li>
+
               <li class="troot-item">
-                <button class="troot-folder" type="button"><span class="troot-mark"></span><span>확률 모델</span></button>
+                <button class="troot-folder" type="button" aria-expanded="false">
+                  <span class="troot-mark"></span><span>확률 · 판별 모델</span>
+                </button>
                 <ul class="troot-children">
                   <li class="troot-item"><a class="troot-link" href="/posts/gaussian-naive-bayes/">가우시안 나이브베이즈</a></li>
                   <li class="troot-item"><a class="troot-link" href="/posts/multinomial-naive-bayes/">다항 나이브베이즈</a></li>
@@ -195,8 +595,11 @@ var(--card-bg,transparent)}
                   <li class="troot-item"><a class="troot-link" href="/posts/gmm/">GMM</a></li>
                 </ul>
               </li>
+
               <li class="troot-item">
-                <button class="troot-folder" type="button"><span class="troot-mark"></span><span>트리</span></button>
+                <button class="troot-folder" type="button" aria-expanded="false">
+                  <span class="troot-mark"></span><span>결정트리</span>
+                </button>
                 <ul class="troot-children">
                   <li class="troot-item"><a class="troot-link" href="/posts/id3/">ID3</a></li>
                   <li class="troot-item"><a class="troot-link" href="/posts/c4-5/">C4.5</a></li>
@@ -205,8 +608,11 @@ var(--card-bg,transparent)}
                   <li class="troot-item"><a class="troot-link" href="/posts/regression-tree/">회귀나무</a></li>
                 </ul>
               </li>
+
               <li class="troot-item">
-                <button class="troot-folder" type="button"><span class="troot-mark"></span><span>앙상블</span></button>
+                <button class="troot-folder" type="button" aria-expanded="false">
+                  <span class="troot-mark"></span><span>앙상블</span>
+                </button>
                 <ul class="troot-children">
                   <li class="troot-item"><a class="troot-link" href="/posts/bagging/">Bagging</a></li>
                   <li class="troot-item"><a class="troot-link" href="/posts/random-forest/">Random Forest</a></li>
@@ -220,8 +626,11 @@ var(--card-bg,transparent)}
                   <li class="troot-item"><a class="troot-link" href="/posts/stacking/">Stacking</a></li>
                 </ul>
               </li>
+
               <li class="troot-item">
-                <button class="troot-folder" type="button"><span class="troot-mark"></span><span>커널 · SVM</span></button>
+                <button class="troot-folder" type="button" aria-expanded="false">
+                  <span class="troot-mark"></span><span>SVM · Kernel</span>
+                </button>
                 <ul class="troot-children">
                   <li class="troot-item"><a class="troot-link" href="/posts/linear-svm/">Linear SVM</a></li>
                   <li class="troot-item"><a class="troot-link" href="/posts/soft-margin-svm/">Soft Margin SVM</a></li>
@@ -230,8 +639,11 @@ var(--card-bg,transparent)}
                   <li class="troot-item"><a class="troot-link" href="/posts/one-class-svm/">One-class SVM</a></li>
                 </ul>
               </li>
+
               <li class="troot-item">
-                <button class="troot-folder" type="button"><span class="troot-mark"></span><span>군집</span></button>
+                <button class="troot-folder" type="button" aria-expanded="false">
+                  <span class="troot-mark"></span><span>군집</span>
+                </button>
                 <ul class="troot-children">
                   <li class="troot-item"><a class="troot-link" href="/posts/k-means/">K-means</a></li>
                   <li class="troot-item"><a class="troot-link" href="/posts/k-medoids/">K-medoids</a></li>
@@ -242,78 +654,112 @@ var(--card-bg,transparent)}
                   <li class="troot-item"><a class="troot-link" href="/posts/spectral-clustering/">Spectral Clustering</a></li>
                 </ul>
               </li>
+
               <li class="troot-item">
-                <button class="troot-folder" type="button"><span class="troot-mark"></span><span>차원축소</span></button>
+                <button class="troot-folder" type="button" aria-expanded="false">
+                  <span class="troot-mark"></span><span>차원축소</span>
+                </button>
                 <ul class="troot-children">
                   <li class="troot-item"><a class="troot-link" href="/posts/pca/">PCA</a></li>
                   <li class="troot-item"><a class="troot-link" href="/posts/kernel-pca/">Kernel PCA</a></li>
                   <li class="troot-item"><a class="troot-link" href="/posts/svd/">SVD</a></li>
-                  <li class="troot-item"><a class="troot-link" href="/posts/lda/">LDA</a></li>
                   <li class="troot-item"><a class="troot-link" href="/posts/tsne/">t-SNE</a></li>
                   <li class="troot-item"><a class="troot-link" href="/posts/umap/">UMAP</a></li>
                   <li class="troot-item"><a class="troot-link" href="/posts/nmf/">NMF</a></li>
                   <li class="troot-item"><a class="troot-link" href="/posts/ica/">ICA</a></li>
                 </ul>
               </li>
+
               <li class="troot-item">
-                <button class="troot-folder" type="button"><span class="troot-mark"></span><span>연관규칙</span></button>
+                <button class="troot-folder" type="button" aria-expanded="false">
+                  <span class="troot-mark"></span><span>연관규칙</span>
+                </button>
                 <ul class="troot-children">
                   <li class="troot-item"><a class="troot-link" href="/posts/apriori/">Apriori</a></li>
                   <li class="troot-item"><a class="troot-link" href="/posts/fp-growth/">FP-Growth</a></li>
                   <li class="troot-item"><a class="troot-link" href="/posts/eclat/">Eclat</a></li>
                 </ul>
               </li>
-              <li class="troot-item"><a class="troot-link" href="#">학습 실무</a></li>
+
             </ul>
           </li>
-          <li class="troot-item is-open">
-            <button class="troot-folder" type="button"><span class="troot-mark"></span><span>딥러닝</span></button>
+
+          <!-- 딥러닝 -->
+          <li class="troot-item">
+            <button class="troot-folder" type="button" aria-expanded="false">
+              <span class="troot-mark"></span><span>딥러닝</span>
+            </button>
+
             <ul class="troot-children">
-              <li class="troot-item is-open">
-                <button class="troot-folder" type="button"><span class="troot-mark"></span><span>기초</span></button>
+
+              <li class="troot-item">
+                <button class="troot-folder" type="button" aria-expanded="false">
+                  <span class="troot-mark"></span><span>신경망 기초</span>
+                </button>
                 <ul class="troot-children">
-                  <li class="troot-item is-open">
-                    <button class="troot-folder" type="button"><span class="troot-mark"></span><span>신경망 기초</span></button>
-                  <ul class="troot-children">
-                    <li class="troot-item"><a class="troot-link" href="/posts/perceptron/">퍼셉트론</a></li>
-                    <li class="troot-item"><a class="troot-link" href="/posts/mlp/">MLP</a></li>
-                    <li class="troot-item"><a class="troot-link" href="/posts/activation-function/">활성화 함수</a></li>
-                    <li class="troot-item"><a class="troot-link" href="/posts/loss-function/">손실 함수</a></li>
-                    <li class="troot-item"><a class="troot-link" href="/posts/forward-propagation/">순전파</a></li>
-                    <li class="troot-item"><a class="troot-link" href="/posts/backpropagation/">역전파</a></li>
-                    <li class="troot-item"><a class="troot-link" href="/posts/gradient-descent/">경사하강법</a></li>
-                  </ul>
-                  </li>
-                  <li class="troot-item">
-                    <button class="troot-folder" type="button"><span class="troot-mark"></span><span>학습 기술</span></button>
-                    <ul class="troot-children">
-                      <li class="troot-item"><a class="troot-link" href="/posts/optimizer/">최적화기</a></li>
-                      <li class="troot-item"><a class="troot-link" href="/posts/regularization/">정규화</a></li>
-                      <li class="troot-item"><a class="troot-link" href="/posts/batch-normalization/">배치 정규화</a></li>
-                      <li class="troot-item"><a class="troot-link" href="/posts/weight-initialization/">가중치 초기화</a></li>
-                    </ul>
-                  </li>
-                  <li class="troot-item">
-                    <button class="troot-folder" type="button"><span class="troot-mark"></span><span>아키텍처</span></button>
-                    <ul class="troot-children">
-                      <li class="troot-item"><a class="troot-link" href="#">CNN</a></li>
-                      <li class="troot-item"><a class="troot-link" href="#">RNN</a></li>
-                      <li class="troot-item"><a class="troot-link" href="#">LSTM</a></li>
-                      <li class="troot-item"><a class="troot-link" href="#">GRU</a></li>
-                      <li class="troot-item"><a class="troot-link" href="#">Attention</a></li>
-                      <li class="troot-item"><a class="troot-link" href="#">Transformer</a></li>
-                      <li class="troot-item"><a class="troot-link" href="#">Autoencoder</a></li>
-                      <li class="troot-item"><a class="troot-link" href="#">GAN</a></li>
-                      <li class="troot-item"><a class="troot-link" href="#">Diffusion</a></li>
-                    </ul>
-                  </li>
+                  <li class="troot-item"><a class="troot-link" href="/posts/perceptron/">퍼셉트론</a></li>
+                  <li class="troot-item"><a class="troot-link" href="/posts/mlp/">MLP</a></li>
+                  <li class="troot-item"><a class="troot-link" href="/posts/activation-function/">활성화 함수</a></li>
+                  <li class="troot-item"><a class="troot-link" href="/posts/loss-function/">손실 함수</a></li>
+                  <li class="troot-item"><a class="troot-link" href="/posts/forward-propagation/">순전파</a></li>
+                  <li class="troot-item"><a class="troot-link" href="/posts/backpropagation/">역전파</a></li>
+                  <li class="troot-item"><a class="troot-link" href="/posts/gradient-descent/">경사하강법</a></li>
                 </ul>
               </li>
+
               <li class="troot-item">
-                <button class="troot-folder" type="button"><span class="troot-mark"></span><span>비전</span></button>
+                <button class="troot-folder" type="button" aria-expanded="false">
+                  <span class="troot-mark"></span><span>학습 기술</span>
+                </button>
                 <ul class="troot-children">
+                  <li class="troot-item"><a class="troot-link" href="/posts/optimizer/">최적화기</a></li>
+                  <li class="troot-item"><a class="troot-link" href="/posts/regularization/">정규화</a></li>
+                  <li class="troot-item"><a class="troot-link" href="/posts/batch-normalization/">배치 정규화</a></li>
+                  <li class="troot-item"><a class="troot-link" href="/posts/weight-initialization/">가중치 초기화</a></li>
+                  <li class="troot-item"><a class="troot-link" href="#">Dropout</a></li>
+                </ul>
+              </li>
+
+              <li class="troot-item">
+                <button class="troot-folder" type="button" aria-expanded="false">
+                  <span class="troot-mark"></span><span>핵심 아키텍처</span>
+                </button>
+                <ul class="troot-children">
+                  <li class="troot-item"><a class="troot-link" href="#">CNN</a></li>
+                  <li class="troot-item"><a class="troot-link" href="#">RNN</a></li>
+                  <li class="troot-item"><a class="troot-link" href="#">LSTM</a></li>
+                  <li class="troot-item"><a class="troot-link" href="#">GRU</a></li>
+                  <li class="troot-item"><a class="troot-link" href="#">Attention</a></li>
+                  <li class="troot-item"><a class="troot-link" href="#">Transformer</a></li>
+                  <li class="troot-item"><a class="troot-link" href="#">Autoencoder</a></li>
+                  <li class="troot-item"><a class="troot-link" href="#">GAN</a></li>
+                  <li class="troot-item"><a class="troot-link" href="#">Diffusion</a></li>
+                </ul>
+              </li>
+
+            </ul>
+          </li>
+
+          <!-- AI 분야 -->
+          <li class="troot-item">
+            <button class="troot-folder" type="button" aria-expanded="false">
+              <span class="troot-mark"></span><span>AI 분야</span>
+            </button>
+
+            <ul class="troot-children">
+
+              <!-- 컴퓨터 비전 -->
+              <li class="troot-item">
+                <button class="troot-folder" type="button" aria-expanded="false">
+                  <span class="troot-mark"></span><span>컴퓨터 비전</span>
+                </button>
+
+                <ul class="troot-children">
+
                   <li class="troot-item">
-                    <button class="troot-folder" type="button"><span class="troot-mark"></span><span>분류</span></button>
+                    <button class="troot-folder" type="button" aria-expanded="false">
+                      <span class="troot-mark"></span><span>이미지 분류</span>
+                    </button>
                     <ul class="troot-children">
                       <li class="troot-item"><a class="troot-link" href="#">LeNet</a></li>
                       <li class="troot-item"><a class="troot-link" href="#">AlexNet</a></li>
@@ -321,117 +767,348 @@ var(--card-bg,transparent)}
                       <li class="troot-item"><a class="troot-link" href="#">ResNet</a></li>
                     </ul>
                   </li>
+
                   <li class="troot-item">
-                    <button class="troot-folder" type="button"><span class="troot-mark"></span><span>검출</span></button>
+                    <button class="troot-folder" type="button" aria-expanded="false">
+                      <span class="troot-mark"></span><span>객체 검출</span>
+                    </button>
                     <ul class="troot-children">
                       <li class="troot-item"><a class="troot-link" href="#">R-CNN</a></li>
                       <li class="troot-item"><a class="troot-link" href="#">Faster R-CNN</a></li>
                       <li class="troot-item"><a class="troot-link" href="#">YOLO</a></li>
                     </ul>
                   </li>
+
                   <li class="troot-item">
-                    <button class="troot-folder" type="button"><span class="troot-mark"></span><span>분할</span></button>
+                    <button class="troot-folder" type="button" aria-expanded="false">
+                      <span class="troot-mark"></span><span>세그멘테이션</span>
+                    </button>
                     <ul class="troot-children">
                       <li class="troot-item"><a class="troot-link" href="#">FCN</a></li>
                       <li class="troot-item"><a class="troot-link" href="#">U-Net</a></li>
                       <li class="troot-item"><a class="troot-link" href="#">Mask R-CNN</a></li>
                     </ul>
                   </li>
+
                   <li class="troot-item">
-                    <button class="troot-folder" type="button"><span class="troot-mark"></span><span>비전 트랜스포머</span></button>
+                    <button class="troot-folder" type="button" aria-expanded="false">
+                      <span class="troot-mark"></span><span>비전 트랜스포머</span>
+                    </button>
                     <ul class="troot-children">
                       <li class="troot-item"><a class="troot-link" href="#">ViT</a></li>
                       <li class="troot-item"><a class="troot-link" href="#">DeiT</a></li>
-                    </ul>
-                  </li>
-                  <li class="troot-item">
-                    <button class="troot-folder" type="button"><span class="troot-mark"></span><span>비전 표현</span></button>
-                    <ul class="troot-children">
                       <li class="troot-item"><a class="troot-link" href="#">CLIP</a></li>
                       <li class="troot-item"><a class="troot-link" href="#">MAE</a></li>
                     </ul>
                   </li>
+
                 </ul>
               </li>
+
+              <!-- 자연어처리 -->
               <li class="troot-item">
-                <button class="troot-folder" type="button"><span class="troot-mark"></span><span>자연어</span></button>
+                <button class="troot-folder" type="button" aria-expanded="false">
+                  <span class="troot-mark"></span><span>자연어처리</span>
+                </button>
+
                 <ul class="troot-children">
+
                   <li class="troot-item">
-                    <button class="troot-folder" type="button"><span class="troot-mark"></span><span>단어 표현</span></button>
+                    <button class="troot-folder" type="button" aria-expanded="false">
+                      <span class="troot-mark"></span><span>텍스트 기초</span>
+                    </button>
                     <ul class="troot-children">
-                      <li class="troot-item"><a class="troot-link" href="#">Word2Vec</a></li>
+                      <li class="troot-item"><a class="troot-link" href="#">말뭉치 · Corpus</a></li>
+                      <li class="troot-item"><a class="troot-link" href="#">텍스트 정규화</a></li>
+                      <li class="troot-item"><a class="troot-link" href="#">토큰화</a></li>
+                      <li class="troot-item"><a class="troot-link" href="#">형태소 분석</a></li>
+                      <li class="troot-item"><a class="troot-link" href="#">불용어</a></li>
+                      <li class="troot-item"><a class="troot-link" href="#">어간 · 표제어 추출</a></li>
+                      <li class="troot-item"><a class="troot-link" href="#">N-gram</a></li>
+                    </ul>
+                  </li>
+
+                  <li class="troot-item">
+                    <button class="troot-folder" type="button" aria-expanded="false">
+                      <span class="troot-mark"></span><span>문서 · 단어 표현</span>
+                    </button>
+                    <ul class="troot-children">
+                      <li class="troot-item"><a class="troot-link" href="#">One-Hot Encoding</a></li>
+                      <li class="troot-item"><a class="troot-link" href="#">Bag of Words</a></li>
+                      <li class="troot-item"><a class="troot-link" href="#">문서-단어 행렬 · DTM</a></li>
+                      <li class="troot-item"><a class="troot-link" href="#">TF · Term Frequency</a></li>
+                      <li class="troot-item"><a class="troot-link" href="#">DF · Document Frequency</a></li>
+                      <li class="troot-item"><a class="troot-link" href="#">IDF · Inverse Document Frequency</a></li>
+                      <li class="troot-item"><a class="troot-link" href="#">TF-IDF</a></li>
+                      <li class="troot-item"><a class="troot-link" href="#">동시출현 행렬</a></li>
+                      <li class="troot-item"><a class="troot-link" href="#">PMI · PPMI</a></li>
+                    </ul>
+                  </li>
+
+                  <li class="troot-item">
+                    <button class="troot-folder" type="button" aria-expanded="false">
+                      <span class="troot-mark"></span><span>정보검색</span>
+                    </button>
+                    <ul class="troot-children">
+                      <li class="troot-item"><a class="troot-link" href="#">역색인 · Inverted Index</a></li>
+                      <li class="troot-item"><a class="troot-link" href="#">코사인 유사도</a></li>
+                      <li class="troot-item"><a class="troot-link" href="#">BM25</a></li>
+                      <li class="troot-item"><a class="troot-link" href="#">Sparse Retrieval</a></li>
+                      <li class="troot-item"><a class="troot-link" href="#">Dense Retrieval</a></li>
+                    </ul>
+                  </li>
+
+                  <li class="troot-item">
+                    <button class="troot-folder" type="button" aria-expanded="false">
+                      <span class="troot-mark"></span><span>단어 임베딩</span>
+                    </button>
+                    <ul class="troot-children">
+
+                      <li class="troot-item">
+                        <button class="troot-folder" type="button" aria-expanded="false">
+                          <span class="troot-mark"></span><span>Word2Vec</span>
+                        </button>
+                        <ul class="troot-children">
+                          <li class="troot-item"><a class="troot-link" href="#">CBOW</a></li>
+                          <li class="troot-item"><a class="troot-link" href="#">Skip-gram</a></li>
+                        </ul>
+                      </li>
+
                       <li class="troot-item"><a class="troot-link" href="#">GloVe</a></li>
                       <li class="troot-item"><a class="troot-link" href="#">FastText</a></li>
                     </ul>
                   </li>
+
                   <li class="troot-item">
-                    <button class="troot-folder" type="button"><span class="troot-mark"></span><span>시퀀스</span></button>
+                    <button class="troot-folder" type="button" aria-expanded="false">
+                      <span class="troot-mark"></span><span>시퀀스 · 언어모델</span>
+                    </button>
                     <ul class="troot-children">
-                      <li class="troot-item"><a class="troot-link" href="#">언어모델</a></li>
-                      <li class="troot-item"><a class="troot-link" href="#">seq2seq</a></li>
+                      <li class="troot-item"><a class="troot-link" href="#">N-gram 언어모델</a></li>
+                      <li class="troot-item"><a class="troot-link" href="#">Neural Language Model</a></li>
+                      <li class="troot-item"><a class="troot-link" href="#">Seq2Seq</a></li>
+                      <li class="troot-item"><a class="troot-link" href="#">Attention</a></li>
                     </ul>
                   </li>
+
                   <li class="troot-item">
-                    <button class="troot-folder" type="button"><span class="troot-mark"></span><span>사전학습</span></button>
+                    <button class="troot-folder" type="button" aria-expanded="false">
+                      <span class="troot-mark"></span><span>NLP Tasks</span>
+                    </button>
                     <ul class="troot-children">
-                      <li class="troot-item"><a class="troot-link" href="#">BERT</a></li>
-                      <li class="troot-item"><a class="troot-link" href="#">GPT</a></li>
-                      <li class="troot-item"><a class="troot-link" href="#">T5</a></li>
+                      <li class="troot-item"><a class="troot-link" href="#">문서 분류</a></li>
+                      <li class="troot-item"><a class="troot-link" href="#">감성 분석</a></li>
+                      <li class="troot-item"><a class="troot-link" href="#">품사 태깅</a></li>
+                      <li class="troot-item"><a class="troot-link" href="#">개체명 인식 · NER</a></li>
+                      <li class="troot-item"><a class="troot-link" href="#">기계번역</a></li>
+                      <li class="troot-item"><a class="troot-link" href="#">질의응답</a></li>
+                      <li class="troot-item"><a class="troot-link" href="#">문서 요약</a></li>
                     </ul>
                   </li>
-                  <li class="troot-item">
-                    <button class="troot-folder" type="button"><span class="troot-mark"></span><span>생성형</span></button>
-                    <ul class="troot-children">
-                      <li class="troot-item"><a class="troot-link" href="#">LLM</a></li>
-                      <li class="troot-item"><a class="troot-link" href="#">RAG</a></li>
-                      <li class="troot-item"><a class="troot-link" href="#">프롬프트</a></li>
-                    </ul>
-                  </li>
+
                 </ul>
               </li>
+
+              <!-- 음성 -->
+              <li class="troot-item">
+                <button class="troot-folder" type="button" aria-expanded="false">
+                  <span class="troot-mark"></span><span>음성</span>
+                </button>
+                <ul class="troot-children">
+                  <li class="troot-item"><a class="troot-link" href="#">ASR · STT</a></li>
+                  <li class="troot-item"><a class="troot-link" href="#">TTS</a></li>
+                  <li class="troot-item"><a class="troot-link" href="#">Speech Representation</a></li>
+                </ul>
+              </li>
+
+              <!-- 추천 -->
+              <li class="troot-item">
+                <button class="troot-folder" type="button" aria-expanded="false">
+                  <span class="troot-mark"></span><span>추천 시스템</span>
+                </button>
+                <ul class="troot-children">
+                  <li class="troot-item"><a class="troot-link" href="#">협업 필터링</a></li>
+                  <li class="troot-item"><a class="troot-link" href="#">콘텐츠 기반 추천</a></li>
+                  <li class="troot-item"><a class="troot-link" href="#">Matrix Factorization</a></li>
+                </ul>
+              </li>
+
+              <!-- 강화학습 -->
+              <li class="troot-item">
+                <button class="troot-folder" type="button" aria-expanded="false">
+                  <span class="troot-mark"></span><span>강화학습</span>
+                </button>
+                <ul class="troot-children">
+                  <li class="troot-item"><a class="troot-link" href="#">MDP</a></li>
+                  <li class="troot-item"><a class="troot-link" href="#">Q-Learning</a></li>
+                  <li class="troot-item"><a class="troot-link" href="#">DQN</a></li>
+                  <li class="troot-item"><a class="troot-link" href="#">Policy Gradient</a></li>
+                  <li class="troot-item"><a class="troot-link" href="#">Actor-Critic</a></li>
+                </ul>
+              </li>
+
             </ul>
           </li>
+
+          <!-- 생성형 AI · LLM -->
           <li class="troot-item">
-            <button class="troot-folder" type="button"><span class="troot-mark"></span><span>응용</span></button>
+            <button class="troot-folder" type="button" aria-expanded="false">
+              <span class="troot-mark"></span><span>생성형 AI · LLM</span>
+            </button>
+
             <ul class="troot-children">
-              <li class="troot-item"><a class="troot-link" href="#">음성</a></li>
-              <li class="troot-item"><a class="troot-link" href="#">추천</a></li>
-              <li class="troot-item"><a class="troot-link" href="#">강화학습</a></li>
-              <li class="troot-item"><a class="troot-link" href="#">에이전트</a></li>
+
+              <li class="troot-item">
+                <button class="troot-folder" type="button" aria-expanded="false">
+                  <span class="troot-mark"></span><span>토크나이저</span>
+                </button>
+                <ul class="troot-children">
+                  <li class="troot-item"><a class="troot-link" href="#">BPE</a></li>
+                  <li class="troot-item"><a class="troot-link" href="#">WordPiece</a></li>
+                  <li class="troot-item"><a class="troot-link" href="#">SentencePiece</a></li>
+                </ul>
+              </li>
+
+              <li class="troot-item">
+                <button class="troot-folder" type="button" aria-expanded="false">
+                  <span class="troot-mark"></span><span>Transformer</span>
+                </button>
+                <ul class="troot-children">
+                  <li class="troot-item"><a class="troot-link" href="#">Encoder</a></li>
+                  <li class="troot-item"><a class="troot-link" href="#">Decoder</a></li>
+                  <li class="troot-item"><a class="troot-link" href="#">Encoder-Decoder</a></li>
+                </ul>
+              </li>
+
+              <li class="troot-item">
+                <button class="troot-folder" type="button" aria-expanded="false">
+                  <span class="troot-mark"></span><span>사전학습 모델</span>
+                </button>
+                <ul class="troot-children">
+                  <li class="troot-item"><a class="troot-link" href="#">BERT</a></li>
+                  <li class="troot-item"><a class="troot-link" href="#">GPT</a></li>
+                  <li class="troot-item"><a class="troot-link" href="#">T5</a></li>
+                </ul>
+              </li>
+
+              <li class="troot-item">
+                <button class="troot-folder" type="button" aria-expanded="false">
+                  <span class="troot-mark"></span><span>LLM 학습</span>
+                </button>
+                <ul class="troot-children">
+                  <li class="troot-item"><a class="troot-link" href="#">Pre-training</a></li>
+                  <li class="troot-item"><a class="troot-link" href="#">Fine-tuning</a></li>
+                  <li class="troot-item"><a class="troot-link" href="#">Instruction Tuning</a></li>
+                  <li class="troot-item"><a class="troot-link" href="#">LoRA</a></li>
+                  <li class="troot-item"><a class="troot-link" href="#">QLoRA</a></li>
+                  <li class="troot-item"><a class="troot-link" href="#">RLHF</a></li>
+                  <li class="troot-item"><a class="troot-link" href="#">DPO</a></li>
+                </ul>
+              </li>
+
+              <li class="troot-item">
+                <button class="troot-folder" type="button" aria-expanded="false">
+                  <span class="troot-mark"></span><span>RAG</span>
+                </button>
+                <ul class="troot-children">
+                  <li class="troot-item"><a class="troot-link" href="#">Chunking</a></li>
+                  <li class="troot-item"><a class="troot-link" href="#">Embedding</a></li>
+                  <li class="troot-item"><a class="troot-link" href="#">Vector Database</a></li>
+                  <li class="troot-item"><a class="troot-link" href="#">Retrieval</a></li>
+                  <li class="troot-item"><a class="troot-link" href="#">Reranking</a></li>
+                  <li class="troot-item"><a class="troot-link" href="#">Hybrid Search</a></li>
+                </ul>
+              </li>
+
+              <li class="troot-item"><a class="troot-link" href="#">Prompt Engineering</a></li>
+              <li class="troot-item"><a class="troot-link" href="#">Tool · Function Calling</a></li>
+              <li class="troot-item"><a class="troot-link" href="#">AI Agent</a></li>
+              <li class="troot-item"><a class="troot-link" href="#">Multimodal</a></li>
+
             </ul>
           </li>
+
+          <!-- 학습 패러다임 -->
           <li class="troot-item">
-            <button class="troot-folder" type="button"><span class="troot-mark"></span><span>학습 방법</span></button>
+            <button class="troot-folder" type="button" aria-expanded="false">
+              <span class="troot-mark"></span><span>학습 패러다임</span>
+            </button>
             <ul class="troot-children">
               <li class="troot-item"><a class="troot-link" href="#">전이학습</a></li>
-              <li class="troot-item"><a class="troot-link" href="#">미세조정</a></li>
               <li class="troot-item"><a class="troot-link" href="#">준지도학습</a></li>
               <li class="troot-item"><a class="troot-link" href="#">자기지도학습</a></li>
               <li class="troot-item"><a class="troot-link" href="#">대조학습</a></li>
+              <li class="troot-item"><a class="troot-link" href="#">멀티태스크 학습</a></li>
               <li class="troot-item"><a class="troot-link" href="#">메타학습</a></li>
               <li class="troot-item"><a class="troot-link" href="#">연합학습</a></li>
               <li class="troot-item"><a class="troot-link" href="#">지속학습</a></li>
               <li class="troot-item"><a class="troot-link" href="#">능동학습</a></li>
-              <li class="troot-item"><a class="troot-link" href="#">멀티태스크</a></li>
             </ul>
           </li>
+
+          <!-- AI 시스템 -->
           <li class="troot-item">
-            <button class="troot-folder" type="button"><span class="troot-mark"></span><span>시스템</span></button>
+            <button class="troot-folder" type="button" aria-expanded="false">
+              <span class="troot-mark"></span><span>AI 시스템</span>
+            </button>
+
             <ul class="troot-children">
-              <li class="troot-item"><a class="troot-link" href="#">양자화</a></li>
-              <li class="troot-item"><a class="troot-link" href="#">가지치기</a></li>
-              <li class="troot-item"><a class="troot-link" href="#">지식증류</a></li>
-              <li class="troot-item"><a class="troot-link" href="#">LoRA</a></li>
-              <li class="troot-item"><a class="troot-link" href="#">QLoRA</a></li>
-              <li class="troot-item"><a class="troot-link" href="#">KV Cache</a></li>
-              <li class="troot-item"><a class="troot-link" href="#">스펙큘레이티브 디코딩</a></li>
-              <li class="troot-item"><a class="troot-link" href="#">FlashAttention</a></li>
-              <li class="troot-item"><a class="troot-link" href="#">Continuous Batching</a></li>
-              <li class="troot-item"><a class="troot-link" href="#">텐서병렬</a></li>
+
+              <li class="troot-item">
+                <button class="troot-folder" type="button" aria-expanded="false">
+                  <span class="troot-mark"></span><span>모델 경량화</span>
+                </button>
+                <ul class="troot-children">
+                  <li class="troot-item"><a class="troot-link" href="#">양자화</a></li>
+                  <li class="troot-item"><a class="troot-link" href="#">가지치기</a></li>
+                  <li class="troot-item"><a class="troot-link" href="#">지식증류</a></li>
+                </ul>
+              </li>
+
+              <li class="troot-item">
+                <button class="troot-folder" type="button" aria-expanded="false">
+                  <span class="troot-mark"></span><span>추론 최적화</span>
+                </button>
+                <ul class="troot-children">
+                  <li class="troot-item"><a class="troot-link" href="#">KV Cache</a></li>
+                  <li class="troot-item"><a class="troot-link" href="#">FlashAttention</a></li>
+                  <li class="troot-item"><a class="troot-link" href="#">Speculative Decoding</a></li>
+                  <li class="troot-item"><a class="troot-link" href="#">Continuous Batching</a></li>
+                </ul>
+              </li>
+
+              <li class="troot-item">
+                <button class="troot-folder" type="button" aria-expanded="false">
+                  <span class="troot-mark"></span><span>분산 학습 · 추론</span>
+                </button>
+                <ul class="troot-children">
+                  <li class="troot-item"><a class="troot-link" href="#">Data Parallel</a></li>
+                  <li class="troot-item"><a class="troot-link" href="#">Tensor Parallel</a></li>
+                  <li class="troot-item"><a class="troot-link" href="#">Pipeline Parallel</a></li>
+                </ul>
+              </li>
+
+              <li class="troot-item">
+                <button class="troot-folder" type="button" aria-expanded="false">
+                  <span class="troot-mark"></span><span>MLOps</span>
+                </button>
+                <ul class="troot-children">
+                  <li class="troot-item"><a class="troot-link" href="#">Experiment Tracking</a></li>
+                  <li class="troot-item"><a class="troot-link" href="#">Model Registry</a></li>
+                  <li class="troot-item"><a class="troot-link" href="#">Model Serving</a></li>
+                  <li class="troot-item"><a class="troot-link" href="#">Monitoring</a></li>
+                  <li class="troot-item"><a class="troot-link" href="#">Data · Model Versioning</a></li>
+                </ul>
+              </li>
+
             </ul>
           </li>
+
+          <!-- AI 보안 -->
           <li class="troot-item">
-            <button class="troot-folder" type="button"><span class="troot-mark"></span><span>보안</span></button>
+            <button class="troot-folder" type="button" aria-expanded="false">
+              <span class="troot-mark"></span><span>AI 보안</span>
+            </button>
             <ul class="troot-children">
               <li class="troot-item"><a class="troot-link" href="#">적대적 예제</a></li>
               <li class="troot-item"><a class="troot-link" href="#">데이터 중독</a></li>
@@ -443,31 +1120,67 @@ var(--card-bg,transparent)}
               <li class="troot-item"><a class="troot-link" href="#">가드레일</a></li>
             </ul>
           </li>
+
         </ul>
       </li>
+
+      <!-- =========================================================
+           5. 실전
+      ========================================================== -->
       <li class="troot-item">
-        <button class="troot-folder" type="button"><span class="troot-mark"></span><span>자격증</span><em>실전 · 기출</em></button>
+        <button class="troot-folder" type="button" aria-expanded="false">
+          <span class="troot-mark"></span>
+          <span>실전</span>
+          <em>프로젝트 · 자격증 · 취업</em>
+        </button>
+
         <ul class="troot-children">
-          <li class="troot-item"><a class="troot-link" href="#">정보처리기사</a></li>
-          <li class="troot-item"><a class="troot-link" href="#">빅데이터분석기사</a></li>
+
+          <li class="troot-item">
+            <button class="troot-folder" type="button" aria-expanded="false">
+              <span class="troot-mark"></span><span>프로젝트</span>
+            </button>
+            <ul class="troot-children">
+              <li class="troot-item"><a class="troot-link" href="#">머신러닝 프로젝트</a></li>
+              <li class="troot-item"><a class="troot-link" href="#">딥러닝 프로젝트</a></li>
+              <li class="troot-item"><a class="troot-link" href="#">LLM 프로젝트</a></li>
+            </ul>
+          </li>
+
+          <li class="troot-item">
+            <button class="troot-folder" type="button" aria-expanded="false">
+              <span class="troot-mark"></span><span>자격증</span>
+            </button>
+            <ul class="troot-children">
+              <li class="troot-item"><a class="troot-link" href="#">정보처리기사</a></li>
+              <li class="troot-item"><a class="troot-link" href="#">빅데이터분석기사</a></li>
+            </ul>
+          </li>
+
+          <li class="troot-item">
+            <button class="troot-folder" type="button" aria-expanded="false">
+              <span class="troot-mark"></span><span>취업</span>
+            </button>
+            <ul class="troot-children">
+              <li class="troot-item"><a class="troot-link" href="#">포트폴리오</a></li>
+              <li class="troot-item"><a class="troot-link" href="#">기술면접</a></li>
+              <li class="troot-item"><a class="troot-link" href="#">코딩테스트</a></li>
+            </ul>
+          </li>
+
         </ul>
       </li>
-      <li class="troot-item">
-        <button class="troot-folder" type="button"><span class="troot-mark"></span><span>취준</span><em>면접 · 포트폴리오</em></button>
-        <ul class="troot-children">
-          <li class="troot-item"><a class="troot-link" href="#">면접</a></li>
-          <li class="troot-item"><a class="troot-link" href="#">포트폴리오</a></li>
-        </ul>
-      </li>
+
     </ul>
   </div>
 </section>
+
 <script>
-document.querySelectorAll('.troot-folder').forEach((btn)=>{
-  btn.addEventListener('click',()=>{
-    const item=btn.parentElement;
-    const open=item.classList.toggle('is-open');
-    item.setAttribute('aria-expanded', open ? 'true' : 'false');
+document.querySelectorAll('.troot-folder').forEach((btn) => {
+  btn.addEventListener('click', () => {
+    const item = btn.parentElement;
+    const open = item.classList.toggle('is-open');
+    btn.setAttribute('aria-expanded', open ? 'true' : 'false');
   });
 });
 </script>
