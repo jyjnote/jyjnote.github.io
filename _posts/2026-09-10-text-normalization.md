@@ -118,6 +118,7 @@ text = " ".join(text.split())
 
 `\n`, `\t`, `\r` 같은 줄바꿈·탭도 필요에 따라 정리합니다.  
 문단 구조가 중요하면 줄바꿈을 무조건 없애면 안 됩니다.
+
 ## 특수문자 처리
 ```text
 AI!!! 정말 좋다!!!
@@ -153,6 +154,7 @@ C#
 <blockquote class="prompt-danger">
   <p>특수문자는 무조건 삭제하지 않습니다. 의미 있는 기호까지 없애면 정보 손실이 생깁니다.</p>
 </blockquote>
+
 ## 숫자 · URL 정규화
 숫자가 지나치게 다양하면 목적에 따라 묶을 수 있습니다.
 
@@ -186,6 +188,7 @@ https://b.com
 로 통일할 수 있습니다.
 
 하지만 `1만원`, `100만원`, `1억원`처럼 숫자 자체가 중요한 문제에서는 남겨야 합니다.
+
 ## 반복 문자 정규화
 SNS와 리뷰에서는
 
@@ -214,6 +217,7 @@ SNS와 리뷰에서는
 처럼 반복 횟수를 제한합니다.
 
 반복 횟수가 감정 강도라면 그대로 두는 편이 나을 수 있습니다.
+
 ## Unicode 정규화
 눈으로 같아 보여도 내부 코드 표현이 다른 문자가 있습니다.
 
@@ -232,6 +236,7 @@ text = unicodedata.normalize("NFC", text)
 <blockquote class="prompt-info">
   <p>Unicode 정규화는 눈에 보이는 모양보다 내부 문자 표현을 통일하는 작업입니다.</p>
 </blockquote>
+
 ## 한국어에서는
 ```text
 사과는
@@ -248,6 +253,7 @@ text = unicodedata.normalize("NFC", text)
 
 - 정규화: 표현 통일
 - 형태소 분석: 언어 구조 분석
+- 
 ## 정규화와 Tokenization
 ```text
 AI     is GOOD!!!
@@ -304,6 +310,7 @@ i love this
 Tokenizer가 Subword, 특수문자, 대소문자를 직접 처리할 수 있기 때문입니다.
 
 <mark>모델이 발전했다고 정규화가 사라진 것이 아니라, 필요한 정규화의 강도가 달라진 것입니다.</mark>
+
 ## Python 예시
 ```python
 import re
