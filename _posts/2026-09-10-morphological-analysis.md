@@ -12,6 +12,7 @@ math: false
 <blockquote class="prompt-info">
   <p>Morphological Analysis = 문장을 의미나 문법 기능을 가진 최소 단위로 분석하는 과정입니다.</p>
 </blockquote>
+
 ```text
 나는 사과를 먹었다
 → 나 / 는 / 사과 / 를 / 먹 / 었 / 다
