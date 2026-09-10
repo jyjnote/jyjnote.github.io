@@ -30,6 +30,7 @@ ai
 표현 차이 때문에 같은 단어가 서로 다른 Token처럼 처리되는 일을 줄입니다.
 </details>
 ## 왜 필요한가
+
 ```text
 I like AI.
 i like ai.
