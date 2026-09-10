@@ -448,6 +448,7 @@ Lemma = 사전에서 찾는 기본형
 <summary>정답</summary>
 ②
 </details>
+
 **2.** Lemmatization의 특징은?
 - ① 사전과 문법 정보를 이용해 기본형을 찾음
 - ② 무조건 마지막 두 글자를 삭제
@@ -457,6 +458,7 @@ Lemma = 사전에서 찾는 기본형
 <summary>정답</summary>
 ①
 </details>
+
 **3.** `먹었다`에서 어간에 해당하는 것은?
 - ① 먹
 - ② 었
@@ -466,6 +468,7 @@ Lemma = 사전에서 찾는 기본형
 <summary>정답</summary>
 ①
 </details>
+
 **4.** `먹었다`의 표제어로 가장 적절한 것은?
 - ① 먹
 - ② 먹다
@@ -475,6 +478,7 @@ Lemma = 사전에서 찾는 기본형
 <summary>정답</summary>
 ②
 </details>
+
 **5.** Over-stemming은?
 - ① 서로 다른 단어를 지나치게 같은 Stem으로 합치는 문제
 - ② 아무 단어도 줄이지 못하는 문제
@@ -484,6 +488,7 @@ Lemma = 사전에서 찾는 기본형
 <summary>정답</summary>
 ①
 </details>
+
 **6.** 현대 LLM에 대한 설명으로 맞는 것은?
 - ① Stemming을 반드시 먼저 수행
 - ② Lemmatization 없이는 동작 불가
