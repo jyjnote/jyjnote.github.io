@@ -13,6 +13,7 @@ math: false
   <p>Stemming은 규칙으로 잘라 어간에 가깝게 만들고, Lemmatization은 사전·품사를 이용해 올바른 기본형을 찾습니다.</p>
 </blockquote>
 예:
+
 ```text
 playing
 played
