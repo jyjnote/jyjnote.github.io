@@ -12,6 +12,7 @@ math: false
 <blockquote class="prompt-info">
   <p>Tokenization = 문자열을 모델이 다룰 처리 단위로 나누는 과정입니다.</p>
 </blockquote>
+
 ```text
 나는 사과를 좋아한다
 → 나는 / 사과를 / 좋아한다
