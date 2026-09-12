@@ -8,26 +8,26 @@ tags: [Transformer, Encoder, SelfAttention, MultiHeadAttention, BERT, LLM]
 math: true
 ---
 
-Transformer Encoder는 **입력 Sequence 전체를 서로 비교하면서 각 Token의 문맥 표현을 만드는 구조**입니다.  
-핵심은 Self-Attention과 Feed Forward Network를 반복해서 적용하는 것입니다.
+Transformer Encoder는 **입력 Sequence 전체를 서로 참고하게 만들어 각 Token을 문맥이 반영된 벡터로 바꾸는 구조**입니다.  
+핵심은 Multi-Head Self-Attention과 Feed Forward Network입니다.
 
 <blockquote class="prompt-info">
-<p>한 줄: Encoder는 모든 입력 Token이 서로를 참고하게 만들어, 각 Token을 문맥이 반영된 벡터로 바꿉니다.</p>
+<p>한 줄: Encoder는 입력 Token 전체의 관계를 계산하고, 각 Token을 Contextual Vector로 바꿉니다.</p>
 </blockquote>
 
 <details>
 <summary>한 줄로</summary>
 
-Transformer Encoder는 Multi-Head Self-Attention과 Feed Forward Network를 Residual Connection과 Layer Normalization으로 감싼 블록을 여러 층 쌓은 구조입니다.
+Embedding과 위치 정보를 입력받아 Multi-Head Self-Attention → Add & Norm → FFN → Add & Norm을 거칩니다.
 
 </details>
 
-## 전체 구조
-
-Transformer Encoder의 한 층은 크게 두 부분으로 나뉩니다.
+## Encoder 한 층 전체
 
 ```text
-입력
+Token
+↓
+Embedding + Position
 ↓
 Multi-Head Self-Attention
 ↓
@@ -37,10 +37,10 @@ Feed Forward Network
 ↓
 Add & Norm
 ↓
-출력
+Contextual Representation
 ```
 
-이 Encoder Layer를 여러 번 반복합니다.
+Encoder Layer를 여러 층 쌓으면 다음과 같습니다.
 
 ```text
 Input
@@ -49,149 +49,120 @@ Encoder Layer 1
 ↓
 Encoder Layer 2
 ↓
-Encoder Layer 3
-↓
 ...
 ↓
 Encoder Layer N
 ```
 
-<mark>Encoder는 입력 Token 각각을 독립적으로 보는 것이 아니라, Sequence 전체의 관계를 반영해 새로운 표현으로 바꿉니다.</mark>
+<mark>Encoder의 출력은 Token을 없애는 것이 아니라 각 Token의 표현을 문맥에 맞게 바꾸는 것입니다.</mark>
 
-## Encoder의 입력
+## 이번 글에서 직접 계산할 문장
 
-문장이 들어오면 먼저 Tokenizer를 거칩니다.
+수식만 보면 흐름이 잘 안 보이므로 다음 문장을 실제 숫자로 계산해보겠습니다.
 
 ```text
 I love AI
-↓
-["I", "love", "AI"]
-↓
-Token ID
 ```
 
-Token ID는 Embedding Vector로 변환됩니다.
+설명을 위해
 
 ```text
-Token ID
-→ Embedding
+Token 수 = 3
+Embedding Dimension = 4
+Attention Head 수 = 2
+Head Dimension = 2
 ```
 
-각 Token은 보통 다음과 같은 벡터가 됩니다.
+로 아주 작게 설정합니다.
+
+실제 Transformer는 훨씬 큰 차원을 사용하지만 계산 원리는 같습니다.
+
+## 1. Token Embedding
+
+각 Token에 임의의 Embedding Vector를 넣겠습니다.
+
+```python
+import numpy as np
+
+np.set_printoptions(precision=4, suppress=True)
+
+tokens = ["I", "love", "AI"]
+
+E = np.array([
+    [1.0, 0.0, 1.0, 0.0],  # I
+    [0.0, 1.0, 0.0, 1.0],  # love
+    [1.0, 1.0, 0.0, 0.0],  # AI
+])
+
+print(E)
+
+# 결과
+# [[1. 0. 1. 0.]
+#  [0. 1. 0. 1.]
+#  [1. 1. 0. 0.]]
+```
+
+행 하나가 Token 하나입니다.
 
 ```text
-I     → [ ... ]
-love  → [ ... ]
-AI    → [ ... ]
+1행 → I
+2행 → love
+3행 → AI
 ```
 
-하지만 Embedding만 사용하면 Token의 순서를 알 수 없습니다.
-
-그래서 위치 정보를 추가합니다.
+따라서 Shape은
 
 ```text
-Input Embedding
-+
-Positional Encoding
+3 × 4
 ```
 
-최종 Encoder 입력은 다음처럼 생각할 수 있습니다.
+입니다.
+
+```python
+print(E.shape)
+
+# 결과
+# (3, 4)
+```
+
+## 2. 위치 정보 추가
+
+Self-Attention만으로는 Token 순서를 알 수 없습니다.
+
+설명을 위해 다음 위치 벡터를 사용하겠습니다.
+
+```python
+P = np.array([
+    [0.1, 0.0, 0.1, 0.0],  # position 1
+    [0.0, 0.1, 0.0, 0.1],  # position 2
+    [0.1, 0.1, 0.0, 0.0],  # position 3
+])
+
+X = E + P
+
+print(X)
+
+# 결과
+# [[1.1 0.  1.1 0. ]
+#  [0.  1.1 0.  1.1]
+#  [1.1 1.1 0.  0. ]]
+```
+
+즉 Encoder에 실제로 들어가는 입력을 단순화하면
 
 $$X=E+P$$
 
-- `E`: Token Embedding
-- `P`: Positional Encoding
-- `X`: Encoder에 들어가는 입력 표현
-
-## 왜 위치 정보가 필요한가
-
-Self-Attention 자체는 순서 개념을 자동으로 알지 못합니다.
-
-예를 들어
+입니다.
 
 ```text
-I love AI
+I     → [1.1, 0.0, 1.1, 0.0]
+love  → [0.0, 1.1, 0.0, 1.1]
+AI    → [1.1, 1.1, 0.0, 0.0]
 ```
 
-와
+## 3. Q, K, V 만들기
 
-```text
-AI love I
-```
-
-는 Token 구성은 같지만 순서는 다릅니다.
-
-그래서 위치 정보를 Embedding에 더합니다.
-
-<blockquote class="prompt-info">
-<p>Transformer에는 RNN처럼 순차적으로 정보를 전달하는 구조가 없기 때문에 위치 정보를 별도로 넣어야 합니다.</p>
-</blockquote>
-
-## Encoder Layer의 핵심
-
-Encoder Layer는 다음 구조를 가집니다.
-
-```text
-X
-↓
-Multi-Head Self-Attention
-↓
-Residual Connection
-↓
-Layer Normalization
-↓
-Feed Forward Network
-↓
-Residual Connection
-↓
-Layer Normalization
-↓
-Output
-```
-
-구형 Transformer 설명에서는 흔히 이를 다음처럼 표현합니다.
-
-```text
-Attention
-→ Add & Norm
-→ FFN
-→ Add & Norm
-```
-
-## Self-Attention
-
-Self-Attention은 **같은 Sequence 안의 Token들이 서로를 참고하는 과정**입니다.
-
-문장:
-
-```text
-The animal didn't cross the street because it was tired.
-```
-
-`it`이라는 Token을 처리할 때 다른 Token들과의 관계를 계산합니다.
-
-```text
-it ↔ animal
-it ↔ street
-it ↔ tired
-...
-```
-
-Attention을 통해 `it`이 어떤 단어와 더 관련 있는지 반영할 수 있습니다.
-
-<mark>Self-Attention의 Self는 Query, Key, Value가 모두 같은 입력 Sequence에서 만들어진다는 뜻입니다.</mark>
-
-## Q, K, V
-
-Self-Attention에서는 입력 벡터를 세 가지 벡터로 변환합니다.
-
-```text
-Query
-Key
-Value
-```
-
-입력 행렬을 `X`라고 하면
+Self-Attention에서는 같은 입력 `X`에서 Query, Key, Value를 만듭니다.
 
 $$Q=XW_Q$$
 
@@ -199,236 +170,804 @@ $$K=XW_K$$
 
 $$V=XW_V$$
 
-- `W_Q`: Query 가중치
-- `W_K`: Key 가중치
-- `W_V`: Value 가중치
+실제 모델에서는 `W_Q`, `W_K`, `W_V`가 학습됩니다.
 
-세 행렬은 학습되는 Parameter입니다.
+여기서는 계산을 직접 보기 위해 임의의 값을 사용합니다.
 
-## Query, Key, Value 직관
+```python
+W_Q = np.array([
+    [1.0, 0.0, 0.0, 0.0],
+    [0.0, 1.0, 0.0, 0.0],
+    [0.0, 0.0, 0.5, 0.0],
+    [0.0, 0.0, 0.0, 0.5],
+])
 
-쉽게 보면 다음과 같습니다.
+W_K = np.array([
+    [0.5, 0.0, 0.0, 0.0],
+    [0.0, 0.5, 0.0, 0.0],
+    [0.0, 0.0, 1.0, 0.0],
+    [0.0, 0.0, 0.0, 1.0],
+])
 
-```text
-Query
-→ 내가 무엇을 찾고 있는가
+W_V = np.array([
+    [1.0, 0.0, 0.0, 0.0],
+    [0.0, 1.0, 0.0, 0.0],
+    [0.5, 0.0, 0.5, 0.0],
+    [0.0, 0.5, 0.0, 0.5],
+])
 
-Key
-→ 내가 어떤 정보를 가지고 있는가
+Q = X @ W_Q
+K = X @ W_K
+V = X @ W_V
 
-Value
-→ 실제로 전달할 정보
+print("Q")
+print(Q)
+
+# 결과
+# [[1.1  0.   0.55 0.  ]
+#  [0.   1.1  0.   0.55]
+#  [1.1  1.1  0.   0.  ]]
+
+print("K")
+print(K)
+
+# 결과
+# [[0.55 0.   1.1  0.  ]
+#  [0.   0.55 0.   1.1 ]
+#  [0.55 0.55 0.   0.  ]]
+
+print("V")
+print(V)
+
+# 결과
+# [[1.65 0.   0.55 0.  ]
+#  [0.   1.65 0.   0.55]
+#  [1.1  1.1  0.   0.  ]]
 ```
 
-Query와 Key를 비교해서 관련도를 구합니다.
+직관은 다음과 같습니다.
 
-관련도가 높으면 해당 Value를 더 많이 가져옵니다.
+```text
+Query → 내가 무엇을 찾는가
+Key   → 내가 어떤 특징을 가지고 있는가
+Value → 실제로 전달할 정보
+```
 
-## Attention Score
+<mark>Q와 K는 누구를 얼마나 참고할지 정하고, V는 실제로 가져올 정보입니다.</mark>
 
-Query와 Key의 내적을 계산합니다.
+## 4. Multi-Head로 나누기
+
+현재 Hidden Dimension은 4이고 Head는 2개입니다.
+
+따라서 한 Head가 담당하는 Dimension은
+
+$$d_k=\frac{4}{2}=2$$
+
+입니다.
+
+```python
+num_heads = 2
+head_dim = 2
+
+Q_heads = Q.reshape(3, num_heads, head_dim).transpose(1, 0, 2)
+K_heads = K.reshape(3, num_heads, head_dim).transpose(1, 0, 2)
+V_heads = V.reshape(3, num_heads, head_dim).transpose(1, 0, 2)
+
+print(Q_heads.shape)
+
+# 결과
+# (2, 3, 2)
+#
+# 2     → Head 수
+# 3     → Token 수
+# 2     → Head Dimension
+```
+
+Head 1의 Query는 다음과 같습니다.
+
+```python
+print(Q_heads[0])
+
+# 결과
+# [[1.1 0. ]
+#  [0.  1.1]
+#  [1.1 1.1]]
+```
+
+Head 2의 Query는 다음과 같습니다.
+
+```python
+print(Q_heads[1])
+
+# 결과
+# [[0.55 0.  ]
+#  [0.   0.55]
+#  [0.   0.  ]]
+```
+
+각 Head가 서로 다른 Feature 공간을 보고 Attention을 계산한다고 이해하면 됩니다.
+
+## 5. Attention Score 계산
+
+한 Head의 기본 Attention Score는 다음과 같습니다.
 
 $$QK^T$$
 
-내적값이 크면 두 Token이 더 관련 있다고 볼 수 있습니다.
-
-하지만 차원이 커지면 내적값도 너무 커질 수 있습니다.
-
-그래서 다음과 같이 나눕니다.
+Head Dimension이 커질수록 값이 커질 수 있으므로 Scale합니다.
 
 $$\frac{QK^T}{\sqrt{d_k}}$$
 
-- `d_k`: Key Vector의 차원
+Python으로 두 Head를 동시에 계산하면
 
-이를 **Scaled Dot-Product Attention**이라고 합니다.
+```python
+scores = Q_heads @ K_heads.transpose(0, 2, 1)
+scaled_scores = scores / np.sqrt(head_dim)
 
-## Softmax
+print("Head 1")
+print(scaled_scores[0])
 
-Attention Score를 그대로 사용하지 않고 Softmax를 적용합니다.
+# 결과
+# [[0.4278 0.     0.4278]
+#  [0.     0.4278 0.4278]
+#  [0.4278 0.4278 0.8556]]
 
-$$A=\operatorname{softmax}\left(\frac{QK^T}{\sqrt{d_k}}\right)$$
+print("Head 2")
+print(scaled_scores[1])
 
-`A`는 Attention Weight입니다.
-
-각 Token이 다른 Token을 얼마나 참고할지 나타냅니다.
-
-예를 들어
-
-```text
-Token A → Token B : 0.7
-Token A → Token C : 0.2
-Token A → Token D : 0.1
+# 결과
+# [[0.4278 0.     0.    ]
+#  [0.     0.4278 0.    ]
+#  [0.     0.     0.    ]]
 ```
 
-처럼 생각할 수 있습니다.
-
-## Value와 결합
-
-Attention Weight를 Value에 곱합니다.
-
-$$\operatorname{Attention}(Q,K,V)=\operatorname{softmax}\left(\frac{QK^T}{\sqrt{d_k}}\right)V$$
-
-결과적으로 각 Token은 다른 Token들의 정보를 가중합해서 새로운 표현을 얻습니다.
+Attention Matrix의
 
 ```text
-현재 Token
-+
-관련 Token들의 정보
-→ 문맥이 반영된 표현
+행 → Query Token
+열 → Key Token
 ```
 
-## Self-Attention 예시
+입니다.
 
-입력:
+Head 1의 첫 번째 행
 
 ```text
-I love AI
+[0.4278, 0.0000, 0.4278]
 ```
 
-`love` Token을 처리한다고 하겠습니다.
+은 `I`가
 
 ```text
-Query(love)
+I
+love
+AI
 ```
 
-는 다음 Key들과 비교됩니다.
+각 Token과 얼마나 관련 있는지 나타내는 Softmax 이전 점수입니다.
+
+## 6. Softmax로 Attention Weight 만들기
+
+Score를 확률처럼 사용할 수 있도록 Softmax를 적용합니다.
+
+$$A=\mathrm{softmax}\left(\frac{QK^T}{\sqrt{d_k}}\right)$$
+
+```python
+def softmax(x):
+    x = x - np.max(x, axis=-1, keepdims=True)
+    exp_x = np.exp(x)
+    return exp_x / np.sum(exp_x, axis=-1, keepdims=True)
+
+attention_weights = np.stack([
+    softmax(scaled_scores[0]),
+    softmax(scaled_scores[1]),
+])
+
+print("Head 1")
+print(attention_weights[0])
+
+# 결과
+# [[0.3771 0.2458 0.3771]
+#  [0.2458 0.3771 0.3771]
+#  [0.2830 0.2830 0.4340]]
+
+print("Head 2")
+print(attention_weights[1])
+
+# 결과
+# [[0.4340 0.2830 0.2830]
+#  [0.2830 0.4340 0.2830]
+#  [0.3333 0.3333 0.3333]]
+```
+
+각 행의 합은 1입니다.
+
+```python
+print(attention_weights[0].sum(axis=-1))
+
+# 결과
+# [1. 1. 1.]
+```
+
+예를 들어 Head 1에서 `love`의 Attention Weight는
 
 ```text
-Key(I)
-Key(love)
-Key(AI)
+I     → 0.2458
+love  → 0.3771
+AI    → 0.3771
 ```
 
-그 결과
+입니다.
+
+즉 이 Head에서는 `love`가 자신의 정보와 `AI`의 정보를 같은 정도로 강하게 참고합니다.
+
+## 7. Attention Weight와 V 결합
+
+이제 Attention Weight만큼 Value를 가져옵니다.
+
+$$\mathrm{Attention}(Q,K,V)=\mathrm{softmax}\left(\frac{QK^T}{\sqrt{d_k}}\right)V$$
+
+```python
+head_outputs = attention_weights @ V_heads
+
+print("Head 1 Output")
+print(head_outputs[0])
+
+# 결과
+# [[1.0370 0.8204]
+#  [0.8204 1.0370]
+#  [0.9444 0.9444]]
+
+print("Head 2 Output")
+print(head_outputs[1])
+
+# 결과
+# [[0.2387 0.1556]
+#  [0.1556 0.2387]
+#  [0.1833 0.1833]]
+```
+
+예를 들어 Head 1의 `love` 결과는
 
 ```text
-I     : 0.2
-love  : 0.2
-AI    : 0.6
+[0.8204, 1.0370]
 ```
 
-이라고 나오면
+입니다.
+
+이 값은 `love` 자신의 Value만 사용한 값이 아닙니다.
 
 ```text
-Value(I) × 0.2
-+
-Value(love) × 0.2
-+
-Value(AI) × 0.6
+I의 Value
+love의 Value
+AI의 Value
 ```
 
-형태로 정보를 합칩니다.
+를 Attention Weight에 따라 섞은 결과입니다.
 
-즉 `love`의 새로운 벡터에 `AI` 정보가 크게 반영됩니다.
+## 8. Head 결과 합치기
 
-## Multi-Head Attention
+두 Head 결과를 다시 이어 붙입니다.
 
-Transformer는 Attention을 한 번만 하지 않습니다.
+```python
+multi_head_output = (
+    head_outputs
+    .transpose(1, 0, 2)
+    .reshape(3, 4)
+)
 
-여러 개의 Attention Head를 동시에 사용합니다.
+print(multi_head_output)
+
+# 결과
+# [[1.0370 0.8204 0.2387 0.1556]
+#  [0.8204 1.0370 0.1556 0.2387]
+#  [0.9444 0.9444 0.1833 0.1833]]
+```
+
+원래 Multi-Head Attention에서는 Concat 뒤에 `W_O` Projection도 적용합니다.
+
+여기서는 계산 흐름을 단순하게 보기 위해 `W_O`를 단위행렬이라고 가정합니다.
+
+따라서
+
+```text
+MHA Output Shape
+= 3 × 4
+```
+
+가 되어 원래 입력 `X`와 같은 Shape으로 돌아옵니다.
+
+## 9. Residual Connection
+
+Attention 결과에 원래 입력을 더합니다.
+
+$$R_1=X+\mathrm{MHA}(X)$$
+
+```python
+residual1 = X + multi_head_output
+
+print(residual1)
+
+# 결과
+# [[2.1370 0.8204 1.3387 0.1556]
+#  [0.8204 2.1370 0.1556 1.3387]
+#  [2.0444 2.0444 0.1833 0.1833]]
+```
+
+예를 들어 `love`는
+
+```text
+원래 love 입력
+[0.0000, 1.1000, 0.0000, 1.1000]
+
+Attention 결과
+[0.8204, 1.0370, 0.1556, 0.2387]
+```
+
+를 더해
+
+```text
+[0.8204, 2.1370, 0.1556, 1.3387]
+```
+
+이 됩니다.
+
+<mark>Residual Connection은 기존 Token 정보에 Attention으로 얻은 문맥 정보를 더합니다.</mark>
+
+## 10. Layer Normalization
+
+설명을 위해 `gamma=1`, `beta=0`인 단순한 LayerNorm을 직접 구현하겠습니다.
+
+```python
+def layer_norm(x, eps=1e-5):
+    mean = x.mean(axis=-1, keepdims=True)
+    var = ((x - mean) ** 2).mean(axis=-1, keepdims=True)
+    return (x - mean) / np.sqrt(var + eps)
+
+norm1 = layer_norm(residual1)
+
+print(norm1)
+
+# 결과
+# [[ 1.4127 -0.4036  0.3115 -1.3207]
+#  [-0.4036  1.4127 -1.3207  0.3115]
+#  [ 1.0000  1.0000 -1.0000 -1.0000]]
+```
+
+실제 LayerNorm에는 학습 가능한 Scale과 Bias도 존재합니다.
+
+여기서는 정규화 자체가 어떻게 동작하는지만 보는 예시입니다.
+
+## 11. Feed Forward Network
+
+Attention은 Token 사이의 정보를 섞었습니다.
+
+이제 FFN은 **각 Token Vector를 독립적으로 변환**합니다.
+
+$$\mathrm{FFN}(x)=W_2\mathrm{ReLU}(W_1x+b_1)+b_2$$
+
+설명을 위해
+
+```text
+4차원
+→ 6차원
+→ 4차원
+```
+
+FFN을 사용하겠습니다.
+
+```python
+W1 = np.array([
+    [ 0.5,  0.2, -0.3,  0.1,  0.4,  0.0],
+    [ 0.1,  0.6,  0.2, -0.2,  0.0,  0.3],
+    [ 0.4, -0.1,  0.5,  0.2, -0.3,  0.1],
+    [-0.2,  0.3,  0.1,  0.5,  0.2, -0.4],
+])
+
+b1 = np.array([0.1, 0.0, 0.05, 0.0, 0.0, 0.0])
+
+W2 = np.array([
+    [ 0.5,  0.0,  0.2, -0.1],
+    [ 0.1,  0.4, -0.2,  0.3],
+    [-0.3,  0.2,  0.5,  0.0],
+    [ 0.2, -0.1,  0.1,  0.4],
+    [ 0.0,  0.3, -0.2,  0.2],
+    [ 0.4, -0.2,  0.0,  0.1],
+])
+
+b2 = np.array([0.0, 0.05, 0.0, -0.05])
+
+hidden = norm1 @ W1 + b1
+
+print(hidden)
+
+# 결과
+# [[ 1.1547 -0.3869 -0.4309 -0.3761  0.2075  0.4384]
+#  [-0.5511  0.9925 -0.1756 -0.4313  0.2971  0.1672]
+#  [ 0.5000  0.6000 -0.6500 -0.8000  0.5000  0.6000]]
+```
+
+ReLU를 적용합니다.
+
+```python
+relu = np.maximum(hidden, 0)
+
+print(relu)
+
+# 결과
+# [[1.1547 0.     0.     0.     0.2075 0.4384]
+#  [0.     0.9925 0.     0.     0.2971 0.1672]
+#  [0.5000 0.6000 0.     0.     0.5000 0.6000]]
+```
+
+다시 4차원으로 줄입니다.
+
+```python
+ffn_output = relu @ W2 + b2
+
+print(ffn_output)
+
+# 결과
+# [[ 0.7527  0.0246  0.1894 -0.0801]
+#  [ 0.1661  0.5027 -0.2579  0.3239]
+#  [ 0.5500  0.3200 -0.1200  0.2400]]
+```
+
+FFN은 Token끼리 섞는 연산이 아닙니다.
+
+```text
+I의 Vector
+→ 같은 FFN
+
+love의 Vector
+→ 같은 FFN
+
+AI의 Vector
+→ 같은 FFN
+```
+
+각 Token에 동일한 Network를 따로 적용합니다.
+
+## 12. 두 번째 Add & Norm
+
+FFN 출력에도 Residual Connection을 적용합니다.
+
+$$R_2=Y+\mathrm{FFN}(Y)$$
+
+```python
+residual2 = norm1 + ffn_output
+
+print(residual2)
+
+# 결과
+# [[ 2.1655 -0.3790  0.5009 -1.4008]
+#  [-0.2374  1.9154 -1.5786  0.6354]
+#  [ 1.5500  1.3200 -1.1200 -0.7600]]
+```
+
+다시 LayerNorm을 적용합니다.
+
+```python
+encoder_output = layer_norm(residual2)
+
+print(encoder_output)
+
+# 결과
+# [[ 1.4854 -0.4590  0.2134 -1.2399]
+#  [-0.3307  1.3600 -1.3839  0.3547]
+#  [ 1.0881  0.8959 -1.1424 -0.8416]]
+```
+
+이 값이 Encoder 한 층의 최종 출력입니다.
+
+```text
+I
+→ [ 1.4854, -0.4590,  0.2134, -1.2399]
+
+love
+→ [-0.3307,  1.3600, -1.3839,  0.3547]
+
+AI
+→ [ 1.0881,  0.8959, -1.1424, -0.8416]
+```
+
+처음 Embedding과 비교해보면 값이 완전히 달라졌습니다.
+
+```text
+처음 love
+[0.0, 1.0, 0.0, 1.0]
+
+Encoder 이후 love
+[-0.3307, 1.3600, -1.3839, 0.3547]
+```
+
+`love`의 출력에는 이제 `I`, `love`, `AI` 사이의 Attention 관계가 반영되어 있습니다.
+
+<mark>이렇게 만들어진 문맥 반영 벡터가 다음 Encoder Layer의 입력이 됩니다.</mark>
+
+## 전체 계산 코드
+
+위 계산을 한 번에 실행하면 다음과 같습니다.
+
+```python
+import numpy as np
+
+np.set_printoptions(precision=4, suppress=True)
+
+# --------------------------------------------------
+# 1. I love AI의 임의 Embedding
+# --------------------------------------------------
+
+E = np.array([
+    [1.0, 0.0, 1.0, 0.0],  # I
+    [0.0, 1.0, 0.0, 1.0],  # love
+    [1.0, 1.0, 0.0, 0.0],  # AI
+])
+
+P = np.array([
+    [0.1, 0.0, 0.1, 0.0],
+    [0.0, 0.1, 0.0, 0.1],
+    [0.1, 0.1, 0.0, 0.0],
+])
+
+X = E + P
+
+# X
+# [[1.1 0.  1.1 0. ]
+#  [0.  1.1 0.  1.1]
+#  [1.1 1.1 0.  0. ]]
+
+# --------------------------------------------------
+# 2. Q, K, V
+# --------------------------------------------------
+
+W_Q = np.array([
+    [1.0, 0.0, 0.0, 0.0],
+    [0.0, 1.0, 0.0, 0.0],
+    [0.0, 0.0, 0.5, 0.0],
+    [0.0, 0.0, 0.0, 0.5],
+])
+
+W_K = np.array([
+    [0.5, 0.0, 0.0, 0.0],
+    [0.0, 0.5, 0.0, 0.0],
+    [0.0, 0.0, 1.0, 0.0],
+    [0.0, 0.0, 0.0, 1.0],
+])
+
+W_V = np.array([
+    [1.0, 0.0, 0.0, 0.0],
+    [0.0, 1.0, 0.0, 0.0],
+    [0.5, 0.0, 0.5, 0.0],
+    [0.0, 0.5, 0.0, 0.5],
+])
+
+Q = X @ W_Q
+K = X @ W_K
+V = X @ W_V
+
+# Q
+# [[1.1  0.   0.55 0.  ]
+#  [0.   1.1  0.   0.55]
+#  [1.1  1.1  0.   0.  ]]
+
+# K
+# [[0.55 0.   1.1  0.  ]
+#  [0.   0.55 0.   1.1 ]
+#  [0.55 0.55 0.   0.  ]]
+
+# V
+# [[1.65 0.   0.55 0.  ]
+#  [0.   1.65 0.   0.55]
+#  [1.1  1.1  0.   0.  ]]
+
+# --------------------------------------------------
+# 3. 2개의 Attention Head
+# --------------------------------------------------
+
+num_heads = 2
+head_dim = 2
+
+Qh = Q.reshape(3, num_heads, head_dim).transpose(1, 0, 2)
+Kh = K.reshape(3, num_heads, head_dim).transpose(1, 0, 2)
+Vh = V.reshape(3, num_heads, head_dim).transpose(1, 0, 2)
+
+scores = Qh @ Kh.transpose(0, 2, 1)
+scores = scores / np.sqrt(head_dim)
+
+# Head 1 Scaled Score
+# [[0.4278 0.     0.4278]
+#  [0.     0.4278 0.4278]
+#  [0.4278 0.4278 0.8556]]
+
+# Head 2 Scaled Score
+# [[0.4278 0.     0.    ]
+#  [0.     0.4278 0.    ]
+#  [0.     0.     0.    ]]
+
+def softmax(x):
+    x = x - np.max(x, axis=-1, keepdims=True)
+    exp_x = np.exp(x)
+    return exp_x / np.sum(exp_x, axis=-1, keepdims=True)
+
+weights = np.stack([
+    softmax(scores[0]),
+    softmax(scores[1]),
+])
+
+# Head 1 Attention Weight
+# [[0.3771 0.2458 0.3771]
+#  [0.2458 0.3771 0.3771]
+#  [0.2830 0.2830 0.4340]]
+
+# Head 2 Attention Weight
+# [[0.4340 0.2830 0.2830]
+#  [0.2830 0.4340 0.2830]
+#  [0.3333 0.3333 0.3333]]
+
+head_output = weights @ Vh
+
+multi_head_output = (
+    head_output
+    .transpose(1, 0, 2)
+    .reshape(3, 4)
+)
+
+# Multi-Head Output
+# [[1.0370 0.8204 0.2387 0.1556]
+#  [0.8204 1.0370 0.1556 0.2387]
+#  [0.9444 0.9444 0.1833 0.1833]]
+
+# --------------------------------------------------
+# 4. Add & Norm
+# --------------------------------------------------
+
+def layer_norm(x, eps=1e-5):
+    mean = x.mean(axis=-1, keepdims=True)
+    var = ((x - mean) ** 2).mean(axis=-1, keepdims=True)
+    return (x - mean) / np.sqrt(var + eps)
+
+residual1 = X + multi_head_output
+norm1 = layer_norm(residual1)
+
+# norm1
+# [[ 1.4127 -0.4036  0.3115 -1.3207]
+#  [-0.4036  1.4127 -1.3207  0.3115]
+#  [ 1.0000  1.0000 -1.0000 -1.0000]]
+
+# --------------------------------------------------
+# 5. FFN
+# --------------------------------------------------
+
+W1 = np.array([
+    [ 0.5,  0.2, -0.3,  0.1,  0.4,  0.0],
+    [ 0.1,  0.6,  0.2, -0.2,  0.0,  0.3],
+    [ 0.4, -0.1,  0.5,  0.2, -0.3,  0.1],
+    [-0.2,  0.3,  0.1,  0.5,  0.2, -0.4],
+])
+
+b1 = np.array([0.1, 0.0, 0.05, 0.0, 0.0, 0.0])
+
+W2 = np.array([
+    [ 0.5,  0.0,  0.2, -0.1],
+    [ 0.1,  0.4, -0.2,  0.3],
+    [-0.3,  0.2,  0.5,  0.0],
+    [ 0.2, -0.1,  0.1,  0.4],
+    [ 0.0,  0.3, -0.2,  0.2],
+    [ 0.4, -0.2,  0.0,  0.1],
+])
+
+b2 = np.array([0.0, 0.05, 0.0, -0.05])
+
+hidden = norm1 @ W1 + b1
+relu = np.maximum(hidden, 0)
+ffn_output = relu @ W2 + b2
+
+# FFN Output
+# [[ 0.7527  0.0246  0.1894 -0.0801]
+#  [ 0.1661  0.5027 -0.2579  0.3239]
+#  [ 0.5500  0.3200 -0.1200  0.2400]]
+
+# --------------------------------------------------
+# 6. 두 번째 Add & Norm
+# --------------------------------------------------
+
+residual2 = norm1 + ffn_output
+encoder_output = layer_norm(residual2)
+
+print(encoder_output)
+
+# 최종 Encoder Output
+# [[ 1.4854 -0.4590  0.2134 -1.2399]
+#  [-0.3307  1.3600 -1.3839  0.3547]
+#  [ 1.0881  0.8959 -1.1424 -0.8416]]
+```
+
+## 숫자로 다시 보는 Encoder 한 층
+
+`love` 하나만 따라가면 다음과 같습니다.
+
+```text
+초기 Embedding
+[0.0000, 1.0000, 0.0000, 1.0000]
+
+위치 정보 추가
+[0.0000, 1.1000, 0.0000, 1.1000]
+
+Multi-Head Attention
+[0.8204, 1.0370, 0.1556, 0.2387]
+
+Residual + LayerNorm
+[-0.4036, 1.4127, -1.3207, 0.3115]
+
+FFN
+[0.1661, 0.5027, -0.2579, 0.3239]
+
+두 번째 Residual + LayerNorm
+[-0.3307, 1.3600, -1.3839, 0.3547]
+```
+
+처음에는 단순히 `love`라는 Token의 Embedding이었습니다.
+
+Encoder 한 층을 지난 뒤에는 `I`, `love`, `AI`의 관계가 Attention을 통해 섞인 **문맥 벡터**가 됩니다.
+
+## 왜 Multi-Head를 사용할까
+
+Head 하나만 있으면 하나의 Attention 공간에서 관계를 계산합니다.
+
+여러 Head를 사용하면 서로 다른 Projection 공간에서 관계를 계산할 수 있습니다.
 
 ```text
 Head 1
+→ Q1, K1, V1
+
 Head 2
-Head 3
+→ Q2, K2, V2
+
 ...
-Head h
 ```
 
-각 Head는 서로 다른 `W_Q`, `W_K`, `W_V`를 사용합니다.
+각 결과를 합칩니다.
 
-$$head_i=\operatorname{Attention}(Q_i,K_i,V_i)$$
+$$H=\mathrm{Concat}(head_1,\dots,head_h)W_O$$
 
-각 Head의 결과를 이어 붙입니다.
-
-$$H=\operatorname{Concat}(head_1,\dots,head_h)W_O$$
-
-- `W_O`: 최종 출력 Projection 행렬
-
-## 왜 여러 Head를 사용할까
-
-하나의 Attention만 사용하면 하나의 관계 표현에 집중할 수 있습니다.
-
-Multi-Head Attention은 서로 다른 관계를 동시에 볼 수 있습니다.
-
-예를 들어 개념적으로
+Head마다 사람이 미리
 
 ```text
-Head 1 → 문법 관계
-Head 2 → 멀리 떨어진 Token 관계
-Head 3 → 의미적 유사성
-Head 4 → 특정 위치 패턴
+문법 담당
+의미 담당
 ```
 
-처럼 서로 다른 특징을 학습할 수 있습니다.
+처럼 역할을 정하는 것은 아닙니다.
 
-실제로 Head마다 반드시 이런 역할이 고정되는 것은 아닙니다.
+학습 과정에서 서로 다른 관계를 포착할 수 있다는 뜻입니다.
 
-<blockquote class="prompt-warning">
-<p>Attention Head마다 문법, 의미처럼 사람이 미리 역할을 지정하는 것은 아닙니다. 학습 과정에서 서로 다른 관계 표현을 학습할 수 있다는 뜻입니다.</p>
-</blockquote>
+## Attention과 FFN의 차이
 
-## Residual Connection
-
-Attention의 출력을 바로 다음 층으로 넘기지 않습니다.
-
-원래 입력을 다시 더합니다.
-
-$$Y=X+\operatorname{MHA}(X)$$
-
-이를 **Residual Connection** 또는 **Skip Connection**이라고 합니다.
+두 연산의 역할을 구분해야 합니다.
 
 ```text
-X ───────────────┐
-↓                │
-Attention        │
-↓                │
-Output ──────────+
+Self-Attention
+→ Token과 Token 사이의 정보 교환
+
+FFN
+→ 각 Token 내부 Feature 변환
 ```
 
-원래 입력 정보를 유지하면서 새로운 정보를 추가할 수 있습니다.
-
-## 왜 Residual Connection을 사용할까
-
-깊은 Network에서는 Layer가 많아질수록 학습이 어려워질 수 있습니다.
-
-Residual Connection은
+예를 들어 Attention은
 
 ```text
-기존 정보
-+
-새롭게 계산한 정보
+love가 AI를 얼마나 참고할까?
 ```
 
-를 함께 전달합니다.
+를 계산합니다.
 
-장점:
+FFN은 Attention이 끝난 `love` Vector 자체를 다시 변환합니다.
 
-- Gradient 전달에 도움
-- 깊은 Network 학습 안정화
-- 원래 표현 보존
-
-## Layer Normalization
-
-Residual Connection 이후에는 Layer Normalization을 적용합니다.
-
-개념적으로
-
-$$Y=\operatorname{LayerNorm}(X+\operatorname{MHA}(X))$$
-
-LayerNorm은 각 Token의 Feature 값 분포를 정규화합니다.
-
-이를 통해 학습을 더 안정적으로 만들 수 있습니다.
+<mark>Attention은 Token 사이를 섞고, FFN은 각 Token을 따로 변환합니다.</mark>
 
 ## Add & Norm
 
-Transformer 그림에서 자주 보는
-
-```text
-Add & Norm
-```
-
-은 다음 두 작업을 뜻합니다.
+Transformer 그림의 `Add & Norm`은 하나의 연산 이름이 아닙니다.
 
 ```text
 Add
@@ -438,243 +977,114 @@ Norm
 → Layer Normalization
 ```
 
-즉
+Encoder 한 층에서는 두 번 등장합니다.
 
 ```text
-SubLayer Output
-+
-Original Input
-→ LayerNorm
-```
-
-입니다.
-
-## Feed Forward Network
-
-Attention 다음에는 Feed Forward Network가 있습니다.
-
-각 Token마다 **독립적으로 같은 MLP**를 적용합니다.
-
-기본적인 형태는 다음과 같습니다.
-
-$$\operatorname{FFN}(x)=W_2\sigma(W_1x+b_1)+b_2$$
-
-- `W_1`: 첫 번째 Linear Layer
-- `W_2`: 두 번째 Linear Layer
-- `σ`: Activation Function
-
-원래 Transformer에서는 ReLU를 사용했습니다.
-
-최근 모델에서는 GELU, SwiGLU 등 다른 Activation도 많이 사용합니다.
-
-## FFN의 역할
-
-Self-Attention은 Token 사이의 정보를 섞습니다.
-
-```text
-Token ↔ Token
-```
-
-FFN은 각 Token의 내부 Feature를 변환합니다.
-
-```text
-Token Vector
-→ Feature 변환
-```
-
-즉 역할을 단순하게 나누면
-
-```text
-Self-Attention
-→ Token 사이 관계 학습
-
-FFN
-→ 각 Token 표현을 비선형 변환
-```
-
-입니다.
-
-<mark>Attention은 Token 간 정보를 섞고, FFN은 각 Token의 Feature를 변환합니다.</mark>
-
-## FFN도 Add & Norm을 거친다
-
-FFN 출력에도 Residual Connection과 LayerNorm을 적용합니다.
-
-$$Z=\operatorname{LayerNorm}(Y+\operatorname{FFN}(Y))$$
-
-따라서 Encoder Layer 전체는 다음과 같습니다.
-
-```text
-X
-↓
-Multi-Head Self-Attention
+Attention
 ↓
 Add & Norm
 ↓
 FFN
 ↓
 Add & Norm
-↓
-Z
 ```
-
-## Encoder 한 층 전체
-
-수식으로 단순화하면
-
-$$Y=\operatorname{LayerNorm}(X+\operatorname{MHA}(X))$$
-
-$$Z=\operatorname{LayerNorm}(Y+\operatorname{FFN}(Y))$$
-
-`Z`가 다음 Encoder Layer의 입력이 됩니다.
-
-```text
-Encoder Layer 1 Output
-→ Encoder Layer 2 Input
-```
-
-## 여러 Encoder Layer를 쌓는 이유
-
-한 층만 사용하면 제한적인 관계만 학습할 수 있습니다.
-
-Layer를 여러 층 쌓으면 표현이 점점 변합니다.
-
-```text
-초기 Layer
-→ 비교적 단순한 Token 관계
-
-중간 Layer
-→ 문맥 관계
-
-깊은 Layer
-→ 더 추상적인 표현
-```
-
-정확한 역할은 모델과 학습에 따라 달라집니다.
 
 ## Encoder의 Mask
 
-Encoder에서도 Attention Mask를 사용할 수 있습니다.
-
-대표적으로 **Padding Mask**입니다.
-
-Batch 처리를 위해 문장 길이를 맞추면 `[PAD]`가 들어갈 수 있습니다.
+Encoder에서도 Padding Mask를 사용할 수 있습니다.
 
 ```text
 I love AI [PAD] [PAD]
 ```
 
-Padding Token은 실제 의미가 없습니다.
-
-따라서 Attention 계산에서 무시하도록 Mask를 적용합니다.
+`[PAD]`는 실제 문장 정보가 아니므로 Attention에서 무시합니다.
 
 ```text
 실제 Token → Attention 가능
-PAD Token  → Attention 차단
+PAD Token  → 차단
 ```
 
-## Encoder에는 Causal Mask가 필요한가
-
-일반적인 Transformer Encoder는 **Causal Mask를 사용하지 않습니다.**
-
-Encoder는 입력 전체를 동시에 봅니다.
-
-예:
+반면 일반적인 Encoder는 **Causal Mask를 사용하지 않습니다.**
 
 ```text
-Token 1 → Token 1, 2, 3, 4 모두 참고 가능
-Token 2 → Token 1, 2, 3, 4 모두 참고 가능
+I
+love
+AI
 ```
 
-반면 Autoregressive Decoder는 미래 Token을 볼 수 없습니다.
+각 Token은 입력 전체를 볼 수 있습니다.
 
 ```text
-Token 2
-→ Token 1, 2만 참고
-→ Token 3, 4는 차단
+I    → I, love, AI
+love → I, love, AI
+AI   → I, love, AI
 ```
-
-<blockquote class="prompt-warning">
-<p>Encoder의 Self-Attention은 일반적으로 양방향이며, Decoder의 Causal Self-Attention처럼 미래 Token을 가리지 않습니다.</p>
-</blockquote>
 
 ## Encoder와 Decoder 비교
 
 | 구분 | Encoder | Decoder |
 | --- | --- | --- |
-| 입력 전체 참고 | 가능 | Causal Mask 사용 시 미래 Token 불가 |
-| 핵심 Attention | Self-Attention | Masked Self-Attention |
-| 대표 용도 | 문맥 이해 | 다음 Token 생성 |
+| Self-Attention | 양방향 | Causal |
+| 미래 Token | 볼 수 있음 | 볼 수 없음 |
+| 대표 Mask | Padding Mask | Causal Mask + Padding Mask |
+| 대표 역할 | 입력 이해 | 다음 Token 생성 |
 | 대표 모델 | BERT | GPT |
 
-Encoder-Decoder Transformer에서는 Decoder에 Cross-Attention도 추가됩니다.
+Encoder-Decoder Transformer에서는 Decoder가 Encoder Output을 참고하는 Cross-Attention도 사용합니다.
 
 ## BERT와 Encoder
 
-BERT는 Transformer의 **Encoder 구조를 여러 층 쌓은 대표적인 모델**입니다.
+BERT는 Transformer Encoder를 여러 층 쌓은 대표적인 Encoder-only 모델입니다.
 
 ```text
 Input
 ↓
-Transformer Encoder
+Encoder
 ↓
-Transformer Encoder
+Encoder
 ↓
 ...
 ↓
 Contextual Representation
 ```
 
-BERT는 좌우 문맥을 모두 볼 수 있습니다.
+BERT는 입력의 왼쪽과 오른쪽 문맥을 모두 참고할 수 있습니다.
+
+예를 들어
 
 ```text
-왼쪽 Token
-← 현재 Token →
-오른쪽 Token
+I went to the bank to deposit money.
 ```
 
-그래서 문장 이해, 분류, 개체명 인식 등에 강점을 보였습니다.
-
-## GPT와 차이
-
-GPT 계열은 기본적으로 Transformer **Decoder 구조**를 사용합니다.
-
-BERT:
+와
 
 ```text
-Encoder
-→ 양방향 문맥
+I sat on the river bank.
 ```
 
-GPT:
+에서 같은 `bank` Token도 Encoder를 통과한 최종 Vector는 달라질 수 있습니다.
 
-```text
-Decoder
-→ 이전 Token만 보고 다음 Token 예측
-```
+주변 문맥이 다르기 때문입니다.
 
-이 차이가 중요한 이유는 학습 목적이 다르기 때문입니다.
-
-## Encoder의 출력
-
-Encoder의 출력 Shape은 일반적으로 입력 Token 수를 유지합니다.
+## Encoder 출력 Shape
 
 입력이
 
 ```text
+Batch Size = B
 Sequence Length = L
 Hidden Dimension = d_model
 ```
 
-이라면 출력도 보통
+이면 일반적으로 Encoder 출력도
 
 ```text
-L × d_model
+B × L × d_model
 ```
 
 형태입니다.
 
-즉 각 Token마다 하나의 Contextual Vector가 나옵니다.
+Token 개수를 줄이는 구조가 아닙니다.
 
 ```text
 Token 1 → Context Vector 1
@@ -682,61 +1092,27 @@ Token 2 → Context Vector 2
 Token 3 → Context Vector 3
 ```
 
-## 입력과 출력의 차이
+## Self-Attention 계산 복잡도
 
-처음 Embedding은 단순히 Token 자체의 표현에 가깝습니다.
-
-Encoder를 통과하면 같은 Token도 주변 문맥에 따라 다른 벡터가 됩니다.
-
-예:
-
-```text
-bank
-```
-
-문장 1:
-
-```text
-I went to the bank to deposit money.
-```
-
-문장 2:
-
-```text
-I sat on the river bank.
-```
-
-입력 Token은 `bank`지만 Encoder 출력 표현은 문맥에 따라 달라질 수 있습니다.
-
-<mark>Encoder의 핵심 결과는 문맥이 반영된 Contextual Embedding입니다.</mark>
-
-## 계산 복잡도
-
-Self-Attention은 모든 Token 쌍의 관계를 계산합니다.
-
-Sequence Length를 `n`이라고 하면 Attention Matrix는
+Sequence Length가 `n`이면 Attention Score Matrix는
 
 $$n\times n$$
 
-크기가 됩니다.
+입니다.
 
-Self-Attention의 대표적인 Sequence Length 기준 계산 복잡도는
+따라서 Sequence Length 기준 대표적인 계산 복잡도는
 
 $$O(n^2)$$
 
 입니다.
 
-Sequence가 길어지면 Attention 계산량과 메모리 사용량이 크게 증가합니다.
+Sequence가 길어질수록 모든 Token Pair를 비교해야 하기 때문에 계산량과 메모리 사용량이 빠르게 증가합니다.
 
 ## 잘 놓치는 핵심
 
-### 1. Encoder는 입력 전체를 볼 수 있다
+### 1. Q, K, V는 같은 입력에서 출발한다
 
-일반적인 Encoder Self-Attention은 양방향입니다.
-
-### 2. Q, K, V는 입력에서 만들어진다
-
-Self-Attention에서는 같은 입력 `X`를 각각 다른 가중치 행렬에 통과시킵니다.
+Encoder Self-Attention에서는
 
 ```text
 X → Q
@@ -744,188 +1120,90 @@ X → K
 X → V
 ```
 
-### 3. Attention과 FFN의 역할은 다르다
+입니다.
+
+가중치 행렬만 서로 다릅니다.
+
+### 2. Attention Weight와 Attention Output은 다르다
 
 ```text
-Attention
-→ Token 간 관계
+Attention Weight
+→ 누구를 얼마나 볼지
 
-FFN
-→ Token 내부 Feature 변환
+Attention Output
+→ 그 비율로 Value를 섞은 결과
 ```
 
-### 4. Add & Norm은 하나의 연산이 아니다
+### 3. Multi-Head는 차원을 단순 복제하는 것이 아니다
 
-```text
-Add
-→ Residual Connection
+각 Head가 서로 다른 Projection을 사용합니다.
 
-Norm
-→ Layer Normalization
-```
+### 4. Encoder는 일반적으로 미래 Token을 볼 수 있다
 
-### 5. Encoder는 미래 Token을 가리지 않는다
+Decoder의 Causal Self-Attention과 혼동하면 안 됩니다.
 
-Decoder의 Causal Mask와 혼동하면 안 됩니다.
+### 5. FFN은 Token끼리 섞지 않는다
 
-### 6. Encoder 출력은 Token별 Contextual Vector다
+각 Token에 동일한 FFN을 독립적으로 적용합니다.
 
-입력 Sequence Length가 유지되며 각 Token 표현이 문맥화됩니다.
+### 6. Encoder 출력은 Contextual Embedding이다
+
+처음 Embedding보다 주변 Token의 정보가 반영된 표현입니다.
 
 ## 시험·면접
 
 ### 핵심 암기
 
 ```text
-Transformer Encoder
-
-Embedding
-+
-Positional Encoding
+Embedding + Position
+↓
+Q, K, V
 ↓
 Multi-Head Self-Attention
 ↓
 Add & Norm
 ↓
-Feed Forward Network
+FFN
 ↓
 Add & Norm
 ```
 
-### 자주 나오는 질문 1
+### Q. Self-Attention의 핵심 수식은?
 
-**Transformer Encoder의 핵심 구성 요소는?**
+$$\mathrm{Attention}(Q,K,V)=\mathrm{softmax}\left(\frac{QK^T}{\sqrt{d_k}}\right)V$$
 
-Multi-Head Self-Attention, Feed Forward Network, Residual Connection, Layer Normalization입니다.
+### Q. 왜 루트 d_k로 나누는가?
 
-### 자주 나오는 질문 2
+Dimension이 커질수록 Dot Product 값이 커질 수 있습니다.
 
-**Self-Attention에서 Q, K, V는 어디서 만들어지는가?**
+값이 너무 커지면 Softmax가 한쪽으로 지나치게 치우칠 수 있기 때문에 Scale합니다.
 
-Encoder Self-Attention에서는 같은 입력 Sequence에서 각각 다른 Linear Projection을 통해 만들어집니다.
+### Q. Multi-Head Attention을 사용하는 이유는?
 
-### 자주 나오는 질문 3
+여러 Projection 공간에서 Token 관계를 동시에 학습하기 위해서입니다.
 
-**왜 QK를 루트 d_k로 나누는가?**
+### Q. Residual Connection의 목적은?
 
-Vector 차원이 커질수록 Dot Product 값이 커져 Softmax가 지나치게 뾰족해질 수 있기 때문에 값을 Scale합니다.
+기존 표현을 유지하면서 Sublayer가 계산한 정보를 더하고, 깊은 Network의 학습을 안정화하는 데 도움을 줍니다.
 
-### 자주 나오는 질문 4
+### Q. Encoder에서 Causal Mask를 사용하는가?
 
-**Encoder의 Attention은 미래 Token을 볼 수 있는가?**
+일반적인 Transformer Encoder는 사용하지 않습니다.
 
-일반적인 Encoder는 가능합니다. Causal Mask를 사용하는 Decoder와 다릅니다.
-
-### 자주 나오는 질문 5
-
-**FFN의 역할은?**
-
-각 Token에 동일한 Feed Forward Network를 독립적으로 적용해 Feature를 비선형 변환합니다.
+입력 전체를 양방향으로 참고할 수 있습니다.
 
 <blockquote class="prompt-danger">
-<p>시험 함정: Encoder의 Self-Attention과 Decoder의 Masked Self-Attention을 같은 것으로 보면 안 됩니다. 일반적인 Encoder는 입력 전체를 참고할 수 있습니다.</p>
+<p>시험 함정: Attention Weight가 최종 Token Vector인 것은 아닙니다. Attention Weight를 Value에 곱해 가중합한 결과가 Attention Output입니다.</p>
 </blockquote>
-
-## 예시로 한 바퀴
-
-입력:
-
-```text
-I love AI
-```
-
-### 1. Embedding
-
-```text
-I     → x1
-love  → x2
-AI    → x3
-```
-
-### 2. 위치 정보 추가
-
-```text
-x1 + p1
-x2 + p2
-x3 + p3
-```
-
-### 3. Q, K, V 생성
-
-```text
-X → Q
-X → K
-X → V
-```
-
-### 4. Self-Attention
-
-각 Token이 다른 모든 Token과 관계를 계산합니다.
-
-```text
-I    ↔ I, love, AI
-love ↔ I, love, AI
-AI   ↔ I, love, AI
-```
-
-### 5. Multi-Head Attention
-
-여러 Attention Head가 서로 다른 관계를 학습합니다.
-
-### 6. Add & Norm
-
-```text
-Attention Output
-+
-Original Input
-→ LayerNorm
-```
-
-### 7. FFN
-
-각 Token Vector를 독립적으로 변환합니다.
-
-### 8. 다시 Add & Norm
-
-```text
-FFN Output
-+
-Previous Representation
-→ LayerNorm
-```
-
-최종적으로
-
-```text
-I     → 문맥 반영 Vector
-love  → 문맥 반영 Vector
-AI    → 문맥 반영 Vector
-```
-
-가 만들어집니다.
 
 ## 객관식 문제
 
-### 1. Transformer Encoder의 핵심 구성 요소로 가장 적절한 것은?
+### 1. Encoder Self-Attention에서 Q, K, V는 어디서 만들어지는가?
 
-① CNN과 Pooling  
-② Self-Attention과 FFN  
-③ RNN과 LSTM  
-④ K-Means와 PCA
-
-<details>
-<summary>정답</summary>
-
-②
-
-</details>
-
-### 2. Self-Attention의 Q, K, V에 대한 설명으로 옳은 것은?
-
-① 모두 다른 문장에서 가져온다.  
-② 같은 입력에서 서로 다른 Projection으로 만든다.  
-③ Q만 학습된다.  
-④ K와 V는 항상 동일하다.
+① 서로 다른 세 문장  
+② 같은 입력 X  
+③ Decoder Output  
+④ Vocabulary
 
 <details>
 <summary>정답</summary>
@@ -934,12 +1212,26 @@ AI    → 문맥 반영 Vector
 
 </details>
 
-### 3. Add & Norm의 Add는 무엇을 의미하는가?
+### 2. Attention Weight를 얻기 직전에 적용하는 함수는?
 
-① Token을 추가한다.  
-② Residual Connection을 적용한다.  
-③ Vocabulary를 추가한다.  
-④ Head를 추가한다.
+① ReLU  
+② Sigmoid  
+③ Softmax  
+④ Max Pooling
+
+<details>
+<summary>정답</summary>
+
+③
+
+</details>
+
+### 3. FFN의 역할로 가장 적절한 것은?
+
+① Token 사이 Attention 계산  
+② 각 Token Feature의 비선형 변환  
+③ Tokenization  
+④ Padding 생성
 
 <details>
 <summary>정답</summary>
@@ -948,12 +1240,12 @@ AI    → 문맥 반영 Vector
 
 </details>
 
-### 4. 일반적인 Transformer Encoder에 대한 설명으로 옳은 것은?
+### 4. Add & Norm의 Add는 무엇인가?
 
-① 미래 Token을 항상 Mask한다.  
-② 입력 전체 Token을 참고할 수 있다.  
-③ 이전 Token 하나만 본다.  
-④ Self-Attention을 사용하지 않는다.
+① Token 추가  
+② Residual Connection  
+③ Vocabulary 추가  
+④ Head 추가
 
 <details>
 <summary>정답</summary>
@@ -962,17 +1254,17 @@ AI    → 문맥 반영 Vector
 
 </details>
 
-### 5. FFN의 역할로 가장 적절한 것은?
+### 5. 일반적인 Encoder의 Self-Attention에 대한 설명으로 옳은 것은?
 
-① Token 간 Attention Score만 계산한다.  
-② 각 Token의 Feature를 비선형 변환한다.  
-③ Tokenizer Vocabulary를 만든다.  
-④ Positional Encoding을 제거한다.
+① 미래 Token을 반드시 가린다.  
+② 현재 Token 하나만 본다.  
+③ 입력 전체 Token을 참고할 수 있다.  
+④ Attention을 사용하지 않는다.
 
 <details>
 <summary>정답</summary>
 
-②
+③
 
 </details>
 
@@ -993,28 +1285,30 @@ AI    → 문맥 반영 Vector
 ## 마지막 정리
 
 ```text
-Token
+I love AI
 ↓
 Embedding + Position
 ↓
 Q, K, V
 ↓
-Multi-Head Self-Attention
+2개의 Attention Head
 ↓
-Add & Norm
+Attention Weight × V
+↓
+Concat
+↓
+Residual + LayerNorm
 ↓
 FFN
 ↓
-Add & Norm
+Residual + LayerNorm
 ↓
-Contextual Representation
+문맥이 반영된 Token Vector
 ```
 
-핵심은 다음 한 문장입니다.
-
-<mark>Transformer Encoder는 Self-Attention으로 Token 사이의 관계를 계산하고, FFN으로 각 Token 표현을 변환해 문맥이 반영된 벡터를 만듭니다.</mark>
+<mark>Transformer Encoder는 Self-Attention으로 Token 사이의 정보를 섞고, FFN으로 각 Token 표현을 변환하여 문맥이 반영된 Vector를 만듭니다.</mark>
 
 ## 다음에 이을 글
 
 **Transformer Decoder**입니다.  
-Encoder와 달리 Causal Mask를 사용하는 이유, Masked Self-Attention, Cross-Attention, 다음 Token 생성 과정을 이어서 봅니다.
+같은 방식으로 예시 Token과 임의의 Vector를 넣어 Causal Mask가 적용되기 전과 후의 Attention Matrix가 실제로 어떻게 달라지는지 Python으로 계산합니다.
