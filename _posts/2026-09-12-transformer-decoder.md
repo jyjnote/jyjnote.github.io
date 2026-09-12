@@ -4,32 +4,32 @@ date: 2026-09-12 14:55:00 +0900
 slug: transformer-decoder
 permalink: /posts/transformer-decoder/
 categories: [AI, 딥러닝]
-tags: [Transformer, Decoder, SelfAttention, CausalMask, CrossAttention, GPT, LLM]
+tags: [Transformer, Decoder, CausalAttention, CrossAttention, KVCache, GPT, LLM]
 math: true
 ---
 
 Transformer Decoder는 **이전 Token들을 참고해 다음 Token을 생성하는 구조**입니다.  
-핵심은 미래 Token을 보지 못하게 막는 **Causal Mask**입니다.
+생성형 LLM에서 가장 중요한 차이는 미래 Token을 보지 못하게 하는 **Causal Mask**입니다.
 
 <blockquote class="prompt-info">
-<p>한 줄: Decoder는 과거 Token만 보면서 다음 Token을 하나씩 예측합니다.</p>
+<p>한 줄: Decoder는 현재까지 나온 Token만 보고 다음 Token의 확률을 계산합니다.</p>
 </blockquote>
 
 <details>
 <summary>한 줄로</summary>
 
-Transformer Decoder는 Masked Self-Attention으로 미래 정보를 차단하고, 필요하면 Encoder 출력에 Cross-Attention한 뒤 FFN을 거쳐 다음 Token 확률을 만듭니다.
+Decoder는 Causal Self-Attention으로 미래 정보를 차단하고, FFN을 거쳐 문맥 표현을 만든 뒤 Vocabulary 확률로 변환해 다음 Token을 예측합니다.
 
 </details>
 
-## 전체 구조
+## 먼저 두 Decoder를 구분
 
-원래 Transformer의 Decoder Layer는 크게 세 부분으로 구성됩니다.
+`Transformer Decoder`라는 말은 문맥에 따라 두 구조를 가리킬 수 있습니다.
+
+### 원래 Transformer의 Decoder
 
 ```text
-입력
-↓
-Masked Multi-Head Self-Attention
+Masked Self-Attention
 ↓
 Add & Norm
 ↓
@@ -37,176 +37,127 @@ Cross-Attention
 ↓
 Add & Norm
 ↓
-Feed Forward Network
+FFN
+↓
+Add & Norm
+```
+
+Encoder의 출력까지 참고하는 **Encoder-Decoder 구조**입니다.
+
+### GPT 계열의 Decoder-only Block
+
+```text
+Causal Self-Attention
 ↓
 Add & Norm
 ↓
-출력
+FFN
+↓
+Add & Norm
 ```
 
-이 Decoder Layer를 여러 층 쌓습니다.
+Encoder가 없으므로 일반적인 GPT 계열에는 Cross-Attention이 없습니다.
 
-```text
-Input
-↓
-Decoder Layer 1
-↓
-Decoder Layer 2
-↓
-...
-↓
-Decoder Layer N
-```
+<blockquote class="prompt-warning">
+<p>원래 Transformer Decoder와 GPT의 Decoder-only Block을 완전히 같은 구조로 보면 안 됩니다. Cross-Attention의 존재 여부가 대표적인 차이입니다.</p>
+</blockquote>
 
-<mark>Decoder의 가장 큰 특징은 미래 Token을 볼 수 없다는 점입니다.</mark>
+이번 글에서는 먼저 **GPT식 Decoder-only Block을 실제 숫자로 계산**합니다.  
+그다음 원래 Transformer Decoder의 **Cross-Attention**을 따로 계산합니다.
 
-## Decoder의 입력
+## 이번 글에서 계산할 문장
 
-문장이 Tokenizer를 거쳐 Token ID로 바뀝니다.
+다음 입력을 사용하겠습니다.
 
 ```text
 I love AI
-↓
-["I", "love", "AI"]
-↓
-Token ID
 ```
 
-Token ID는 Embedding Vector로 바뀝니다.
+설명을 위해 매우 작은 모델을 가정합니다.
 
 ```text
-Token ID
-→ Embedding
+Token 수 = 3
+Hidden Dimension = 4
+Attention Head 수 = 2
+Head Dimension = 2
 ```
 
-여기에 위치 정보를 더합니다.
+실제 LLM은 훨씬 큰 Dimension과 많은 Head를 사용하지만 계산 원리는 같습니다.
+
+## 1. Token Embedding
+
+각 Token에 임의의 Embedding을 넣습니다.
+
+```python
+import numpy as np
+
+np.set_printoptions(precision=4, suppress=True)
+
+tokens = ["I", "love", "AI"]
+
+E = np.array([
+    [1.0, 0.0, 1.0, 0.0],  # I
+    [0.0, 1.0, 0.0, 1.0],  # love
+    [1.0, 1.0, 0.0, 0.0],  # AI
+])
+
+print(E)
+
+# 결과
+# [[1. 0. 1. 0.]
+#  [0. 1. 0. 1.]
+#  [1. 1. 0. 0.]]
+```
+
+행 하나가 Token 하나입니다.
+
+```text
+1행 → I
+2행 → love
+3행 → AI
+```
+
+Shape:
+
+```python
+print(E.shape)
+
+# 결과
+# (3, 4)
+```
+
+## 2. 위치 정보 추가
+
+Transformer는 순서를 별도로 알려줘야 합니다.
+
+설명을 위해 다음 위치 벡터를 사용합니다.
+
+```python
+P = np.array([
+    [0.1, 0.0, 0.1, 0.0],  # position 1
+    [0.0, 0.1, 0.0, 0.1],  # position 2
+    [0.1, 0.1, 0.0, 0.0],  # position 3
+])
+
+X = E + P
+
+print(X)
+
+# 결과
+# [[1.1 0.  1.1 0. ]
+#  [0.  1.1 0.  1.1]
+#  [1.1 1.1 0.  0. ]]
+```
+
+수식으로는
 
 $$X=E+P$$
 
-- `E`: Token Embedding
-- `P`: Positional Encoding
-- `X`: Decoder 입력
+입니다.
 
-## 왜 위치 정보가 필요한가
+## 3. Q, K, V 만들기
 
-Self-Attention 자체는 Token 순서를 자동으로 알지 못합니다.
-
-```text
-I love AI
-```
-
-와
-
-```text
-AI love I
-```
-
-는 Token 집합은 같지만 순서는 다릅니다.
-
-그래서 Decoder도 위치 정보를 필요로 합니다.
-
-## Masked Self-Attention
-
-Decoder의 핵심은 **Masked Self-Attention**입니다.
-
-일반적인 Encoder Self-Attention은 모든 Token을 볼 수 있습니다.
-
-```text
-Token 1 → 1, 2, 3, 4
-Token 2 → 1, 2, 3, 4
-Token 3 → 1, 2, 3, 4
-```
-
-Decoder는 미래 Token을 볼 수 없습니다.
-
-```text
-Token 1 → 1
-Token 2 → 1, 2
-Token 3 → 1, 2, 3
-Token 4 → 1, 2, 3, 4
-```
-
-이를 위해 **Causal Mask**를 사용합니다.
-
-<blockquote class="prompt-info">
-<p>Causal Mask는 현재 위치보다 뒤에 있는 미래 Token의 Attention을 차단합니다.</p>
-</blockquote>
-
-## 왜 미래 Token을 가릴까
-
-다음 Token을 예측하는 모델이 정답을 미리 보면 안 되기 때문입니다.
-
-예를 들어
-
-```text
-I love
-```
-
-다음 Token으로
-
-```text
-AI
-```
-
-를 예측한다고 하겠습니다.
-
-학습할 때 입력 전체 문장이 존재하더라도
-
-```text
-I love AI
-```
-
-`love` 위치에서 `AI`를 직접 보면 정답을 미리 본 것이 됩니다.
-
-그래서 미래 위치를 Mask합니다.
-
-## Causal Mask
-
-Attention Score는 기본적으로 다음과 같습니다.
-
-$$S=\frac{QK^T}{\sqrt{d_k}}$$
-
-여기에 Mask를 더합니다.
-
-$$S'=\frac{QK^T}{\sqrt{d_k}}+M$$
-
-미래 위치에는 매우 작은 값을 넣습니다.
-
-개념적으로
-
-```text
-0     -∞    -∞    -∞
-0      0    -∞    -∞
-0      0     0    -∞
-0      0     0     0
-```
-
-Softmax를 적용하면 `-∞` 위치의 확률은 0이 됩니다.
-
-$$A=\operatorname{softmax}(S')$$
-
-따라서 미래 Token은 Attention 결과에 영향을 주지 못합니다.
-
-## Causal Mask 모양
-
-Token이 4개라면
-
-```text
-        K1  K2  K3  K4
-Q1      O   X   X   X
-Q2      O   O   X   X
-Q3      O   O   O   X
-Q4      O   O   O   O
-```
-
-- `O`: 볼 수 있음
-- `X`: 볼 수 없음
-
-<mark>Causal Mask는 Attention Matrix의 위쪽 삼각 영역을 막는 형태로 이해하면 쉽습니다.</mark>
-
-## Q, K, V
-
-Decoder Self-Attention에서도 Q, K, V를 만듭니다.
+Decoder Self-Attention에서도 같은 입력 `X`에서 Q, K, V를 만듭니다.
 
 $$Q=XW_Q$$
 
@@ -214,533 +165,893 @@ $$K=XW_K$$
 
 $$V=XW_V$$
 
-- Query: 무엇을 찾는가
-- Key: 어떤 정보를 가지고 있는가
-- Value: 실제 전달할 정보
+설명을 위해 임의의 Projection Matrix를 사용합니다.
 
-Self-Attention에서는 Q, K, V 모두 같은 Decoder 입력에서 만들어집니다.
+```python
+W_Q = np.array([
+    [1.0, 0.0, 0.0, 0.0],
+    [0.0, 1.0, 0.0, 0.0],
+    [0.0, 0.0, 0.5, 0.0],
+    [0.0, 0.0, 0.0, 0.5],
+])
 
-## Masked Self-Attention 계산
+W_K = np.array([
+    [0.5, 0.0, 0.0, 0.0],
+    [0.0, 0.5, 0.0, 0.0],
+    [0.0, 0.0, 1.0, 0.0],
+    [0.0, 0.0, 0.0, 1.0],
+])
 
-기본 형태는 다음과 같습니다.
+W_V = np.array([
+    [1.0, 0.0, 0.0, 0.0],
+    [0.0, 1.0, 0.0, 0.0],
+    [0.5, 0.0, 0.5, 0.0],
+    [0.0, 0.5, 0.0, 0.5],
+])
 
-$$\operatorname{Attention}(Q,K,V)=\operatorname{softmax}\left(\frac{QK^T}{\sqrt{d_k}}+M\right)V$$
+Q = X @ W_Q
+K = X @ W_K
+V = X @ W_V
 
-`M`이 Causal Mask입니다.
+print("Q")
+print(Q)
 
-일반 Self-Attention 공식에 Mask가 추가된 형태입니다.
+# 결과
+# [[1.1  0.   0.55 0.  ]
+#  [0.   1.1  0.   0.55]
+#  [1.1  1.1  0.   0.  ]]
 
-## Multi-Head Attention
+print("K")
+print(K)
 
-Decoder도 여러 Attention Head를 사용합니다.
+# 결과
+# [[0.55 0.   1.1  0.  ]
+#  [0.   0.55 0.   1.1 ]
+#  [0.55 0.55 0.   0.  ]]
 
-$$head_i=\operatorname{Attention}(Q_i,K_i,V_i)$$
+print("V")
+print(V)
 
-각 Head의 결과를 합칩니다.
-
-$$H=\operatorname{Concat}(head_1,\dots,head_h)W_O$$
-
-여러 Head가 서로 다른 관계를 학습할 수 있습니다.
-
-```text
-Head 1
-Head 2
-Head 3
-...
+# 결과
+# [[1.65 0.   0.55 0.  ]
+#  [0.   1.65 0.   0.55]
+#  [1.1  1.1  0.   0.  ]]
 ```
 
-다만 Head별 역할이 사람이 미리 정해져 있는 것은 아닙니다.
-
-## Add & Norm
-
-Masked Self-Attention 뒤에는 Add & Norm이 있습니다.
+직관은 Encoder와 같습니다.
 
 ```text
-Masked Self-Attention
-↓
-Residual Connection
-↓
-Layer Normalization
+Query → 내가 무엇을 찾는가
+Key   → 내가 어떤 특징을 가지고 있는가
+Value → 실제로 전달할 정보
 ```
 
-수식으로 단순화하면
+## 4. 두 개의 Head로 나누기
 
-$$Y=\operatorname{LayerNorm}(X+\operatorname{MaskedMHA}(X))$$
+Hidden Dimension은 4이고 Head가 2개이므로
 
-여기서 `Add`는 Residual Connection입니다.
+$$d_k=\frac{4}{2}=2$$
 
-## Cross-Attention
+입니다.
 
-원래 Transformer Encoder-Decoder 구조에서는 Decoder에 **Cross-Attention**이 있습니다.
+```python
+num_heads = 2
+head_dim = 2
 
-Decoder가 Encoder의 출력 정보를 참고하는 부분입니다.
+Qh = Q.reshape(3, num_heads, head_dim).transpose(1, 0, 2)
+Kh = K.reshape(3, num_heads, head_dim).transpose(1, 0, 2)
+Vh = V.reshape(3, num_heads, head_dim).transpose(1, 0, 2)
 
-예를 들어 번역에서는
+print(Qh.shape)
 
-```text
-영어 문장
-→ Encoder
-→ Encoder Output
+# 결과
+# (2, 3, 2)
+#
+# 2 → Attention Head
+# 3 → Token
+# 2 → Head Dimension
 ```
 
-Decoder가 이 정보를 보면서 한국어 문장을 생성합니다.
+Head 1의 Query:
 
-```text
-Decoder
-→ Encoder Output 참고
-→ 다음 Token 생성
+```python
+print(Qh[0])
+
+# 결과
+# [[1.1 0. ]
+#  [0.  1.1]
+#  [1.1 1.1]]
 ```
 
-## Cross-Attention의 Q, K, V
+Head 2의 Query:
 
-Cross-Attention에서는 Q, K, V의 출처가 다릅니다.
+```python
+print(Qh[1])
 
-```text
-Query
-→ Decoder에서 옴
-
-Key
-→ Encoder Output에서 옴
-
-Value
-→ Encoder Output에서 옴
+# 결과
+# [[0.55 0.  ]
+#  [0.   0.55]
+#  [0.   0.  ]]
 ```
 
-즉
+## 5. Mask 적용 전 Attention Score
 
-$$Q=YW_Q$$
+먼저 Encoder와 똑같이 Scaled Dot-Product Score를 계산합니다.
 
-$$K=HW_K$$
+$$S=\frac{QK^T}{\sqrt{d_k}}$$
 
-$$V=HW_V$$
+```python
+scores = Qh @ Kh.transpose(0, 2, 1)
+scores = scores / np.sqrt(head_dim)
 
-- `Y`: Decoder의 현재 표현
-- `H`: Encoder Output
+print("Head 1")
+print(scores[0])
 
-<mark>Cross-Attention에서는 Q는 Decoder, K와 V는 Encoder에서 옵니다.</mark>
+# 결과
+# [[0.4278 0.     0.4278]
+#  [0.     0.4278 0.4278]
+#  [0.4278 0.4278 0.8556]]
 
-## 왜 Cross-Attention을 사용할까
+print("Head 2")
+print(scores[1])
 
-Decoder가 입력 문장의 정보를 참고해야 하기 때문입니다.
-
-번역 예:
-
-```text
-Encoder 입력:
-I love AI
-
-Decoder 출력:
-나는 AI를 좋아한다
+# 결과
+# [[0.4278 0.     0.    ]
+#  [0.     0.4278 0.    ]
+#  [0.     0.     0.    ]]
 ```
 
-Decoder가 단순히 이전 한국어 Token만 보는 것이 아니라 Encoder가 만든 영어 문장 표현도 참고해야 합니다.
+여기까지만 보면 첫 번째 Token인 `I`도 미래의 `love`, `AI`를 볼 수 있습니다.
 
-## Encoder Self-Attention과 Cross-Attention 차이
-
-| 구분 | Self-Attention | Cross-Attention |
-| --- | --- | --- |
-| Q | 현재 Sequence | Decoder |
-| K | 현재 Sequence | Encoder |
-| V | 현재 Sequence | Encoder |
-| 목적 | 같은 Sequence 내부 관계 | Encoder 정보 참조 |
-
-## GPT에는 Cross-Attention이 있는가
-
-일반적인 GPT 계열의 **Decoder-only Transformer**에는 Encoder가 없습니다.
-
-따라서 일반적인 구조에서는 Cross-Attention도 없습니다.
+예를 들어 Head 1의 첫 번째 행은
 
 ```text
-GPT 계열
-
-Masked Self-Attention
-↓
-FFN
-↓
-다음 Token 예측
+I → I
+I → love
+I → AI
 ```
 
-즉 원래 Transformer Decoder와 GPT의 Decoder Block은 완전히 같은 구조가 아닙니다.
+세 위치 모두 점수가 존재합니다.
 
-<blockquote class="prompt-warning">
-<p>GPT는 Decoder 구조를 기반으로 하지만, 일반적인 GPT Decoder-only Block에는 Encoder가 없으므로 Cross-Attention도 없습니다.</p>
-</blockquote>
+생성 모델에서는 이것을 그대로 사용하면 안 됩니다.
 
-## Feed Forward Network
+## 6. Causal Mask 만들기
 
-Attention 뒤에는 FFN이 있습니다.
+미래 Token 위치를 `-∞`로 만듭니다.
 
-$$\operatorname{FFN}(x)=W_2\sigma(W_1x+b_1)+b_2$$
+```python
+causal_mask = np.array([
+    [0.0,   -np.inf, -np.inf],
+    [0.0,    0.0,    -np.inf],
+    [0.0,    0.0,     0.0],
+])
 
-각 Token에 동일한 MLP를 독립적으로 적용합니다.
+print(causal_mask)
 
-```text
-Attention
-→ Token 사이 정보 교환
-
-FFN
-→ 각 Token Feature 변환
+# 결과
+# [[  0. -inf -inf]
+#  [  0.   0. -inf]
+#  [  0.   0.   0.]]
 ```
 
-## Decoder Layer 전체
-
-원래 Transformer Decoder를 단순화하면
+의미는 다음과 같습니다.
 
 ```text
-Input
-↓
-Masked Self-Attention
-↓
-Add & Norm
-↓
-Cross-Attention
-↓
-Add & Norm
-↓
-FFN
-↓
-Add & Norm
-↓
-Output
+I
+→ I만 가능
+
+love
+→ I, love 가능
+→ AI 금지
+
+AI
+→ I, love, AI 가능
 ```
 
-수식으로 단순화하면
-
-$$Y=\operatorname{LayerNorm}(X+\operatorname{MaskedMHA}(X))$$
-
-$$Z=\operatorname{LayerNorm}(Y+\operatorname{CrossAttention}(Y,H))$$
-
-$$O=\operatorname{LayerNorm}(Z+\operatorname{FFN}(Z))$$
-
-`H`는 Encoder Output입니다.
-
-## Decoder-only 구조
-
-GPT 계열처럼 Encoder가 없는 구조는 더 단순합니다.
+표로 보면
 
 ```text
-Input
-↓
-Masked Self-Attention
-↓
-Add & Norm
-↓
-FFN
-↓
-Add & Norm
-↓
-Output
+        I    love    AI
+I       O      X      X
+love    O      O      X
+AI      O      O      O
 ```
 
-여러 Block을 반복합니다.
+<mark>Causal Mask의 핵심은 현재 위치보다 오른쪽에 있는 미래 Token을 볼 수 없게 만드는 것입니다.</mark>
 
-```text
-Decoder Block 1
-↓
-Decoder Block 2
-↓
-...
-↓
-Decoder Block N
+## 7. Score에 Causal Mask 적용
+
+Score에 Mask를 더합니다.
+
+$$S'=\frac{QK^T}{\sqrt{d_k}}+M$$
+
+```python
+masked_scores = scores + causal_mask
+
+print("Head 1")
+print(masked_scores[0])
+
+# 결과
+# [[0.4278   -inf   -inf]
+#  [0.     0.4278   -inf]
+#  [0.4278 0.4278 0.8556]]
+
+print("Head 2")
+print(masked_scores[1])
+
+# 결과
+# [[0.4278   -inf   -inf]
+#  [0.     0.4278   -inf]
+#  [0.     0.     0.    ]]
 ```
 
-## 다음 Token 예측
+첫 번째 행의 미래 위치가 모두 `-inf`가 됐습니다.
 
-마지막 Decoder 출력은 Vocabulary 크기로 Projection됩니다.
+## 8. Softmax를 적용하면 미래 확률이 0이 된다
 
-```text
-Hidden State
-↓
-Linear Layer
-↓
-Vocabulary Logits
-↓
-Softmax
-↓
-다음 Token 확률
+```python
+def softmax(x):
+    x = x - np.max(x, axis=-1, keepdims=True)
+    exp_x = np.exp(x)
+    return exp_x / np.sum(exp_x, axis=-1, keepdims=True)
+
+attention_weights = np.stack([
+    softmax(masked_scores[0]),
+    softmax(masked_scores[1]),
+])
+
+print("Head 1")
+print(attention_weights[0])
+
+# 결과
+# [[1.     0.     0.    ]
+#  [0.3947 0.6053 0.    ]
+#  [0.2830 0.2830 0.4340]]
+
+print("Head 2")
+print(attention_weights[1])
+
+# 결과
+# [[1.     0.     0.    ]
+#  [0.3947 0.6053 0.    ]
+#  [0.3333 0.3333 0.3333]]
 ```
 
-수식으로 보면
+이 숫자가 Causal Mask의 핵심을 그대로 보여줍니다.
 
-$$z_t=h_tW+b$$
-
-$$P(x_{t+1}\mid x_{\le t})=\operatorname{softmax}(z_t)$$
-
-현재까지의 Token을 보고 다음 Token의 확률을 계산합니다.
-
-## 예시
-
-입력:
+### `I` 위치
 
 ```text
-I love
+I    → 1.0000
+love → 0.0000
+AI   → 0.0000
 ```
 
-모델이 다음 Token 확률을 계산합니다.
+미래를 전혀 볼 수 없습니다.
+
+### `love` 위치
+
+Head 1 기준:
 
 ```text
-AI       0.45
-music    0.20
-you      0.15
-coding   0.10
-...
+I    → 0.3947
+love → 0.6053
+AI   → 0.0000
 ```
 
-Sampling 방식에 따라 다음 Token을 선택합니다.
+아직 생성되지 않은 `AI`의 Weight가 정확히 0입니다.
 
-예를 들어
+### `AI` 위치
 
 ```text
+I
+love
 AI
 ```
 
-가 선택되면 다음 입력은
+모두 이미 현재 또는 과거이므로 전부 볼 수 있습니다.
+
+<blockquote class="prompt-info">
+<p>Causal Mask의 -∞는 Softmax 이후 정확히 0에 해당하는 Weight가 되도록 만들기 위한 장치입니다.</p>
+</blockquote>
+
+## 9. Attention Weight와 V 결합
+
+이제 허용된 Token의 Value만 가중합합니다.
+
+$$\mathrm{Attention}(Q,K,V)=\mathrm{softmax}\left(\frac{QK^T}{\sqrt{d_k}}+M\right)V$$
+
+```python
+head_output = attention_weights @ Vh
+
+print("Head 1 Output")
+print(head_output[0])
+
+# 결과
+# [[1.6500 0.0000]
+#  [0.6512 0.9988]
+#  [0.9444 0.9444]]
+
+print("Head 2 Output")
+print(head_output[1])
+
+# 결과
+# [[0.5500 0.0000]
+#  [0.2171 0.3329]
+#  [0.1833 0.1833]]
+```
+
+특히 첫 번째 Token `I`는 자기 자신밖에 볼 수 없기 때문에
 
 ```text
-I love AI
+Attention Weight
+[1, 0, 0]
+```
+
+이 되고, 출력도 사실상 자신의 Value만 가져옵니다.
+
+## 10. 두 Head를 다시 합치기
+
+```python
+multi_head_output = (
+    head_output
+    .transpose(1, 0, 2)
+    .reshape(3, 4)
+)
+
+print(multi_head_output)
+
+# 결과
+# [[1.6500 0.0000 0.5500 0.0000]
+#  [0.6512 0.9988 0.2171 0.3329]
+#  [0.9444 0.9444 0.1833 0.1833]]
+```
+
+실제 Multi-Head Attention은 여기에 Output Projection `W_O`도 적용합니다.
+
+여기서는 흐름을 단순하게 보기 위해 `W_O`를 단위행렬로 가정합니다.
+
+## 11. 첫 번째 Residual Connection
+
+원래 Decoder 입력을 다시 더합니다.
+
+$$R_1=X+\mathrm{MHA}(X)$$
+
+```python
+residual1 = X + multi_head_output
+
+print(residual1)
+
+# 결과
+# [[2.7500 0.0000 1.6500 0.0000]
+#  [0.6512 2.0988 0.2171 1.4329]
+#  [2.0444 2.0444 0.1833 0.1833]]
+```
+
+`love`를 보면
+
+```text
+원래 입력
+[0.0000, 1.1000, 0.0000, 1.1000]
+
+Causal Attention Output
+[0.6512, 0.9988, 0.2171, 0.3329]
+```
+
+두 값을 더해
+
+```text
+[0.6512, 2.0988, 0.2171, 1.4329]
 ```
 
 가 됩니다.
 
-그리고 다시 다음 Token을 예측합니다.
+## 12. Layer Normalization
 
-## Autoregressive Generation
+설명을 위해 `gamma=1`, `beta=0`인 단순 LayerNorm을 사용합니다.
 
-이 과정을 반복하는 것을 **Autoregressive Generation**이라고 합니다.
+```python
+def layer_norm(x, eps=1e-5):
+    mean = x.mean(axis=-1, keepdims=True)
+    var = ((x - mean) ** 2).mean(axis=-1, keepdims=True)
+    return (x - mean) / np.sqrt(var + eps)
+
+norm1 = layer_norm(residual1)
+
+print(norm1)
+
+# 결과
+# [[ 1.4142 -0.9428  0.4714 -0.9428]
+#  [-0.6210  1.3819 -1.2216  0.4606]
+#  [ 1.0000  1.0000 -1.0000 -1.0000]]
+```
+
+원래 Transformer 논문의 대표 그림은 이런 **Post-Norm 형태**로 이해할 수 있습니다.
+
+현대 LLM에는 Pre-Norm이나 RMSNorm 등 다른 구성이 많이 사용되므로 실제 모델 구조는 확인해야 합니다.
+
+## 13. Feed Forward Network
+
+이제 각 Token에 동일한 FFN을 독립적으로 적용합니다.
+
+$$\mathrm{FFN}(x)=W_2\mathrm{ReLU}(W_1x+b_1)+b_2$$
+
+설명을 위해
+
+```text
+4차원
+→ 6차원
+→ 4차원
+```
+
+으로 변환합니다.
+
+```python
+W1 = np.array([
+    [ 0.5,  0.2, -0.3,  0.1,  0.4,  0.0],
+    [ 0.1,  0.6,  0.2, -0.2,  0.0,  0.3],
+    [ 0.4, -0.1,  0.5,  0.2, -0.3,  0.1],
+    [-0.2,  0.3,  0.1,  0.5,  0.2, -0.4],
+])
+
+b1 = np.array([0.1, 0.0, 0.05, 0.0, 0.0, 0.0])
+
+W2 = np.array([
+    [ 0.5,  0.0,  0.2, -0.1],
+    [ 0.1,  0.4, -0.2,  0.3],
+    [-0.3,  0.2,  0.5,  0.0],
+    [ 0.2, -0.1,  0.1,  0.4],
+    [ 0.0,  0.3, -0.2,  0.2],
+    [ 0.4, -0.2,  0.0,  0.1],
+])
+
+b2 = np.array([0.0, 0.05, 0.0, -0.05])
+
+hidden = norm1 @ W1 + b1
+relu = np.maximum(hidden, 0)
+ffn_output = relu @ W2 + b2
+
+print(ffn_output)
+
+# 결과
+# [[ 0.6015  0.0924  0.1708 -0.0977]
+#  [ 0.1398  0.4776 -0.2351  0.2925]
+#  [ 0.5500  0.3200 -0.1200  0.2400]]
+```
+
+Attention과 FFN의 역할을 구분해야 합니다.
+
+```text
+Causal Self-Attention
+→ 이전 Token들의 정보를 섞음
+
+FFN
+→ 각 Token Vector 자체를 변환
+```
+
+## 14. 두 번째 Add & Norm
+
+FFN 결과에 이전 표현을 다시 더합니다.
+
+```python
+residual2 = norm1 + ffn_output
+
+encoder_like_decoder_output = layer_norm(residual2)
+
+print(encoder_like_decoder_output)
+
+# 결과
+# [[ 1.4729 -0.8415  0.3638 -0.9951]
+#  [-0.5193  1.3511 -1.2988  0.4670]
+#  [ 1.0881  0.8959 -1.1424 -0.8416]]
+```
+
+이 값이 지금 계산한 **Decoder-only Block 한 층의 출력**입니다.
+
+Token별로 보면
+
+```text
+I
+→ [ 1.4729, -0.8415,  0.3638, -0.9951]
+
+love
+→ [-0.5193,  1.3511, -1.2988,  0.4670]
+
+AI
+→ [ 1.0881,  0.8959, -1.1424, -0.8416]
+```
+
+입니다.
+
+## `love` 하나만 따라가 보기
+
+`love`가 한 Decoder Block에서 어떻게 변했는지 보면 더 쉽습니다.
+
+```text
+초기 Embedding
+[0.0000, 1.0000, 0.0000, 1.0000]
+
+위치 정보 추가
+[0.0000, 1.1000, 0.0000, 1.1000]
+
+Causal Attention Weight - Head 1
+[0.3947, 0.6053, 0.0000]
+                     ↑
+               미래 AI는 0
+
+Multi-Head Attention
+[0.6512, 0.9988, 0.2171, 0.3329]
+
+Residual + LayerNorm
+[-0.6210, 1.3819, -1.2216, 0.4606]
+
+FFN
+[0.1398, 0.4776, -0.2351, 0.2925]
+
+최종 Decoder Block
+[-0.5193, 1.3511, -1.2988, 0.4670]
+```
+
+<mark>Encoder와 가장 큰 차이는 Attention Weight를 계산할 때 미래 Token의 Weight가 0이 되도록 Causal Mask가 들어간다는 점입니다.</mark>
+
+## 15. Hidden State를 Vocabulary Logit으로 변환
+
+Decoder Block 출력 자체가 단어는 아닙니다.
+
+마지막 Hidden State를 Vocabulary 크기로 Projection해야 합니다.
+
+현재 마지막 Token은 `AI`입니다.
+
+```python
+decoder_output = encoder_like_decoder_output
+
+last_hidden = decoder_output[-1]
+
+print(last_hidden)
+
+# 결과
+# [ 1.0881  0.8959 -1.1424 -0.8416]
+```
+
+설명을 위해 Vocabulary를 5개로 작게 만들겠습니다.
+
+```text
+0 → I
+1 → love
+2 → AI
+3 → because
+4 → <EOS>
+```
+
+Vocabulary Projection Matrix를 임의로 지정합니다.
+
+```python
+vocab = ["I", "love", "AI", "because", "<EOS>"]
+
+W_vocab = np.array([
+    [ 0.2,  0.1,  0.3,  0.8, -0.2],
+    [ 0.1,  0.4,  0.2,  0.6,  0.0],
+    [-0.3,  0.2, -0.1, -0.2,  0.5],
+    [ 0.0, -0.1,  0.3,  0.4,  0.2],
+])
+
+b_vocab = np.array([0.0, 0.0, 0.0, 0.1, 0.0])
+
+logits = last_hidden @ W_vocab + b_vocab
+
+print(logits)
+
+# 결과
+# [ 0.6499  0.3229  0.3674  1.3998 -0.9571]
+```
+
+이 값이 **Logit**입니다.
+
+아직 확률은 아닙니다.
+
+## 16. Softmax로 다음 Token 확률 계산
+
+```python
+probs = softmax(logits)
+
+for token, prob in zip(vocab, probs):
+    print(f"{token:8s} {prob:.4f}")
+
+# 결과
+# I        0.2087
+# love     0.1505
+# AI       0.1573
+# because  0.4417
+# <EOS>    0.0418
+```
+
+이 예시에서는
+
+```text
+because → 44.17%
+```
+
+가 가장 높습니다.
+
+Greedy Decoding이라면 다음 Token으로 `because`를 선택합니다.
+
+```text
+기존 입력
+I love AI
+
+다음 입력
+I love AI because
+```
+
+그리고 다시 같은 과정을 반복합니다.
+
+## Decoder가 문장을 생성하는 전체 흐름
 
 ```text
 I
 ↓
+다음 Token 예측
+↓
+love
+↓
 I love
+↓
+다음 Token 예측
+↓
+AI
 ↓
 I love AI
 ↓
-I love AI because
+다음 Token 예측
+↓
+because
 ↓
 ...
 ```
 
-항상 이전까지 생성한 Token을 조건으로 다음 Token을 예측합니다.
+이를 **Autoregressive Generation**이라고 합니다.
 
 $$P(x_1,\dots,x_n)=\prod_{t=1}^{n}P(x_t\mid x_{<t})$$
 
-<mark>Decoder-only LLM의 생성은 이전 Token을 조건으로 다음 Token을 하나씩 예측하는 Autoregressive 방식입니다.</mark>
+즉 다음 Token은 이전 Token들에 조건부로 결정됩니다.
 
-## 학습할 때도 하나씩 생성할까
+## 전체 Decoder-only 계산 코드
 
-학습에서는 반드시 Token을 하나씩 순차 실행할 필요는 없습니다.
+지금까지의 계산을 한 번에 실행하면 다음과 같습니다.
 
-Causal Mask를 사용하면 여러 위치의 다음 Token 예측을 **병렬로 계산**할 수 있습니다.
+```python
+import numpy as np
 
-예:
+np.set_printoptions(precision=4, suppress=True)
 
-```text
-입력:
-I love AI
+# --------------------------------------------------
+# 1. Embedding + Position
+# --------------------------------------------------
 
-예측:
-I     → love
-love  → AI
-AI    → 다음 Token
+E = np.array([
+    [1.0, 0.0, 1.0, 0.0],  # I
+    [0.0, 1.0, 0.0, 1.0],  # love
+    [1.0, 1.0, 0.0, 0.0],  # AI
+])
+
+P = np.array([
+    [0.1, 0.0, 0.1, 0.0],
+    [0.0, 0.1, 0.0, 0.1],
+    [0.1, 0.1, 0.0, 0.0],
+])
+
+X = E + P
+
+# X
+# [[1.1 0.  1.1 0. ]
+#  [0.  1.1 0.  1.1]
+#  [1.1 1.1 0.  0. ]]
+
+# --------------------------------------------------
+# 2. Q, K, V
+# --------------------------------------------------
+
+W_Q = np.array([
+    [1.0, 0.0, 0.0, 0.0],
+    [0.0, 1.0, 0.0, 0.0],
+    [0.0, 0.0, 0.5, 0.0],
+    [0.0, 0.0, 0.0, 0.5],
+])
+
+W_K = np.array([
+    [0.5, 0.0, 0.0, 0.0],
+    [0.0, 0.5, 0.0, 0.0],
+    [0.0, 0.0, 1.0, 0.0],
+    [0.0, 0.0, 0.0, 1.0],
+])
+
+W_V = np.array([
+    [1.0, 0.0, 0.0, 0.0],
+    [0.0, 1.0, 0.0, 0.0],
+    [0.5, 0.0, 0.5, 0.0],
+    [0.0, 0.5, 0.0, 0.5],
+])
+
+Q = X @ W_Q
+K = X @ W_K
+V = X @ W_V
+
+# --------------------------------------------------
+# 3. Multi-Head
+# --------------------------------------------------
+
+num_heads = 2
+head_dim = 2
+
+Qh = Q.reshape(3, num_heads, head_dim).transpose(1, 0, 2)
+Kh = K.reshape(3, num_heads, head_dim).transpose(1, 0, 2)
+Vh = V.reshape(3, num_heads, head_dim).transpose(1, 0, 2)
+
+scores = Qh @ Kh.transpose(0, 2, 1)
+scores = scores / np.sqrt(head_dim)
+
+# Mask 적용 전 Head 1
+# [[0.4278 0.     0.4278]
+#  [0.     0.4278 0.4278]
+#  [0.4278 0.4278 0.8556]]
+
+# --------------------------------------------------
+# 4. Causal Mask
+# --------------------------------------------------
+
+mask = np.array([
+    [0.0,   -np.inf, -np.inf],
+    [0.0,    0.0,    -np.inf],
+    [0.0,    0.0,     0.0],
+])
+
+masked_scores = scores + mask
+
+# Mask 적용 후 Head 1
+# [[0.4278   -inf   -inf]
+#  [0.     0.4278   -inf]
+#  [0.4278 0.4278 0.8556]]
+
+def softmax(x):
+    x = x - np.max(x, axis=-1, keepdims=True)
+    exp_x = np.exp(x)
+    return exp_x / np.sum(exp_x, axis=-1, keepdims=True)
+
+weights = np.stack([
+    softmax(masked_scores[0]),
+    softmax(masked_scores[1]),
+])
+
+# Head 1 Attention Weight
+# [[1.     0.     0.    ]
+#  [0.3947 0.6053 0.    ]
+#  [0.2830 0.2830 0.4340]]
+
+# Head 2 Attention Weight
+# [[1.     0.     0.    ]
+#  [0.3947 0.6053 0.    ]
+#  [0.3333 0.3333 0.3333]]
+
+head_output = weights @ Vh
+
+mha_output = (
+    head_output
+    .transpose(1, 0, 2)
+    .reshape(3, 4)
+)
+
+# MHA Output
+# [[1.6500 0.0000 0.5500 0.0000]
+#  [0.6512 0.9988 0.2171 0.3329]
+#  [0.9444 0.9444 0.1833 0.1833]]
+
+# --------------------------------------------------
+# 5. Add & Norm
+# --------------------------------------------------
+
+def layer_norm(x, eps=1e-5):
+    mean = x.mean(axis=-1, keepdims=True)
+    var = ((x - mean) ** 2).mean(axis=-1, keepdims=True)
+    return (x - mean) / np.sqrt(var + eps)
+
+residual1 = X + mha_output
+norm1 = layer_norm(residual1)
+
+# norm1
+# [[ 1.4142 -0.9428  0.4714 -0.9428]
+#  [-0.6210  1.3819 -1.2216  0.4606]
+#  [ 1.0000  1.0000 -1.0000 -1.0000]]
+
+# --------------------------------------------------
+# 6. FFN
+# --------------------------------------------------
+
+W1 = np.array([
+    [ 0.5,  0.2, -0.3,  0.1,  0.4,  0.0],
+    [ 0.1,  0.6,  0.2, -0.2,  0.0,  0.3],
+    [ 0.4, -0.1,  0.5,  0.2, -0.3,  0.1],
+    [-0.2,  0.3,  0.1,  0.5,  0.2, -0.4],
+])
+
+b1 = np.array([0.1, 0.0, 0.05, 0.0, 0.0, 0.0])
+
+W2 = np.array([
+    [ 0.5,  0.0,  0.2, -0.1],
+    [ 0.1,  0.4, -0.2,  0.3],
+    [-0.3,  0.2,  0.5,  0.0],
+    [ 0.2, -0.1,  0.1,  0.4],
+    [ 0.0,  0.3, -0.2,  0.2],
+    [ 0.4, -0.2,  0.0,  0.1],
+])
+
+b2 = np.array([0.0, 0.05, 0.0, -0.05])
+
+hidden = norm1 @ W1 + b1
+relu = np.maximum(hidden, 0)
+ffn_output = relu @ W2 + b2
+
+# FFN Output
+# [[ 0.6015  0.0924  0.1708 -0.0977]
+#  [ 0.1398  0.4776 -0.2351  0.2925]
+#  [ 0.5500  0.3200 -0.1200  0.2400]]
+
+residual2 = norm1 + ffn_output
+decoder_output = layer_norm(residual2)
+
+# Decoder Output
+# [[ 1.4729 -0.8415  0.3638 -0.9951]
+#  [-0.5193  1.3511 -1.2988  0.4670]
+#  [ 1.0881  0.8959 -1.1424 -0.8416]]
+
+# --------------------------------------------------
+# 7. Vocabulary Projection
+# --------------------------------------------------
+
+last_hidden = decoder_output[-1]
+
+vocab = ["I", "love", "AI", "because", "<EOS>"]
+
+W_vocab = np.array([
+    [ 0.2,  0.1,  0.3,  0.8, -0.2],
+    [ 0.1,  0.4,  0.2,  0.6,  0.0],
+    [-0.3,  0.2, -0.1, -0.2,  0.5],
+    [ 0.0, -0.1,  0.3,  0.4,  0.2],
+])
+
+b_vocab = np.array([0.0, 0.0, 0.0, 0.1, 0.0])
+
+logits = last_hidden @ W_vocab + b_vocab
+probs = softmax(logits)
+
+# logits
+# [ 0.6499  0.3229  0.3674  1.3998 -0.9571]
+
+for token, prob in zip(vocab, probs):
+    print(f"{token:8s} {prob:.4f}")
+
+# 결과
+# I        0.2087
+# love     0.1505
+# AI       0.1573
+# because  0.4417
+# <EOS>    0.0418
 ```
 
-미래 정보는 Mask로 차단하면서 여러 위치의 Loss를 동시에 계산할 수 있습니다.
+## 원래 Transformer Decoder의 Cross-Attention
 
-## Teacher Forcing
+지금까지 계산한 것은 GPT처럼 **Decoder-only** 구조였습니다.
 
-학습할 때는 이전 위치에 모델이 생성한 Token 대신 실제 정답 Token을 입력으로 사용할 수 있습니다.
-
-예:
+원래 Transformer의 Encoder-Decoder 구조에서는 Causal Self-Attention 뒤에 Cross-Attention이 하나 더 있습니다.
 
 ```text
-정답 문장:
-I love AI
-```
-
-모델은
-
-```text
-I
-→ love 예측
-
-I love
-→ AI 예측
-```
-
-과 같은 학습을 합니다.
-
-실제 정답 Sequence를 입력으로 활용하므로 학습을 효율적으로 할 수 있습니다.
-
-## Inference와 Training 차이
-
-### Training
-
-```text
-전체 정답 Sequence 존재
-+
-Causal Mask
-→ 여러 위치 병렬 계산
-```
-
-### Inference
-
-```text
-이전 Token
-→ 다음 Token 생성
-→ 생성 Token 다시 입력
-→ 반복
-```
-
-Inference에서는 다음 Token을 알아야 그다음 Token을 만들 수 있으므로 순차적입니다.
-
-## KV Cache
-
-Decoder-only LLM 추론에서는 **KV Cache**가 중요합니다.
-
-예를 들어
-
-```text
-I love AI
-```
-
-까지 이미 계산했다고 하겠습니다.
-
-다음 Token을 만들 때 이전 Token의 Key와 Value를 매번 처음부터 다시 계산하면 비효율적입니다.
-
-그래서 이전 Attention의 K와 V를 저장합니다.
-
-```text
-이전 K, V
-→ Cache
-→ 다음 Token 계산 때 재사용
-```
-
-이를 KV Cache라고 합니다.
-
-<blockquote class="prompt-info">
-<p>KV Cache는 이전 Token의 Key와 Value를 저장해서 Autoregressive 추론 시 중복 계산을 줄입니다.</p>
-</blockquote>
-
-## Decoder의 Mask 종류
-
-Decoder에서는 대표적으로 두 종류의 Mask를 볼 수 있습니다.
-
-### 1. Causal Mask
-
-미래 Token을 차단합니다.
-
-```text
-현재보다 뒤
-→ Attention 금지
-```
-
-### 2. Padding Mask
-
-`[PAD]` Token을 무시합니다.
-
-```text
-실제 Token → 사용
-PAD Token → 무시
-```
-
-두 Mask의 목적은 다릅니다.
-
-## Encoder와 Decoder 비교
-
-| 구분 | Encoder | Decoder |
-| --- | --- | --- |
-| 미래 Token | 볼 수 있음 | Causal Mask로 차단 |
-| Self-Attention | 양방향 | Causal |
-| Cross-Attention | 없음 | Encoder-Decoder 구조에서 사용 |
-| 대표 역할 | 문맥 이해 | Token 생성 |
-| 대표 모델 | BERT | GPT |
-
-## Decoder의 출력
-
-Decoder는 각 위치마다 Hidden State를 만듭니다.
-
-```text
-Token 1 → h1
-Token 2 → h2
-Token 3 → h3
-```
-
-다음 Token 생성에서는 보통 마지막 위치의 Hidden State를 사용합니다.
-
-```text
-h_t
+Decoder Hidden State
 ↓
-Linear
-↓
-Vocabulary Logits
-↓
-Softmax
+Cross-Attention
+↑
+Encoder Output
 ```
 
-## Logit이란
-
-Logit은 Softmax를 적용하기 전의 점수입니다.
-
-예:
-
-```text
-AI      4.2
-music   3.1
-coding  2.8
-```
-
-Softmax를 적용하면 확률 형태가 됩니다.
-
-```text
-AI      0.55
-music   0.20
-coding  0.15
-...
-```
-
-## Decoder와 생성형 AI
-
-GPT 같은 생성형 AI에서는 Decoder 구조가 핵심입니다.
-
-```text
-Prompt
-↓
-Tokenizer
-↓
-Decoder Blocks
-↓
-Next Token Probability
-↓
-Token 선택
-↓
-다시 Decoder
-```
-
-이 과정을 반복하면서 문장을 생성합니다.
-
-## 잘 놓치는 핵심
-
-### 1. Decoder는 미래 Token을 보지 못한다
-
-Causal Mask를 사용합니다.
-
-### 2. Causal Mask와 Padding Mask는 다르다
-
-```text
-Causal Mask
-→ 미래 차단
-
-Padding Mask
-→ PAD 차단
-```
-
-### 3. Cross-Attention은 항상 있는 것이 아니다
-
-원래 Encoder-Decoder Transformer에는 있습니다.
-
-GPT 같은 Decoder-only 모델에는 일반적으로 없습니다.
-
-### 4. Cross-Attention의 Q, K, V 출처가 다르다
+Cross-Attention에서는 Q, K, V의 출처가 다릅니다.
 
 ```text
 Q → Decoder
@@ -748,157 +1059,411 @@ K → Encoder
 V → Encoder
 ```
 
-### 5. Training과 Inference는 다르다
+## Cross-Attention도 실제 숫자로 계산
 
-Training은 Causal Mask를 사용해 여러 위치를 병렬 계산할 수 있습니다.
+앞의 Encoder 글에서 `I love AI`가 Encoder를 통과해 다음 벡터가 나왔다고 하겠습니다.
 
-Inference는 Token을 하나씩 생성합니다.
+```python
+encoder_output = np.array([
+    [ 1.4854, -0.4590,  0.2134, -1.2399],  # I
+    [-0.3307,  1.3600, -1.3839,  0.3547],  # love
+    [ 1.0881,  0.8959, -1.1424, -0.8416],  # AI
+])
+```
 
-### 6. KV Cache는 추론 최적화다
+Decoder의 Causal Self-Attention 직후 표현은 앞에서 계산한 `norm1`을 사용하겠습니다.
 
-이전 Token의 K, V를 저장해 중복 계산을 줄입니다.
+```python
+decoder_state = norm1
+
+print(decoder_state)
+
+# 결과
+# [[ 1.4142 -0.9428  0.4714 -0.9428]
+#  [-0.6210  1.3819 -1.2216  0.4606]
+#  [ 1.0000  1.0000 -1.0000 -1.0000]]
+```
+
+설명을 단순하게 하기 위해 Cross-Attention Projection은 단위행렬이라고 가정합니다.
+
+```python
+Q_cross = decoder_state
+K_cross = encoder_output
+V_cross = encoder_output
+```
+
+Cross-Attention Score:
+
+```python
+cross_scores = Q_cross @ K_cross.T / np.sqrt(4)
+
+print(cross_scores)
+
+# 결과
+# [[ 1.9015 -1.3683  0.4745]
+#  [-1.1943  1.9694  0.7851]
+#  [ 1.0264  1.0292  1.9840]]
+```
+
+여기에는 Causal Mask가 없습니다.
+
+Decoder의 각 위치가 **Encoder 입력 전체**를 참고할 수 있기 때문입니다.
+
+Softmax:
+
+```python
+cross_weights = np.stack([
+    softmax(row)
+    for row in cross_scores
+])
+
+print(cross_weights)
+
+# 결과
+# [[0.7824 0.0297 0.1878]
+#  [0.0314 0.7417 0.2269]
+#  [0.2170 0.2176 0.5654]]
+```
+
+행은 Decoder Token, 열은 Encoder Token입니다.
+
+예를 들어 첫 번째 Decoder 위치는 Encoder의
+
+```text
+I     → 0.7824
+love  → 0.0297
+AI    → 0.1878
+```
+
+를 참고합니다.
+
+세 번째 Decoder 위치는
+
+```text
+I     → 0.2170
+love  → 0.2176
+AI    → 0.5654
+```
+
+이므로 이 예시에서는 Encoder의 `AI` Vector를 가장 강하게 참고합니다.
+
+## Cross-Attention Output
+
+```python
+cross_output = cross_weights @ V_cross
+
+print(cross_output)
+
+# 결과
+# [[ 1.3568 -0.1504 -0.0887 -1.1177]
+#  [ 0.0482  1.1976 -1.2790  0.0332]
+#  [ 0.8656  0.7029 -0.9007 -0.6677]]
+```
+
+Residual과 LayerNorm까지 적용하면
+
+```python
+cross_residual = decoder_state + cross_output
+cross_norm = layer_norm(cross_residual)
+
+print(cross_norm)
+
+# 결과
+# [[ 1.5216 -0.6003  0.2101 -1.1314]
+#  [-0.3120  1.4052 -1.3622  0.2690]
+#  [ 1.0439  0.9529 -1.0636 -0.9332]]
+```
+
+가 됩니다.
+
+<mark>Cross-Attention은 Decoder가 지금까지 만든 표현을 Query로 사용해 Encoder의 입력 표현 중 필요한 정보를 꺼내오는 과정입니다.</mark>
+
+## Self-Attention과 Cross-Attention 비교
+
+| 구분 | Decoder Self-Attention | Cross-Attention |
+| --- | --- | --- |
+| Q | Decoder | Decoder |
+| K | Decoder | Encoder |
+| V | Decoder | Encoder |
+| Causal Mask | 사용 | 보통 사용하지 않음 |
+| 목적 | 이전 출력 문맥 참고 | 입력 Sequence 참고 |
+
+## Training에서는 왜 병렬 계산이 가능한가
+
+추론할 때는 다음 Token을 하나씩 생성합니다.
+
+하지만 학습할 때는 정답 문장이 이미 있습니다.
+
+예:
+
+```text
+I love AI because
+```
+
+다음 Token 예측 문제로 바꾸면
+
+```text
+I
+→ love
+
+I love
+→ AI
+
+I love AI
+→ because
+```
+
+입니다.
+
+Causal Mask가 있으므로 전체 Sequence를 한 번에 넣어도 각 위치는 미래 정답을 볼 수 없습니다.
+
+```text
+Position 1 → Position 1만
+Position 2 → Position 1, 2
+Position 3 → Position 1, 2, 3
+```
+
+따라서 여러 위치의 Loss를 병렬로 계산할 수 있습니다.
+
+## Training과 Inference 차이
+
+### Training
+
+```text
+전체 정답 Sequence
++
+Causal Mask
+↓
+여러 위치를 동시에 계산
+```
+
+### Inference
+
+```text
+Prompt
+↓
+다음 Token 생성
+↓
+그 Token을 다시 입력
+↓
+다음 Token 생성
+↓
+반복
+```
+
+Inference는 다음 Token을 알아야 그다음 계산을 진행할 수 있기 때문에 기본적으로 순차적입니다.
+
+## KV Cache
+
+Autoregressive 추론에서 이전 Token의 K와 V를 매번 다시 계산하면 낭비가 큽니다.
+
+예:
+
+```text
+1단계
+I
+
+2단계
+I love
+
+3단계
+I love AI
+```
+
+세 번째 단계에서 `I`, `love`의 K와 V는 이미 앞 단계에서 계산했습니다.
+
+그래서 저장해둡니다.
+
+```text
+K Cache
+V Cache
+```
+
+이를 **KV Cache**라고 합니다.
+
+간단한 Shape 예시는 다음과 같습니다.
+
+```python
+# Head 수 2, 기존 Token 3개, Head Dimension 2라고 가정
+
+K_cache = np.zeros((2, 3, 2))
+V_cache = np.zeros((2, 3, 2))
+
+print(K_cache.shape)
+print(V_cache.shape)
+
+# 결과
+# (2, 3, 2)
+# (2, 3, 2)
+
+# 다음 Token 1개가 생성되면
+new_K = np.zeros((2, 1, 2))
+new_V = np.zeros((2, 1, 2))
+
+K_cache = np.concatenate([K_cache, new_K], axis=1)
+V_cache = np.concatenate([V_cache, new_V], axis=1)
+
+print(K_cache.shape)
+print(V_cache.shape)
+
+# 결과
+# (2, 4, 2)
+# (2, 4, 2)
+```
+
+Sequence가 길어질수록 Cache도 커집니다.
+
+<blockquote class="prompt-info">
+<p>KV Cache는 이전 Token의 Key와 Value를 저장해 다음 Token 생성 때 다시 계산하지 않도록 하는 추론 최적화입니다.</p>
+</blockquote>
+
+## Decoder와 Encoder의 차이
+
+| 구분 | Encoder | Decoder |
+| --- | --- | --- |
+| Self-Attention | 양방향 | Causal |
+| 미래 Token | 볼 수 있음 | 볼 수 없음 |
+| 대표 Mask | Padding | Causal |
+| 출력 목적 | Contextual Representation | 다음 Token 생성 |
+| 대표 모델 | BERT | GPT |
+
+가장 중요한 차이를 숫자로 보면 이것입니다.
+
+Encoder의 `love` Attention:
+
+```text
+I     0.2458
+love  0.3771
+AI    0.3771
+```
+
+Decoder의 `love` Attention:
+
+```text
+I     0.3947
+love  0.6053
+AI    0.0000
+```
+
+Decoder에서는 미래 `AI`가 **0**입니다.
+
+## 잘 놓치는 핵심
+
+### 1. Causal Mask는 Softmax 전에 적용한다
+
+```text
+Attention Score
+→ 미래 위치에 -∞
+→ Softmax
+→ 미래 Weight = 0
+```
+
+### 2. Padding Mask와 Causal Mask는 다르다
+
+```text
+Padding Mask
+→ PAD 무시
+
+Causal Mask
+→ 미래 Token 차단
+```
+
+### 3. GPT에는 일반적으로 Cross-Attention이 없다
+
+Decoder-only 구조이기 때문입니다.
+
+### 4. 원래 Transformer Decoder에는 Cross-Attention이 있다
+
+Encoder Output을 참고해야 하기 때문입니다.
+
+### 5. Cross-Attention의 출처
+
+```text
+Q → Decoder
+K → Encoder
+V → Encoder
+```
+
+### 6. Hidden State는 아직 Token이 아니다
+
+```text
+Hidden State
+→ Linear Projection
+→ Vocabulary Logit
+→ Softmax
+→ Token 확률
+```
+
+### 7. Training과 Inference는 다르다
+
+Training은 Causal Mask 덕분에 병렬 계산할 수 있지만, Inference는 다음 Token을 순차적으로 생성합니다.
 
 ## 시험·면접
 
 ### 핵심 암기
 
 ```text
-Transformer Decoder
+Decoder-only
 
 Embedding + Position
 ↓
-Masked Self-Attention
+Causal Self-Attention
 ↓
 Add & Norm
+↓
+FFN
+↓
+Add & Norm
+↓
+Vocabulary Projection
+↓
+Softmax
+↓
+Next Token
+```
+
+원래 Transformer Decoder:
+
+```text
+Masked Self-Attention
 ↓
 Cross-Attention
 ↓
-Add & Norm
-↓
 FFN
-↓
-Add & Norm
 ```
 
-GPT 계열:
+### Q. Causal Mask를 사용하는 이유는?
 
-```text
-Masked Self-Attention
-↓
-FFN
-↓
-Next Token Prediction
-```
+현재 위치에서 미래 정답 Token을 미리 보지 못하게 하기 위해서입니다.
 
-### 자주 나오는 질문 1
+### Q. Causal Mask는 어떻게 미래 Attention을 0으로 만드는가?
 
-**Decoder에서 Causal Mask를 사용하는 이유는?**
+미래 위치의 Attention Score에 `-∞`를 더한 뒤 Softmax를 적용하면 해당 위치의 Weight가 0이 됩니다.
 
-현재 Token이 미래 Token을 미리 보지 못하게 해서 올바른 Autoregressive 학습을 하기 위해 사용합니다.
-
-### 자주 나오는 질문 2
-
-**Encoder와 Decoder Self-Attention의 차이는?**
-
-Encoder는 일반적으로 입력 전체를 볼 수 있지만 Decoder는 Causal Mask를 사용해 미래 Token을 보지 못합니다.
-
-### 자주 나오는 질문 3
-
-**Cross-Attention에서 Q, K, V는 어디서 오는가?**
+### Q. Cross-Attention에서 Q, K, V는 어디서 오는가?
 
 Q는 Decoder, K와 V는 Encoder Output에서 옵니다.
 
-### 자주 나오는 질문 4
+### Q. GPT에는 왜 Cross-Attention이 없는가?
 
-**GPT에는 Cross-Attention이 있는가?**
+일반적인 GPT는 Encoder가 없는 Decoder-only 모델이기 때문입니다.
 
-일반적인 GPT Decoder-only 구조에는 Encoder가 없기 때문에 Cross-Attention도 없습니다.
+### Q. KV Cache란?
 
-### 자주 나오는 질문 5
-
-**KV Cache란?**
-
-이전 Token에서 계산한 Key와 Value를 저장해 다음 Token 생성 시 재사용하는 추론 최적화 기법입니다.
+이미 계산한 이전 Token의 Key와 Value를 저장해 Autoregressive 추론에서 중복 계산을 줄이는 방법입니다.
 
 <blockquote class="prompt-danger">
-<p>시험 함정: Transformer Decoder와 GPT Block을 완전히 동일하게 보면 안 됩니다. 원래 Decoder에는 Cross-Attention이 있지만 일반적인 GPT Decoder-only 구조에는 없습니다.</p>
+<p>시험 함정: Decoder의 Causal Mask는 미래 Token 자체를 입력에서 삭제하는 것이 아닙니다. Attention Score에서 미래 위치를 보지 못하도록 막습니다.</p>
 </blockquote>
-
-## 예시로 한 바퀴
-
-Prompt:
-
-```text
-I love
-```
-
-### 1. Embedding과 위치 정보
-
-```text
-I
-love
-→ Embedding + Position
-```
-
-### 2. Masked Self-Attention
-
-```text
-I
-→ I만 참고
-
-love
-→ I, love 참고
-```
-
-미래 Token은 볼 수 없습니다.
-
-### 3. FFN
-
-각 Token의 Feature를 변환합니다.
-
-### 4. 마지막 Hidden State
-
-```text
-h_love
-```
-
-를 Vocabulary 크기로 Projection합니다.
-
-### 5. 다음 Token 확률
-
-```text
-AI       0.45
-music    0.20
-coding   0.10
-...
-```
-
-### 6. Token 선택
-
-```text
-AI
-```
-
-를 선택했다고 하겠습니다.
-
-새 입력:
-
-```text
-I love AI
-```
-
-다시 같은 과정을 반복합니다.
-
-<mark>Decoder는 이전까지의 Token을 계속 입력으로 사용하면서 다음 Token을 하나씩 생성합니다.</mark>
 
 ## 객관식 문제
 
-### 1. Decoder에서 Causal Mask를 사용하는 이유는?
+### 1. Causal Mask의 목적은?
 
-① Padding을 늘리기 위해  
-② 미래 Token을 보지 못하게 하기 위해  
-③ Vocabulary를 줄이기 위해  
-④ Embedding을 제거하기 위해
+① PAD Token 생성  
+② 미래 Token 차단  
+③ Vocabulary 축소  
+④ Embedding 제거
 
 <details>
 <summary>정답</summary>
@@ -907,12 +1472,26 @@ I love AI
 
 </details>
 
-### 2. Cross-Attention에서 Key와 Value의 출처는?
+### 2. 미래 위치에 `-∞`를 넣는 이유는?
 
-① Decoder만 사용  
+① ReLU 결과를 키우기 위해  
+② Softmax 이후 해당 위치의 Weight를 0으로 만들기 위해  
+③ Embedding Dimension을 줄이기 위해  
+④ Token ID를 만들기 위해
+
+<details>
+<summary>정답</summary>
+
+②
+
+</details>
+
+### 3. Cross-Attention의 Key와 Value는 어디서 오는가?
+
+① Decoder  
 ② Encoder Output  
-③ Tokenizer Vocabulary  
-④ Positional Encoding
+③ Tokenizer  
+④ Vocabulary Logit
 
 <details>
 <summary>정답</summary>
@@ -921,12 +1500,12 @@ I love AI
 
 </details>
 
-### 3. 일반적인 GPT Decoder-only 구조에 대한 설명으로 옳은 것은?
+### 4. Decoder-only GPT에 대한 설명으로 옳은 것은?
 
-① Encoder가 반드시 존재한다.  
-② Cross-Attention이 반드시 존재한다.  
+① 미래 Token 전체를 볼 수 있다.  
+② 반드시 Encoder가 필요하다.  
 ③ Causal Self-Attention을 사용한다.  
-④ 미래 Token을 자유롭게 본다.
+④ Cross-Attention만 사용한다.
 
 <details>
 <summary>정답</summary>
@@ -935,40 +1514,26 @@ I love AI
 
 </details>
 
-### 4. KV Cache의 주요 목적은?
+### 5. Vocabulary Logit에 Softmax를 적용하는 이유는?
 
-① Vocabulary 생성  
-② 이전 K, V를 재사용해 추론 중복 계산 감소  
-③ Tokenizer 학습  
-④ Causal Mask 제거
-
-<details>
-<summary>정답</summary>
-
-②
-
-</details>
-
-### 5. 다음 중 Encoder와 Decoder의 차이로 옳은 것은?
-
-① Encoder만 Attention을 사용한다.  
-② Decoder는 일반적으로 미래 Token을 Mask한다.  
-③ Encoder는 항상 Cross-Attention을 사용한다.  
-④ Decoder는 Embedding을 사용하지 않는다.
+① 다음 Token에 대한 확률 분포로 바꾸기 위해  
+② Token 수를 줄이기 위해  
+③ Causal Mask를 제거하기 위해  
+④ Positional Encoding을 만들기 위해
 
 <details>
 <summary>정답</summary>
 
-②
+①
 
 </details>
 
-### 6. Autoregressive Generation의 의미는?
+### 6. KV Cache의 주된 목적은?
 
-① 모든 Token을 무작위로 동시에 생성  
-② 이전 Token들을 조건으로 다음 Token을 순차적으로 생성  
-③ Encoder Output을 제거  
-④ Attention 없이 문장 생성
+① Training Data 저장  
+② 이전 K와 V 재사용으로 추론 중복 계산 감소  
+③ Vocabulary 학습  
+④ Encoder Output 삭제
 
 <details>
 <summary>정답</summary>
@@ -980,28 +1545,60 @@ I love AI
 ## 마지막 정리
 
 ```text
-Prompt
+I love AI
 ↓
 Embedding + Position
 ↓
-Causal Self-Attention
+Q, K, V
 ↓
-FFN
+Attention Score
 ↓
-Vocabulary Logits
+Causal Mask
 ↓
 Softmax
 ↓
-다음 Token
+미래 Token Weight = 0
 ↓
-다시 입력
+Attention × V
+↓
+Multi-Head 결합
+↓
+Residual + LayerNorm
+↓
+FFN
+↓
+Residual + LayerNorm
+↓
+Hidden State
+↓
+Vocabulary Logit
+↓
+Softmax
+↓
+Next Token
 ```
 
-Encoder-Decoder 구조라면 중간에 Cross-Attention이 추가됩니다.
+이번 예시에서는
 
-<mark>Transformer Decoder의 핵심은 Causal Mask로 미래 정보를 차단한 상태에서 이전 Token들을 이용해 다음 Token을 예측하는 것입니다.</mark>
+```text
+I love AI
+```
+
+뒤의 다음 Token 확률이
+
+```text
+because  0.4417
+I        0.2087
+AI       0.1573
+love     0.1505
+<EOS>    0.0418
+```
+
+로 계산되었습니다.
+
+<mark>Transformer Decoder의 핵심은 Causal Mask로 미래 정보의 Attention Weight를 0으로 만든 상태에서 이전 Token들을 이용해 다음 Token의 확률을 계산하는 것입니다.</mark>
 
 ## 다음에 이을 글
 
 **Self-Attention과 Scaled Dot-Product Attention**입니다.  
-Q, K, V가 실제로 어떤 행렬 연산을 거쳐 Attention Weight를 만드는지 계산 예시와 함께 봅니다.
+`QK^T`, Scaling, Softmax, Value 가중합을 더 작은 2차원 Vector 예제로 하나씩 손계산합니다.
