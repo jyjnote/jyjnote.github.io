@@ -3,7 +3,7 @@ title: 전이학습 Transfer Learning
 date: 2026-09-15 00:04:00 +0900
 slug: transfer-learning
 permalink: /posts/transfer-learning/
-categories: [AI, 학습 패러다임]
+categories: [AI, 딥러닝, 학습 패러다임]
 tags: [전이학습, TransferLearning, Pretraining, FineTuning, FeatureExtraction, 머신러닝]
 math: true
 ---
