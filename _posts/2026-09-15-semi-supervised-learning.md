@@ -3,7 +3,7 @@ title: 준지도학습
 date: 2026-09-15 00:10:00 +0900
 slug: semi-supervised-learning
 permalink: /posts/semi-supervised-learning/
-categories: [AI, 머신러닝, 학습 패러다임]
+categories: [AI, 딥러닝, 학습 패러다임]
 tags: [준지도학습, SemiSupervisedLearning, PseudoLabeling, SelfTraining, ConsistencyRegularization, 머신러닝, 빅분기]
 math: true
 ---
