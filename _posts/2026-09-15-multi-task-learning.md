@@ -3,7 +3,7 @@ title: 멀티태스크 학습
 date: 2026-09-15 00:30:00 +0900
 slug: multi-task-learning
 permalink: /posts/multi-task-learning/
-categories: [AI, 머신러닝]
+categories: [AI, 딥러닝, 학습 패러다임]
 tags: [멀티태스크학습, Multi-Task Learning, MTL, Hard Parameter Sharing, Soft Parameter Sharing]
 math: true
 ---
