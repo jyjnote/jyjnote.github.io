@@ -3,7 +3,7 @@ title: 연합학습
 date: 2026-09-15 00:50:00 +0900
 slug: federated-learning
 permalink: /posts/federated-learning/
-categories: [AI, 머신러닝]
+categories: [AI, 딥러닝, 학습 패러다임]
 tags: [연합학습, Federated Learning, FedAvg, Non-IID, 분산학습, 프라이버시]
 math: true
 ---
