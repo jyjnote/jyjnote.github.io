@@ -3,7 +3,7 @@ title: 지속학습
 date: 2026-09-15 01:00:00 +0900
 slug: continual-learning
 permalink: /posts/continual-learning/
-categories: [AI, 머신러닝]
+categories: [AI, 딥러닝, 학습 패러다임]
 tags: [지속학습, Continual Learning, Catastrophic Forgetting, Replay, EWC, Incremental Learning]
 math: true
 ---
