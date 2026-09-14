@@ -3,7 +3,7 @@ title: 메타학습
 date: 2026-09-15 00:40:00 +0900
 slug: meta-learning
 permalink: /posts/meta-learning/
-categories: [AI, 머신러닝]
+categories: [AI, 딥러닝, 학습 패러다임]
 tags: [메타학습, Meta-Learning, Few-Shot Learning, MAML, Support Set, Query Set]
 math: true
 ---
