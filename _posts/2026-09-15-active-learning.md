@@ -3,7 +3,7 @@ title: 능동학습
 date: 2026-09-15 01:10:00 +0900
 slug: active-learning
 permalink: /posts/active-learning/
-categories: [AI, 머신러닝]
+categories: [AI, 딥러닝, 학습 패러다임]
 tags: [능동학습, Active Learning, Uncertainty Sampling, Query by Committee, Oracle, 레이블링]
 math: true
 ---
