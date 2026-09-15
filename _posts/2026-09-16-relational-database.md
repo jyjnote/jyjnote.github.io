@@ -16,6 +16,7 @@ math: true
 <summary>한 줄로</summary>
 RDB는 데이터를 테이블로 표현하고 관계를 통해 연결하는 데이터베이스입니다.
 </details>
+
 ## 가장 먼저 큰 그림
 대학교 데이터를 생각해봅시다.
 
@@ -321,23 +322,32 @@ SQLite
 <mark>RDB는 데이터 구조이고, RDBMS는 이를 관리하는 소프트웨어입니다.</mark>
 ---
 ## 관계형 데이터베이스의 장점
+
 ### 구조가 명확하다
 행과 열로 표현되기 때문에 데이터 구조를 이해하기 쉽습니다.
+
 ### 관계를 표현하기 쉽다
 Primary Key와 Foreign Key를 이용해 테이블을 연결할 수 있습니다.
+
 ### 중복을 줄일 수 있다
 테이블을 적절히 분리하면 같은 데이터의 반복 저장을 줄일 수 있습니다.
+
 ### 무결성을 유지하기 쉽다
 Key와 제약조건을 이용해 잘못된 데이터 입력을 제한할 수 있습니다.
+
 ### SQL을 사용할 수 있다
 표준화된 SQL을 이용해 데이터를 조회하고 변경할 수 있습니다.
 ---
 ## 관계형 데이터베이스의 단점
+
 ### 구조가 복잡해질 수 있다
 테이블과 관계가 많아지면 설계가 복잡해집니다.
+
 ### JOIN 비용이 발생할 수 있다
 여러 테이블을 연결하면 처리 비용이 증가할 수 있습니다.
+
 ### 비정형 데이터에는 불편할 수 있다
+
 데이터 구조가 일정하지 않거나 자주 변하면 관계형 모델에 맞추기 어려울 수 있습니다.
 ---
 ## RDB와 NoSQL
@@ -423,6 +433,7 @@ N : M
 <summary>정답</summary>
 ②
 </details>
+
 ### 2. 관계형 데이터 모델에서 Column에 대응하는 용어는?
 ① Attribute  
 ② Tuple  
@@ -432,6 +443,7 @@ N : M
 <summary>정답</summary>
 ①
 </details>
+
 ### 3. 각 Row를 고유하게 식별하는 Key는?
 ① Foreign Key  
 ② Primary Key  
@@ -441,6 +453,7 @@ N : M
 <summary>정답</summary>
 ②
 </details>
+
 ### 4. 다른 테이블의 Key를 참조하는 것은?
 ① Primary Key  
 ② Candidate Key  
@@ -451,8 +464,11 @@ N : M
 ③
 </details>
 ---
+
 ## 실전 문제 - 코드
+
 ### 5. 다음 테이블에서 Primary Key로 가장 적절한 것은?
+
 ```text
 STUDENT
 
@@ -469,6 +485,7 @@ student_id | name   | department
 <summary>정답</summary>
 ③
 </details>
+
 ### 6. 다음 SQL의 목적은?
 ```sql
 SELECT student.name, enrollment.course_id
