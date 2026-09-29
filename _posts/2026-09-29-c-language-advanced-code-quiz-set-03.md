@@ -615,7 +615,7 @@ int pop_min(Heap *h)
 
 int main(void)
 {
-    Heap h = {{0}, 0};
+    Heap h = { {0}, 0 };
 
     int input[] = {
         4, 1, 7, 3, 8, 5
@@ -1651,7 +1651,7 @@ int pop_back(Deque *q)
 
 int main(void)
 {
-    Deque q = {{0}, 0, 0};
+    Deque q = { {0}, 0, 0 };
 
     push_back(&q, 10);
     push_back(&q, 20);
