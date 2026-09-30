@@ -1,0 +1,36 @@
+<!-- footer.html에서도 안전하게 사용할 수 있도록 페이지 판별은 스크립트에서 수행합니다. -->
+<template id="blog-insights-template"
+  data-home="{{ '/' | relative_url }}"
+  data-posts="{{ '/assets/data/post-activity.json' | relative_url }}"
+  data-visits="{{ '/assets/data/visits.json' | relative_url }}">
+  <div class="bi" aria-label="블로그 기록">
+    <section class="bi-card bi-writing" aria-labelledby="bi-writing-title">
+      <header class="bi-heading">
+        <div class="bi-title-wrap"><span class="bi-icon" aria-hidden="true">✦</span><h2 id="bi-writing-title">쌓이는 기록</h2></div>
+        <span class="bi-badge">글 작성</span>
+      </header>
+      <div class="bi-lead"><strong data-bi="post-total">—</strong><span>편의 생각</span></div>
+      <p class="bi-caption" data-bi="post-caption">최근 16주간 남긴 배움의 흔적</p>
+      <div class="bi-calendar" data-bi="calendar" aria-label="날짜별 글 작성 달력"></div>
+      <div class="bi-legend"><span>적게</span><i data-level="0"></i><i data-level="1"></i><i data-level="2"></i><i data-level="3"></i><i data-level="4"></i><span>많이</span></div>
+      <p class="bi-hint" data-bi="post-hint">날짜를 누르면 작성한 글을 볼 수 있어요.</p>
+      <div class="bi-day-detail" data-bi="day-detail" hidden aria-live="polite"></div>
+      <div class="bi-foot"><div><span>작성한 날</span><strong data-bi="active-days">—</strong></div><div><span>최장 연속</span><strong data-bi="streak">—</strong></div><span class="bi-foot-mark" aria-hidden="true">↗</span></div>
+    </section>
+    <section class="bi-card bi-visitors" aria-labelledby="bi-visitors-title">
+      <header class="bi-heading">
+        <div class="bi-title-wrap"><span class="bi-icon" aria-hidden="true">⌁</span><h2 id="bi-visitors-title">이어지는 발걸음</h2></div>
+        <span class="bi-status" data-bi="visit-status">연결 대기</span>
+      </header>
+      <div class="bi-visit-summary"><div class="bi-lead"><strong data-bi="visit-total">—</strong><span>회 방문</span></div><span class="bi-trend" data-bi="visit-trend">최근 30일</span></div>
+      <p class="bi-caption" data-bi="visit-caption">기록을 찾아온 사람들의 흐름</p>
+      <div class="bi-chart" data-bi="chart" aria-label="일별 방문 수 그래프"></div>
+      <p class="bi-chart-readout" data-bi="chart-readout" aria-live="polite">통계를 연결하면 그래프가 채워집니다.</p>
+      <div class="bi-visit-metrics"><div><span data-bi="latest-label">최근 집계일</span><strong data-bi="latest-count">—</strong></div><div><span>하루 평균</span><strong data-bi="average">—</strong></div><div><span>가장 많은 날</span><strong data-bi="peak">—</strong></div></div>
+      <p class="bi-updated" data-bi="updated">방문 기록은 통계 연결 이후부터 쌓입니다.</p>
+      <details class="bi-data-table" data-bi="visit-table" hidden><summary>날짜별 기록 보기</summary><table><thead><tr><th scope="col">날짜</th><th scope="col">방문 수</th></tr></thead><tbody></tbody></table></details>
+    </section>
+  </div>
+</template>
+<link rel="stylesheet" href="{{ '/assets/css/blog-insights.css' | relative_url }}">
+<script defer src="{{ '/assets/js/blog-insights.js' | relative_url }}"></script>
