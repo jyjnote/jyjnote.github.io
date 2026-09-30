@@ -1,0 +1,18 @@
+---
+layout: null
+permalink: /assets/data/post-activity.json
+---
+{%- assign visible_posts = site.posts | where_exp: 'post', 'post.hidden != true' -%}
+{
+  "timezone": {{ site.timezone | default: 'Asia/Seoul' | jsonify }},
+  "posts": [
+    {%- for post in visible_posts -%}
+    {
+      "date": {{ post.date | date: '%Y-%m-%d' | jsonify }},
+      "published_at": {{ post.date | date_to_xmlschema | jsonify }},
+      "title": {{ post.title | jsonify }},
+      "url": {{ post.url | relative_url | jsonify }}
+    }{% unless forloop.last %},{% endunless %}
+    {%- endfor -%}
+  ]
+}
