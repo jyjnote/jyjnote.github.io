@@ -2,7 +2,7 @@
 title: "JOIN 개념 — 흩어진 표를 연결하는 기준과 결과"
 date: 2026-10-01 18:53:00 +0900
 slug: sql-join-concepts
-permalink: /posts/sql-join-concepts/
+permalink: /posts/sql-join-concept/
 categories: [데이터베이스, SQL]
 tags: [조인, 내부조인, 외부조인, 교차조인, 자체조인, 정보처리기사]
 math: true
