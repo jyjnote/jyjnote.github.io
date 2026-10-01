@@ -4,7 +4,7 @@ date: 2026-09-18 21:50:00 +0900
 slug: natural-join-using
 permalink: /posts/natural-join-using/
 categories: [CS, 데이터베이스]
-tags: [NATURALJOIN, USING, JOIN, SQL, ON, 공통Column, 정보처리기사, NCS]
+tags: [NATURALJOIN, USING, JOIN, SQL, "ON", 공통Column, 정보처리기사, NCS]
 math: true
 ---
 
