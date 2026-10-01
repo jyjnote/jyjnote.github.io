@@ -59,8 +59,8 @@ JOIN = 여러 Table의 관련 Row를 연결 조건에 따라 하나의 결과로
 대표 SQL은 다음과 같습니다.
 
 ```sql
-SELECT E.EMP_NAME, D.DEPT_NAME F
-ROM EMPLOYEE E 
+SELECT E.EMP_NAME, D.DEPT_NAME
+FROM EMPLOYEE E 
 JOIN DEPARTMENT D 
 ON E.DEPT_ID = D.DEPT_ID;
 ```
