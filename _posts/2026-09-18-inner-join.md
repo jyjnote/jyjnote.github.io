@@ -2,7 +2,7 @@
 title: INNER JOIN · 이너 조인
 date: 2026-09-18 21:35:00 +0900
 slug: inner-join
-permalink: /posts/inner-join/
+permalink: /posts/sql-inner-join/
 categories: [CS, 데이터베이스]
 tags: [INNERJOIN, 이너조인, JOIN, SQL, 관계형데이터베이스, ForeignKey, 정보처리기사, NCS]
 math: true
