@@ -4,7 +4,7 @@ date: 2026-09-18 21:25:00 +0900
 slug: left-outer-join
 permalink: /posts/left-outer-join/
 categories: [CS, 데이터베이스]
-tags: [LEFTOUTERJOIN, LEFTJOIN, JOIN, SQL, NULL, ON, WHERE, 정보처리기사, NCS]
+tags: [LEFTOUTERJOIN, LEFTJOIN, JOIN, SQL, NULL, "ON", WHERE, 정보처리기사, NCS]
 math: true
 ---
 
