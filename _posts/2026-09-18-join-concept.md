@@ -59,7 +59,10 @@ JOIN = 여러 Table의 관련 Row를 연결 조건에 따라 하나의 결과로
 대표 SQL은 다음과 같습니다.
 
 ```sql
-SELECT E.EMP_NAME, D.DEPT_NAME\nFROM EMPLOYEE E\nJOIN DEPARTMENT D\n    ON E.DEPT_ID = D.DEPT_ID;
+SELECT E.EMP_NAME, D.DEPT_NAME F
+ROM EMPLOYEE E 
+JOIN DEPARTMENT D 
+ON E.DEPT_ID = D.DEPT_ID;
 ```
 
 <mark>JOIN은 서로 나뉘어 저장된 Table을 연결 조건에 따라 다시 합쳐 조회합니다.</mark>
