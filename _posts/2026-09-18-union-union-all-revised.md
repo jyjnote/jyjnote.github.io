@@ -204,8 +204,10 @@ FROM EMPLOYEE;
 
 ### 결과 Column
 
+
 | ID | PERSON_NAME |
 | --- | --- |
+| 결과 데이터 생략 | 결과 데이터 생략 |
 
 결과 Column 이름은 일반적으로 첫 번째 SELECT의 Column 이름 또는 별칭을 기준으로 정해집니다.
 
