@@ -1,721 +1,488 @@
 ---
 title: ER Model · ERD
-date: 2026-09-18 23:25:00 +0900
+date: 2026-09-18 23:40:00 +0900
 slug: er-model-erd
 permalink: /posts/er-model-erd/
 categories: [CS, 데이터베이스]
-tags: [ERModel, ERD, 데이터모델링, Entity, Attribute, Relationship, Cardinality, 정보처리기사, NCS]
+tags: [ERModel, ERD, 데이터모델링, Entity, Relationship, Attribute, 정보처리기사, NCS]
 math: true
 ---
 
-ER Model은 현실 세계의 데이터 구조를 Entity, Attribute, Relationship으로 표현하는 개념적 데이터 모델입니다.
+`ER Model`은 <mark>현실 세계의 대상을 Entity와 Relationship으로 표현하는 데이터 모델</mark>입니다.
 
-이 글에서는 정의만 외우지 않고 실제 Table을 어떻게 보고 판단하는지까지 연결합니다.
+`ERD`는 이 구조를 그림으로 나타내어 데이터 사이의 관계를 한눈에 볼 수 있게 합니다.
 
 <blockquote class="prompt-info">
-<p>한 줄: ERD는 Entity와 Relationship을 그림으로 표현해 데이터 구조를 한눈에 보여줍니다.</p>
+<p>한 줄: ER Model은 개체와 관계로 데이터를 표현하고, ERD는 그 구조를 그림으로 나타낸 것입니다.</p>
 </blockquote>
 
-<details>
+<details markdown="1">
 <summary>한 줄로</summary>
 
-ER Model = Entity + Attribute + Relationship / ERD = 이를 그림으로 표현
+ER Model은 데이터 구조의 개념이고, ERD는 그 구조를 시각적으로 표현한 도식입니다.
 
 </details>
 
-## 실습 데이터 전체 보기
-
-아래 실습 데이터베이스를 기준으로 예시를 연결합니다.
-
-<div style="width:100%; overflow:hidden; border:1px solid var(--main-border-color,#ddd); border-radius:12px; margin:1rem 0;">
-<iframe
-  src="https://docs.google.com/spreadsheets/d/1mtu6pFcGyOfwpFizaJskfFD87GxyjAmB/preview"
-  width="100%"
-  height="500"
-  style="border:0;"
-  loading="lazy">
-</iframe>
-</div>
-
-실습 DB의 대표 구조는 다음과 같습니다.
-
-| Table | 핵심 Column | 역할 |
-| --- | --- | --- |
-| DEPARTMENT | DEPT_ID, DEPT_NAME, REGION | 부서 |
-| EMPLOYEE | EMP_ID, EMP_NAME, DEPT_ID, SALARY | 직원 |
-| CUSTOMER | CUSTOMER_ID, NAME, REGION, GRADE | 고객 |
-| PRODUCT | PRODUCT_ID, PRODUCT_NAME, CATEGORY, PRICE | 상품 |
-| ORDERS | ORDER_ID, CUSTOMER_ID, ORDER_DATE, STATUS | 주문 |
-| ORDER_ITEM | ORDER_ID, PRODUCT_ID, QTY | 주문 상세 |
-
-정규화 설명에서는 이해를 위해 별도의 작은 예시 Table도 함께 사용합니다.
-
-
 ## ER Model
 
-ER은 Entity-Relationship의 약자입니다.
-
-핵심 요소는 세 가지입니다.
+ER Model은 현실 세계의 데이터를 크게 다음 요소로 표현합니다.
 
 ```text
 Entity
+→ 관리할 대상
+
 Attribute
+→ 대상이 가진 정보
+
 Relationship
+→ 대상 사이의 관계
 ```
 
-예를 들어 쇼핑몰에서는 고객, 주문, 상품을 Entity로 볼 수 있습니다.
+예를 들어 학교 시스템을 생각해보면 다음과 같습니다.
+
+```text
+학생
+↓ 수강한다
+강의
+```
+
+여기서 학생과 강의는 관리 대상이고, 수강한다는 두 대상 사이의 관계입니다.
 
 ## ERD
 
-ERD는 ER Model을 Diagram으로 표현한 것입니다.
+`ERD`는 ER Model을 그림으로 표현한 것입니다.
+
+데이터베이스를 만들기 전에 어떤 Entity가 존재하고 서로 어떻게 연결되는지 확인할 수 있습니다.
+
+### 예시
 
 ```text
-CUSTOMER
-   │ 1
-   │
-   │ N
- ORDERS
+[학생]
+- 학생번호
+- 이름
+
+    수강
+
+[강의]
+- 강의번호
+- 강의명
 ```
 
-고객 한 명이 여러 주문을 만들 수 있다는 관계를 시각적으로 표현합니다.
-
-## Entity 표시
-
-Entity는 독립적으로 관리할 필요가 있는 대상을 뜻합니다.
+단순하게 보면 다음 구조입니다.
 
 ```text
-CUSTOMER
-EMPLOYEE
-PRODUCT
-ORDERS
-```
-
-실제 관계형 데이터베이스에서는 Entity가 Table로 변환되는 경우가 많습니다.
-
-## Attribute 표시
-
-Attribute는 Entity의 특성을 나타냅니다.
-
-```text
-CUSTOMER
-├─ CUSTOMER_ID
-├─ NAME
-├─ REGION
-└─ GRADE
-```
-
-논리 모델링 단계에서는 Key Attribute와 일반 Attribute를 구분합니다.
-
-## Relationship 표시
-
-Relationship은 Entity 사이의 연결입니다.
-
-```text
-CUSTOMER
-→ 주문한다
-→ ORDERS
-```
-
-```text
-EMPLOYEE
-→ 소속된다
-→ DEPARTMENT
-```
-
-관계에는 Cardinality와 선택성도 함께 고려합니다.
-
-## 식별 관계와 비식별 관계
-
-모델링 도구에서는 부모 Key가 자식 Primary Key에 포함되는지에 따라 식별 관계와 비식별 관계를 구분하기도 합니다.
-
-예를 들어 ORDER_ITEM의 복합 Primary Key가 ORDER_ID를 포함한다면 주문과 주문 상세는 식별 관계로 모델링할 수 있습니다.
-
-세부 표기법은 사용하는 ERD 표기 방식에 따라 달라질 수 있습니다.
-
-## Crow's Foot
-
-실무 ERD에서는 Crow's Foot 표기법을 많이 사용합니다.
-
-```text
-1
-→ 하나
-
-N
-→ 여러 개
-```
-
-까마귀발 모양이 다수 쪽을 나타냅니다.
-
-시험에서는 기호 자체보다 1:1, 1:N, N:M 의미를 정확히 이해하는 것이 중요합니다.
-
-## ERD에서 Relation으로
-
-ERD는 이후 관계형 Schema로 변환됩니다.
-
-```text
-CUSTOMER 1:N ORDERS
+학생
 ↓
-ORDERS.CUSTOMER_ID
-→ Foreign Key
+수강
+↓
+강의
 ```
 
-Cardinality와 Relationship이 실제 PK·FK 구조로 변환됩니다.
+ERD에서는 이러한 관계를 선과 기호를 이용해 표현합니다.
 
-## 다른 개념과 비교
+## ER Model과 ERD 차이
 
-### 비교 1. ER Model
+| 구분 | ER Model | ERD |
+| --- | --- | --- |
+| 의미 | 데이터 모델링 개념 | ER Model을 표현한 그림 |
+| 목적 | Entity와 관계 정의 | 구조를 시각적으로 확인 |
+| 형태 | 개념적 구조 | 다이어그램 |
+| 사용 시점 | 데이터 모델링 | 모델 설계·검토 |
 
 ```text
 ER Model
-→ 개념 구조
-```
+→ 구조를 정의하는 개념
 
-비교할 때는 **무엇을 결정하는가**, **어떤 중복을 줄이는가**, **어떤 성능 비용이 생기는가**를 구분합니다.
-
-### 비교 2. ERD
-
-```text
 ERD
-→ 시각적 Diagram
+→ 구조를 그림으로 표현
 ```
 
-비교할 때는 **무엇을 결정하는가**, **어떤 중복을 줄이는가**, **어떤 성능 비용이 생기는가**를 구분합니다.
+## ERD의 기본 구성
 
-### 비교 3. Relation
+ERD에서는 주로 다음 요소를 확인합니다.
+
+| 요소 | 의미 |
+| --- | --- |
+| Entity | 관리 대상 |
+| Attribute | Entity의 속성 |
+| Relationship | Entity 사이의 관계 |
+| Key | Row를 식별하는 Attribute |
+| Cardinality | 관계의 수 |
+
+다만 Entity, Attribute, Relationship과 Cardinality는 각각 별도 글에서 더 자세히 다룹니다.
+
+## 간단한 ERD 예시
+
+쇼핑몰의 고객과 주문을 생각해보겠습니다.
+
+### 업무 관계
 
 ```text
-Relation
-→ 관계형 Table 구조
+고객은 주문을 한다.
 ```
 
-비교할 때는 **무엇을 결정하는가**, **어떤 중복을 줄이는가**, **어떤 성능 비용이 생기는가**를 구분합니다.
-
-## 구체적인 예시 연습
-
-### 예시 1. 업무 구조
-
-먼저 구조를 봅니다.
+### ERD 구조
 
 ```text
-고객 → 주문 → 상품
+[고객]
+- 고객번호
+- 이름
+- 지역
+
+      1
+      │
+      │ 주문한다
+      │
+      N
+
+[주문]
+- 주문번호
+- 고객번호
+- 주문일자
 ```
 
-핵심 해석은 다음과 같습니다.
+의미는 다음과 같습니다.
 
 ```text
-개념 모델
+고객 1명
+→ 여러 주문 가능
+
+주문 1개
+→ 한 고객과 연결
 ```
 
-`ER Model · ERD` 문제에서는 결과를 외우기보다 **왜 이 구조가 필요한지**를 설명할 수 있어야 합니다.
+## ERD에서 Key 확인
 
-시험에서는 작은 Relation을 직접 그리고 Key와 함수 종속을 표시하면 판단이 빨라집니다.
+ERD에서는 Entity를 식별하는 Key도 중요합니다.
 
-### 예시 2. Table 변환
+### 고객
 
-먼저 구조를 봅니다.
+| Attribute | 역할 |
+| --- | --- |
+| 고객번호 | Primary Key |
+| 이름 | 일반 Attribute |
+| 지역 | 일반 Attribute |
 
-```text
-CUSTOMER / ORDERS / PRODUCT
-```
+### 주문
 
-핵심 해석은 다음과 같습니다.
+| Attribute | 역할 |
+| --- | --- |
+| 주문번호 | Primary Key |
+| 고객번호 | Foreign Key |
+| 주문일자 | 일반 Attribute |
 
-```text
-논리 모델
-```
-
-`ER Model · ERD` 문제에서는 결과를 외우기보다 **왜 이 구조가 필요한지**를 설명할 수 있어야 합니다.
-
-시험에서는 작은 Relation을 직접 그리고 Key와 함수 종속을 표시하면 판단이 빨라집니다.
-
-### 예시 3. FK
-
-먼저 구조를 봅니다.
+관계를 단순하게 표현하면 다음과 같습니다.
 
 ```text
+CUSTOMER.CUSTOMER_ID
+↓
 ORDERS.CUSTOMER_ID
 ```
 
-핵심 해석은 다음과 같습니다.
+고객의 Primary Key를 주문의 Foreign Key가 참조합니다.
+
+## ERD를 Table로 변환
+
+ERD에서 설계한 구조는 이후 실제 Table로 구현할 수 있습니다.
+
+### ERD 구조
 
 ```text
-관계 구현
+고객
+1
+↓
+N
+주문
 ```
 
-`ER Model · ERD` 문제에서는 결과를 외우기보다 **왜 이 구조가 필요한지**를 설명할 수 있어야 합니다.
+### Table 구조
 
-시험에서는 작은 Relation을 직접 그리고 Key와 함수 종속을 표시하면 판단이 빨라집니다.
+#### CUSTOMER
 
-### 예시 4. 1:N
+| Column | 역할 |
+| --- | --- |
+| CUSTOMER_ID | Primary Key |
+| NAME | 고객 이름 |
+| REGION | 지역 |
 
-먼저 구조를 봅니다.
+#### ORDERS
+
+| Column | 역할 |
+| --- | --- |
+| ORDER_ID | Primary Key |
+| CUSTOMER_ID | Foreign Key |
+| ORDER_DATE | 주문일자 |
+
+실제로 구현하면 다음처럼 표현할 수 있습니다.
+
+```sql
+CREATE TABLE CUSTOMER(
+    CUSTOMER_ID TEXT PRIMARY KEY,
+    NAME TEXT,
+    REGION TEXT
+);
+```
+
+```sql
+CREATE TABLE ORDERS(
+    ORDER_ID TEXT PRIMARY KEY,
+    CUSTOMER_ID TEXT,
+    ORDER_DATE TEXT,
+    FOREIGN KEY(CUSTOMER_ID)
+        REFERENCES CUSTOMER(CUSTOMER_ID)
+);
+```
+
+## ERD 표기법은 하나가 아니다
+
+ERD는 사용하는 표기법에 따라 모양이 달라질 수 있습니다.
+
+대표적으로 다음과 같은 방식이 있습니다.
 
 ```text
-DEPARTMENT 1:N EMPLOYEE
+Chen 표기법
+Crow's Foot 표기법
+IDEF1X 표기법
 ```
 
-핵심 해석은 다음과 같습니다.
+같은 데이터 구조라도 Entity, Attribute, Cardinality를 표현하는 기호는 달라질 수 있습니다.
+
+<blockquote class="prompt-warning">
+<p>ERD 문제에서는 그림 모양 자체보다 Entity가 무엇이고 어떤 관계와 Cardinality를 가지는지를 먼저 확인합니다.</p>
+</blockquote>
+
+## ERD 읽는 순서
+
+복잡한 ERD는 다음 순서로 보면 이해하기 쉽습니다.
+
+### 1. Entity 확인
 
 ```text
-Cardinality
+어떤 데이터 대상을 관리하는가?
 ```
 
-`ER Model · ERD` 문제에서는 결과를 외우기보다 **왜 이 구조가 필요한지**를 설명할 수 있어야 합니다.
-
-시험에서는 작은 Relation을 직접 그리고 Key와 함수 종속을 표시하면 판단이 빨라집니다.
-
-### 예시 5. N:M
-
-먼저 구조를 봅니다.
+### 2. Primary Key 확인
 
 ```text
-ORDERS N:M PRODUCT
+각 Entity를 무엇으로 구분하는가?
 ```
 
-핵심 해석은 다음과 같습니다.
+### 3. Relationship 확인
 
 ```text
-ORDER_ITEM으로 분해
+어떤 Entity끼리 연결되어 있는가?
 ```
 
-`ER Model · ERD` 문제에서는 결과를 외우기보다 **왜 이 구조가 필요한지**를 설명할 수 있어야 합니다.
-
-시험에서는 작은 Relation을 직접 그리고 Key와 함수 종속을 표시하면 판단이 빨라집니다.
-
-### 예시 6. 물리 구현
-
-먼저 구조를 봅니다.
+### 4. Cardinality 확인
 
 ```text
-CREATE TABLE
+1:1
+1:N
+N:M
 ```
 
-핵심 해석은 다음과 같습니다.
+### 5. Foreign Key 확인
 
 ```text
-DBMS Schema
+어떤 Key가 다른 Entity를 참조하는가?
 ```
 
-`ER Model · ERD` 문제에서는 결과를 외우기보다 **왜 이 구조가 필요한지**를 설명할 수 있어야 합니다.
+## ERD와 실제 데이터베이스
 
-시험에서는 작은 Relation을 직접 그리고 Key와 함수 종속을 표시하면 판단이 빨라집니다.
-
-## 자주 하는 실수
-
-### 실수 1. Table 이름만 보고 Entity와 Relation을 같은 수준으로 생각한다.
-
-이 실수를 피하려면 다음 순서를 지킵니다.
+ERD는 데이터 자체가 아니라 <mark>데이터베이스 구조를 설계하기 위한 도식</mark>입니다.
 
 ```text
-업무 규칙
-→ Key
-→ 함수 종속
-→ 이상 현상
-→ 필요한 분해
+ERD
+→ 설계도
+
+Table
+→ 실제 구현 결과
 ```
 
-`ER Model · ERD`에서도 데이터 몇 Row만 보고 판단하지 말고 **Schema의 의미와 업무 규칙**을 기준으로 봅니다.
-
-### 실수 2. Key를 찾기 전에 정규형부터 판단한다.
-
-이 실수를 피하려면 다음 순서를 지킵니다.
-
-```text
-업무 규칙
-→ Key
-→ 함수 종속
-→ 이상 현상
-→ 필요한 분해
-```
-
-`ER Model · ERD`에서도 데이터 몇 Row만 보고 판단하지 말고 **Schema의 의미와 업무 규칙**을 기준으로 봅니다.
-
-### 실수 3. 함수 종속을 현재 데이터 값의 우연한 중복 여부로만 판단한다.
-
-이 실수를 피하려면 다음 순서를 지킵니다.
-
-```text
-업무 규칙
-→ Key
-→ 함수 종속
-→ 이상 현상
-→ 필요한 분해
-```
-
-`ER Model · ERD`에서도 데이터 몇 Row만 보고 판단하지 말고 **Schema의 의미와 업무 규칙**을 기준으로 봅니다.
-
-### 실수 4. 정규화 단계를 건너뛰고 바로 3NF나 BCNF라고 판단한다.
-
-이 실수를 피하려면 다음 순서를 지킵니다.
-
-```text
-업무 규칙
-→ Key
-→ 함수 종속
-→ 이상 현상
-→ 필요한 분해
-```
-
-`ER Model · ERD`에서도 데이터 몇 Row만 보고 판단하지 말고 **Schema의 의미와 업무 규칙**을 기준으로 봅니다.
-
-### 실수 5. 분해 후 어떤 Attribute가 어느 Relation으로 가야 하는지 확인하지 않는다.
-
-이 실수를 피하려면 다음 순서를 지킵니다.
-
-```text
-업무 규칙
-→ Key
-→ 함수 종속
-→ 이상 현상
-→ 필요한 분해
-```
-
-`ER Model · ERD`에서도 데이터 몇 Row만 보고 판단하지 말고 **Schema의 의미와 업무 규칙**을 기준으로 봅니다.
-
-### 실수 6. 정규화와 반정규화를 무조건 좋은 것과 나쁜 것으로 나눈다.
-
-이 실수를 피하려면 다음 순서를 지킵니다.
-
-```text
-업무 규칙
-→ Key
-→ 함수 종속
-→ 이상 현상
-→ 필요한 분해
-```
-
-`ER Model · ERD`에서도 데이터 몇 Row만 보고 판단하지 말고 **Schema의 의미와 업무 규칙**을 기준으로 봅니다.
+건물의 설계도와 실제 건물의 관계처럼 생각하면 이해하기 쉽습니다.
 
 ## 잘 놓치는 핵심
 
-### 1. ER Model
+### 1. ER Model과 ERD는 같은 말이 아니다
 
-ER은 Entity-Relationship의 약자입니다.
+ER Model은 모델링 개념이고 ERD는 그 모델을 그림으로 표현한 것입니다.
 
-핵심은 결과를 외우는 것이 아니라 **왜 이 구조가 필요한지**를 설명할 수 있는 것입니다.
+### 2. ERD는 실제 데이터가 아니다
 
-### 2. ERD
+Row 값 자체가 아니라 데이터 구조와 관계를 표현합니다.
 
-ERD는 ER Model을 Diagram으로 표현한 것입니다.
+### 3. 관계의 수를 확인해야 한다
 
-핵심은 결과를 외우는 것이 아니라 **왜 이 구조가 필요한지**를 설명할 수 있는 것입니다.
+Entity가 연결되어 있다는 사실만 보는 것이 아니라 `1:1`, `1:N`, `N:M` 같은 관계 수를 함께 확인해야 합니다.
 
-### 3. Entity 표시
+### 4. 표기법마다 기호가 다를 수 있다
 
-Entity는 독립적으로 관리할 필요가 있는 대상을 뜻합니다.
-
-핵심은 결과를 외우는 것이 아니라 **왜 이 구조가 필요한지**를 설명할 수 있는 것입니다.
-
-### 4. Attribute 표시
-
-Attribute는 Entity의 특성을 나타냅니다.
-
-핵심은 결과를 외우는 것이 아니라 **왜 이 구조가 필요한지**를 설명할 수 있는 것입니다.
-
-### 5. Relationship 표시
-
-Relationship은 Entity 사이의 연결입니다.
-
-핵심은 결과를 외우는 것이 아니라 **왜 이 구조가 필요한지**를 설명할 수 있는 것입니다.
-
-### 6. 식별 관계와 비식별 관계
-
-모델링 도구에서는 부모 Key가 자식 Primary Key에 포함되는지에 따라 식별 관계와 비식별 관계를 구분하기도 합니다.
-
-핵심은 결과를 외우는 것이 아니라 **왜 이 구조가 필요한지**를 설명할 수 있는 것입니다.
+그림 모양만 외우기보다 의미를 이해해야 합니다.
 
 ## 시험·면접
 
 ### 핵심 암기
 
 ```text
-ER Model = Entity + Attribute + Relationship / ERD = 이를 그림으로 표현
+ER Model
+→ Entity
+→ Attribute
+→ Relationship
 ```
 
-### 시험 접근 순서
+```text
+ERD
+→ ER Model을 그림으로 표현
+```
 
 ```text
-1. Entity 또는 Relation 확인
-2. Candidate Key 확인
-3. 함수 종속 확인
-4. 이상 현상 확인
-5. 정규형 조건 확인
-6. 필요한 분해 확인
+ERD 읽기
+→ Entity
+→ Key
+→ Relationship
+→ Cardinality
 ```
 
 ### 시험 함정
 
-현재 예시 데이터에서 값이 우연히 유일하다고 해서 함수 종속이나 Key가 자동으로 성립하는 것은 아닙니다.
+ERD 자체를 실제 Table이나 실제 데이터라고 생각하면 안 됩니다.
 
-Schema와 업무 규칙을 기준으로 판단해야 합니다.
+ERD는 데이터베이스를 구현하기 전에 구조와 관계를 표현하는 설계 도구입니다.
 
-### 면접에서 짧게 답한다면
+### 면접 짧은 답변
 
-ER Model은 현실 세계의 데이터 구조를 Entity, Attribute, Relationship으로 표현하는 개념적 데이터 모델입니다.
-
-정규화와 모델링에서는 Key와 함수 종속을 기준으로 중복과 이상 현상을 줄이는 방향으로 구조를 설계합니다.
-
-## 예시로 한 바퀴
-
-`ER Model · ERD` 문제를 만나면 작은 Relation부터 그립니다.
-
-```text
-Key
-→ 결정되는 Attribute
-→ 반복되는 사실
-→ 발생 가능한 이상 현상
-```
-
-그다음 어떤 Attribute가 어떤 Key에 종속되는지 화살표로 표시합니다.
-
-마지막으로 분해가 필요하다면 **같은 사실을 한 곳에서만 관리할 수 있도록** Relation을 나눕니다.
+ER Model은 현실 세계의 데이터를 Entity, Attribute, Relationship으로 표현하는 데이터 모델입니다. ERD는 이 ER Model을 시각적으로 나타낸 다이어그램으로, Entity 사이의 관계와 Cardinality, Key 구조 등을 확인하는 데 사용합니다.
 
 ## 객관식 문제
 
-### 1. ER의 세 요소는?
+### 문제 1 · ER Model
 
-① Entity, Attribute, Relationship  
-② 항상 모든 Row 삭제  
-③ Index만 생성  
-④ Foreign Key는 항상 불필요
+다음 중 ER Model의 핵심 구성 요소로 가장 적절한 것은?
 
-<details>
+① Entity와 Relationship  
+② CPU와 Memory  
+③ File과 Folder  
+④ Process와 Thread
+
+<details markdown="1">
 <summary>정답</summary>
 
 ①
 
+ER Model은 Entity와 Attribute, Relationship을 이용해 데이터 구조를 표현합니다.
+
 </details>
 
-해설: `Entity, Attribute, Relationship`가 이 문제의 핵심입니다.
+### 문제 2 · ERD
 
-### 2. ERD의 목적은?
+ERD에 대한 설명으로 옳은 것은?
 
-① 데이터 구조를 시각적으로 표현  
-② 항상 모든 Row 삭제  
-③ Index만 생성  
-④ Foreign Key는 항상 불필요
+① 실제 Row 데이터를 저장하는 파일이다.  
+② ER Model을 그림으로 표현한 것이다.  
+③ SQL 명령어의 한 종류다.  
+④ Index를 자동 생성하는 기능이다.
 
-<details>
+<details markdown="1">
 <summary>정답</summary>
 
-①
+②
+
+ERD는 Entity와 Relationship 등의 구조를 시각적으로 표현한 다이어그램입니다.
 
 </details>
 
-해설: `데이터 구조를 시각적으로 표현`가 이 문제의 핵심입니다.
+### 문제 3 · 관계 읽기
 
-### 3. 1:N 관계는 무엇을 나타내는가?
-
-① 한 Entity가 여러 상대와 연결  
-② 항상 모든 Row 삭제  
-③ Index만 생성  
-④ Foreign Key는 항상 불필요
-
-<details>
-<summary>정답</summary>
-
-①
-
-</details>
-
-해설: `한 Entity가 여러 상대와 연결`가 이 문제의 핵심입니다.
-
-### 4. 정규화 판단 전에 먼저 찾을 것은?
-
-① Candidate Key와 함수 종속  
-② 항상 모든 Row 삭제  
-③ Index만 생성  
-④ Foreign Key는 항상 불필요
-
-<details>
-<summary>정답</summary>
-
-①
-
-</details>
-
-해설: `Candidate Key와 함수 종속`가 이 문제의 핵심입니다.
-
-### 5. 정규화의 주요 목적은?
-
-① 중복과 이상 현상 감소  
-② 항상 모든 Row 삭제  
-③ Index만 생성  
-④ Foreign Key는 항상 불필요
-
-<details>
-<summary>정답</summary>
-
-①
-
-</details>
-
-해설: `중복과 이상 현상 감소`가 이 문제의 핵심입니다.
-
-### 6. 현재 Row 값만 보고 함수 종속을 결정해도 되는가?
-
-① 아니며 업무 규칙을 봐야 한다  
-② 항상 모든 Row 삭제  
-③ Index만 생성  
-④ Foreign Key는 항상 불필요
-
-<details>
-<summary>정답</summary>
-
-①
-
-</details>
-
-해설: `아니며 업무 규칙을 봐야 한다`가 이 문제의 핵심입니다.
-
-### 7. Relation 분해 후 확인할 것은?
-
-① Key와 참조 관계  
-② 항상 모든 Row 삭제  
-③ Index만 생성  
-④ Foreign Key는 항상 불필요
-
-<details>
-<summary>정답</summary>
-
-①
-
-</details>
-
-해설: `Key와 참조 관계`가 이 문제의 핵심입니다.
-
-### 8. 정규화가 높을수록 무조건 성능이 좋은가?
-
-① 아니다  
-② 항상 모든 Row 삭제  
-③ Index만 생성  
-④ Foreign Key는 항상 불필요
-
-<details>
-<summary>정답</summary>
-
-①
-
-</details>
-
-해설: `아니다`가 이 문제의 핵심입니다.
-
-## 추가 확인
-
-### 체크 1
-
-`ER Model · ERD`를 다시 볼 때 다음 순서로 확인합니다.
+다음 구조의 의미로 가장 적절한 것은?
 
 ```text
-1. 업무에서 어떤 사실을 저장하는가
-2. Candidate Key는 무엇인가
-3. 어떤 함수 종속이 있는가
-4. 중복과 이상 현상은 무엇인가
-5. 분해 또는 결합이 필요한가
+고객
+1
+↓
+N
+주문
 ```
 
-정규화 문제는 **Table 모양**보다 **함수 종속과 Key**를 중심으로 판단해야 합니다.
+① 고객 하나가 여러 주문과 연결될 수 있다.  
+② 주문 하나가 반드시 여러 고객을 가진다.  
+③ 고객과 주문은 관계가 없다.  
+④ 고객과 주문은 항상 같은 개수다.
 
-분해 후에는 각 Relation이 어떤 사실 하나를 표현하는지도 확인합니다.
+<details markdown="1">
+<summary>정답</summary>
 
-### 체크 2
+①
 
-`ER Model · ERD`를 다시 볼 때 다음 순서로 확인합니다.
+`1:N` 관계이므로 한 고객이 여러 주문과 연결될 수 있습니다.
+
+</details>
+
+### 문제 4 · ERD 읽기
+
+복잡한 ERD를 볼 때 먼저 확인할 대상으로 가장 적절한 것은?
+
+① CPU 사용률  
+② Entity  
+③ 파일 크기  
+④ SQL 실행 시간
+
+<details markdown="1">
+<summary>정답</summary>
+
+②
+
+먼저 어떤 Entity가 존재하는지 확인한 뒤 Key와 Relationship을 확인하는 것이 좋습니다.
+
+</details>
+
+### 문제 5 · ERD와 Table
+
+다음 설명으로 옳은 것은?
+
+① ERD는 실제 데이터 Row 그 자체다.  
+② ERD와 Table은 항상 완전히 같은 개념이다.  
+③ ERD는 구조 설계에 사용하고 Table은 실제 구현 결과가 될 수 있다.  
+④ ERD에서는 Entity 관계를 표현할 수 없다.
+
+<details markdown="1">
+<summary>정답</summary>
+
+③
+
+ERD는 데이터 구조를 설계하는 도식이고, 이를 바탕으로 실제 Table을 구현할 수 있습니다.
+
+</details>
+
+## ER Model · ERD 전체 요약
 
 ```text
-1. 업무에서 어떤 사실을 저장하는가
-2. Candidate Key는 무엇인가
-3. 어떤 함수 종속이 있는가
-4. 중복과 이상 현상은 무엇인가
-5. 분해 또는 결합이 필요한가
+현실 세계
+↓
+ER Model
+↓
+Entity · Attribute · Relationship
+↓
+ERD
+↓
+시각적인 데이터 구조
+↓
+실제 Table 설계
 ```
 
-정규화 문제는 **Table 모양**보다 **함수 종속과 Key**를 중심으로 판단해야 합니다.
+| 구분 | 핵심 |
+| --- | --- |
+| ER Model | 데이터 구조를 개체와 관계로 표현 |
+| ERD | ER Model을 그림으로 표현 |
+| Entity | 관리 대상 |
+| Relationship | Entity 사이 연결 |
+| Cardinality | 관계의 수 |
 
-분해 후에는 각 Relation이 어떤 사실 하나를 표현하는지도 확인합니다.
-
-### 체크 3
-
-`ER Model · ERD`를 다시 볼 때 다음 순서로 확인합니다.
-
-```text
-1. 업무에서 어떤 사실을 저장하는가
-2. Candidate Key는 무엇인가
-3. 어떤 함수 종속이 있는가
-4. 중복과 이상 현상은 무엇인가
-5. 분해 또는 결합이 필요한가
-```
-
-정규화 문제는 **Table 모양**보다 **함수 종속과 Key**를 중심으로 판단해야 합니다.
-
-분해 후에는 각 Relation이 어떤 사실 하나를 표현하는지도 확인합니다.
-
-### 체크 4
-
-`ER Model · ERD`를 다시 볼 때 다음 순서로 확인합니다.
-
-```text
-1. 업무에서 어떤 사실을 저장하는가
-2. Candidate Key는 무엇인가
-3. 어떤 함수 종속이 있는가
-4. 중복과 이상 현상은 무엇인가
-5. 분해 또는 결합이 필요한가
-```
-
-정규화 문제는 **Table 모양**보다 **함수 종속과 Key**를 중심으로 판단해야 합니다.
-
-분해 후에는 각 Relation이 어떤 사실 하나를 표현하는지도 확인합니다.
-
-### 체크 5
-
-`ER Model · ERD`를 다시 볼 때 다음 순서로 확인합니다.
-
-```text
-1. 업무에서 어떤 사실을 저장하는가
-2. Candidate Key는 무엇인가
-3. 어떤 함수 종속이 있는가
-4. 중복과 이상 현상은 무엇인가
-5. 분해 또는 결합이 필요한가
-```
-
-정규화 문제는 **Table 모양**보다 **함수 종속과 Key**를 중심으로 판단해야 합니다.
-
-분해 후에는 각 Relation이 어떤 사실 하나를 표현하는지도 확인합니다.
-
-### 체크 6
-
-`ER Model · ERD`를 다시 볼 때 다음 순서로 확인합니다.
-
-```text
-1. 업무에서 어떤 사실을 저장하는가
-2. Candidate Key는 무엇인가
-3. 어떤 함수 종속이 있는가
-4. 중복과 이상 현상은 무엇인가
-5. 분해 또는 결합이 필요한가
-```
-
-정규화 문제는 **Table 모양**보다 **함수 종속과 Key**를 중심으로 판단해야 합니다.
-
-분해 후에는 각 Relation이 어떤 사실 하나를 표현하는지도 확인합니다.
-
-### 체크 7
-
-`ER Model · ERD`를 다시 볼 때 다음 순서로 확인합니다.
-
-```text
-1. 업무에서 어떤 사실을 저장하는가
-2. Candidate Key는 무엇인가
-3. 어떤 함수 종속이 있는가
-4. 중복과 이상 현상은 무엇인가
-5. 분해 또는 결합이 필요한가
-```
-
-정규화 문제는 **Table 모양**보다 **함수 종속과 Key**를 중심으로 판단해야 합니다.
-
-분해 후에는 각 Relation이 어떤 사실 하나를 표현하는지도 확인합니다.
+<blockquote class="prompt-danger">
+<p>ERD 문제에서는 먼저 Entity와 Relationship을 찾고, 그다음 Key와 Cardinality를 확인합니다.</p>
+</blockquote>
 
 ## 다음에 이을 글
 
 **Entity · Attribute · Relationship**입니다.
 
-ER Model의 세 핵심 구성 요소를 각각 구체적으로 정리합니다.
+ER Model을 구성하는 세 핵심 요소를 각각 구분해서 살펴봅니다.

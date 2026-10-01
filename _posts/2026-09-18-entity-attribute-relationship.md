@@ -1,724 +1,515 @@
 ---
 title: Entity · Attribute · Relationship
-date: 2026-09-18 23:30:00 +0900
+date: 2026-09-18 23:45:00 +0900
 slug: entity-attribute-relationship
 permalink: /posts/entity-attribute-relationship/
 categories: [CS, 데이터베이스]
-tags: [Entity, Attribute, Relationship, ERD, 데이터모델링, KeyAttribute, 정보처리기사, NCS]
+tags: [Entity, Attribute, Relationship, ERModel, ERD, 데이터모델링, 정보처리기사, NCS]
 math: true
 ---
 
-Entity는 관리 대상, Attribute는 그 대상의 특성, Relationship은 Entity 사이의 연관성을 의미합니다.
+`Entity`, `Attribute`, `Relationship`은 <mark>ER Model을 구성하는 가장 기본적인 세 요소</mark>입니다.
 
-이 글에서는 정의만 외우지 않고 실제 Table을 어떻게 보고 판단하는지까지 연결합니다.
+각각 **관리할 대상**, **대상이 가진 정보**, **대상 사이의 관계**를 의미합니다.
 
 <blockquote class="prompt-info">
-<p>한 줄: Entity는 대상, Attribute는 속성, Relationship은 대상 사이의 관계입니다.</p>
+<p>한 줄: Entity는 대상, Attribute는 속성, Relationship은 대상 사이의 연결입니다.</p>
 </blockquote>
 
-<details>
+<details markdown="1">
 <summary>한 줄로</summary>
 
-Entity = 대상 / Attribute = 특성 / Relationship = 연결
+Entity = 대상, Attribute = 속성, Relationship = 관계입니다.
 
 </details>
 
-## 실습 데이터 전체 보기
-
-아래 실습 데이터베이스를 기준으로 예시를 연결합니다.
-
-<div style="width:100%; overflow:hidden; border:1px solid var(--main-border-color,#ddd); border-radius:12px; margin:1rem 0;">
-<iframe
-  src="https://docs.google.com/spreadsheets/d/1mtu6pFcGyOfwpFizaJskfFD87GxyjAmB/preview"
-  width="100%"
-  height="500"
-  style="border:0;"
-  loading="lazy">
-</iframe>
-</div>
-
-실습 DB의 대표 구조는 다음과 같습니다.
-
-| Table | 핵심 Column | 역할 |
-| --- | --- | --- |
-| DEPARTMENT | DEPT_ID, DEPT_NAME, REGION | 부서 |
-| EMPLOYEE | EMP_ID, EMP_NAME, DEPT_ID, SALARY | 직원 |
-| CUSTOMER | CUSTOMER_ID, NAME, REGION, GRADE | 고객 |
-| PRODUCT | PRODUCT_ID, PRODUCT_NAME, CATEGORY, PRICE | 상품 |
-| ORDERS | ORDER_ID, CUSTOMER_ID, ORDER_DATE, STATUS | 주문 |
-| ORDER_ITEM | ORDER_ID, PRODUCT_ID, QTY | 주문 상세 |
-
-정규화 설명에서는 이해를 위해 별도의 작은 예시 Table도 함께 사용합니다.
-
-
 ## Entity
 
-Entity는 업무에서 독립적으로 관리할 필요가 있는 대상입니다.
+`Entity`는 데이터베이스에서 관리하려는 현실 세계의 대상입니다.
 
-예를 들어 다음과 같습니다.
+예를 들어 쇼핑몰에서는 다음과 같은 대상이 Entity가 될 수 있습니다.
 
 ```text
-직원
-부서
 고객
 상품
 주문
 ```
 
-관계형 모델로 변환되면 보통 Table이 됩니다.
+각각 독립적으로 관리할 가치가 있는 대상입니다.
 
-## Entity 조건
+### 예시
 
-일반적으로 Entity로 볼 수 있으려면 다음과 같은 특징을 생각합니다.
+#### CUSTOMER
 
-- 업무에서 의미가 있다.
-- 여러 Instance가 존재할 수 있다.
-- 다른 Entity와 구분할 수 있다.
-- Attribute를 가진다.
+| CUSTOMER_ID | NAME | REGION |
+| --- | --- | --- |
+| C001 | 고객1 | 서울 |
+| C002 | 고객2 | 부산 |
 
-단순한 값 하나를 모두 Entity로 만드는 것은 아닙니다.
-
-## Attribute
-
-Attribute는 Entity가 가지는 특성입니다.
-
-```text
-EMPLOYEE
-├─ EMP_ID
-├─ EMP_NAME
-├─ SALARY
-└─ HIRE_DATE
-```
-
-관계형 Table에서는 Column에 대응되는 경우가 많습니다.
-
-## Key Attribute
-
-Entity를 식별하는 Attribute는 Key 역할을 할 수 있습니다.
-
-```text
-EMPLOYEE
-→ EMP_ID
-
-DEPARTMENT
-→ DEPT_ID
-```
-
-Candidate Key 중 하나를 Primary Key로 선택합니다.
-
-## 단순·복합 Attribute
-
-하나의 더 작은 의미 단위로 나누기 어려운 Attribute를 단순 Attribute로 볼 수 있습니다.
-
-반면 주소처럼 여러 요소로 나눌 수 있는 속성은 복합 Attribute로 모델링할 수 있습니다.
-
-실제 관계형 DB 설계에서는 필요한 검색과 제약을 고려해 적절히 분해합니다.
-
-## 다중값 Attribute
-
-한 Entity에 여러 값을 가질 수 있는 속성은 관계형 모델에서 별도 Table로 분리하는 경우가 많습니다.
-
-예를 들어 한 고객이 여러 전화번호를 가진다면
-
-```text
-CUSTOMER
-CUSTOMER_PHONE
-```
-
-처럼 분리할 수 있습니다.
-
-한 Cell에 여러 값을 넣는 방식은 1NF와 충돌할 수 있습니다.
-
-## Relationship
-
-Relationship은 Entity 사이의 의미 있는 연결입니다.
-
-```text
-EMPLOYEE
-→ 소속
-→ DEPARTMENT
-
-CUSTOMER
-→ 주문
-→ ORDERS
-```
-
-Cardinality를 통해 1:1, 1:N, N:M 같은 구조를 표현합니다.
-
-## Relationship의 Attribute
-
-Relationship 자체에도 Attribute가 필요한 경우가 있습니다.
-
-예를 들어 주문과 상품의 N:M 관계에는 수량이 필요합니다.
-
-```text
-ORDERS
-↕
-ORDER_ITEM
-↕
-PRODUCT
-
-QTY
-→ 관계에 붙는 값
-```
-
-그래서 중간 Entity를 만들어 관리합니다.
-
-## 다른 개념과 비교
-
-### 비교 1. Entity
+여기서 `CUSTOMER`라는 대상 자체가 Entity입니다.
 
 ```text
 Entity
 → 관리 대상
+→ 고객
 ```
 
-비교할 때는 **무엇을 결정하는가**, **어떤 중복을 줄이는가**, **어떤 성능 비용이 생기는가**를 구분합니다.
+## Entity의 특징
 
-### 비교 2. Attribute
+Entity는 일반적으로 다음 특징을 가집니다.
 
 ```text
+업무에서 관리할 필요가 있음
+식별 가능해야 함
+여러 개의 Instance를 가질 수 있음
+Attribute를 가짐
+다른 Entity와 Relationship을 가질 수 있음
+```
+
+예를 들어 CUSTOMER라는 Entity 안에는 여러 고객이 존재할 수 있습니다.
+
+```text
+CUSTOMER
+├─ 고객1
+├─ 고객2
+└─ 고객3
+```
+
+## Instance
+
+Entity가 대상의 종류라면, 실제 하나하나의 데이터는 Instance라고 볼 수 있습니다.
+
+### CUSTOMER Entity
+
+| CUSTOMER_ID | NAME |
+| --- | --- |
+| C001 | 고객1 |
+| C002 | 고객2 |
+
+```text
+CUSTOMER
+→ Entity
+
+C001 고객1
+→ 하나의 Instance
+
+C002 고객2
+→ 하나의 Instance
+```
+
+## Attribute
+
+`Attribute`는 Entity가 가지는 구체적인 정보나 특징입니다.
+
+예를 들어 고객 Entity에는 다음 Attribute가 있을 수 있습니다.
+
+```text
+고객번호
+이름
+지역
+등급
+```
+
+### 예시
+
+| Attribute | 의미 |
+| --- | --- |
+| CUSTOMER_ID | 고객번호 |
+| NAME | 이름 |
+| REGION | 지역 |
+| GRADE | 등급 |
+
+즉, Table 관점에서는 보통 Column과 연결해서 이해할 수 있습니다.
+
+```text
+Entity
+→ Table
+
 Attribute
-→ 대상의 특성
+→ Column
 ```
 
-비교할 때는 **무엇을 결정하는가**, **어떤 중복을 줄이는가**, **어떤 성능 비용이 생기는가**를 구분합니다.
+## Attribute와 값
 
-### 비교 3. Relationship
+Attribute는 정보의 항목이고, 실제 저장된 내용은 그 Attribute의 값입니다.
+
+### 예시
+
+| Attribute | 값 |
+| --- | --- |
+| CUSTOMER_ID | C001 |
+| NAME | 고객1 |
+| REGION | 서울 |
+| GRADE | VIP |
 
 ```text
+REGION
+→ Attribute
+
+서울
+→ Attribute의 값
+```
+
+이 둘을 구분해야 합니다.
+
+## 식별 Attribute
+
+Entity의 각 Instance를 구분할 수 있는 Attribute가 필요합니다.
+
+예를 들어 고객번호가 각 고객을 고유하게 구분한다고 가정합니다.
+
+| CUSTOMER_ID | NAME |
+| --- | --- |
+| C001 | 고객1 |
+| C002 | 고객2 |
+
+```text
+CUSTOMER_ID
+→ 각 고객을 식별
+```
+
+실제 관계형 데이터베이스에서는 이러한 식별 Attribute가 Primary Key로 구현될 수 있습니다.
+
+## Relationship
+
+`Relationship`은 둘 이상의 Entity 사이에 존재하는 연관관계입니다.
+
+예를 들어 다음과 같은 업무 관계가 있습니다.
+
+```text
+고객
+↓ 주문한다
+주문
+```
+
+여기서 `주문한다`가 Relationship입니다.
+
+## Relationship 예시
+
+### CUSTOMER
+
+| CUSTOMER_ID | NAME |
+| --- | --- |
+| C001 | 고객1 |
+| C002 | 고객2 |
+
+### ORDERS
+
+| ORDER_ID | CUSTOMER_ID |
+| --- | --- |
+| O001 | C001 |
+| O002 | C001 |
+| O003 | C002 |
+
+관계는 다음처럼 표현할 수 있습니다.
+
+```text
+고객
+1
+↓ 주문한다
+N
+주문
+```
+
+한 고객이 여러 주문을 가질 수 있는 관계입니다.
+
+## Entity · Attribute · Relationship 비교
+
+| 구분 | 의미 | 예시 |
+| --- | --- | --- |
+| Entity | 관리 대상 | 고객 |
+| Attribute | Entity의 정보 | 고객번호, 이름 |
+| Relationship | Entity 사이의 관계 | 고객이 주문한다 |
+
+```text
+고객
+→ Entity
+
+고객번호, 이름
+→ Attribute
+
+고객이 주문한다
+→ Relationship
+```
+
+## 하나의 예시로 보기
+
+대학교 시스템을 생각해보겠습니다.
+
+### Entity
+
+```text
+학생
+강의
+```
+
+### Attribute
+
+#### 학생
+
+```text
+학생번호
+이름
+학과
+```
+
+#### 강의
+
+```text
+강의번호
+강의명
+```
+
+### Relationship
+
+```text
+학생
+↓ 수강한다
+강의
+```
+
+이를 한 번에 보면 다음과 같습니다.
+
+```text
+[학생]
+- 학생번호
+- 이름
+- 학과
+
+   수강한다
+
+[강의]
+- 강의번호
+- 강의명
+```
+
+## ERD에서는 어떻게 보이는가
+
+ERD에서는 Entity, Attribute, Relationship을 시각적으로 표현합니다.
+
+표기법마다 모양은 다르지만 의미는 같습니다.
+
+```text
+Entity
+→ 무엇을 관리하는가
+
+Attribute
+→ 어떤 정보를 가지는가
+
 Relationship
-→ 대상 사이 연결
+→ 무엇과 연결되는가
 ```
 
-비교할 때는 **무엇을 결정하는가**, **어떤 중복을 줄이는가**, **어떤 성능 비용이 생기는가**를 구분합니다.
-
-## 구체적인 예시 연습
-
-### 예시 1. 업무 구조
-
-먼저 구조를 봅니다.
-
-```text
-고객 → 주문 → 상품
-```
-
-핵심 해석은 다음과 같습니다.
-
-```text
-개념 모델
-```
-
-`Entity · Attribute · Relationship` 문제에서는 결과를 외우기보다 **왜 이 구조가 필요한지**를 설명할 수 있어야 합니다.
-
-시험에서는 작은 Relation을 직접 그리고 Key와 함수 종속을 표시하면 판단이 빨라집니다.
-
-### 예시 2. Table 변환
-
-먼저 구조를 봅니다.
-
-```text
-CUSTOMER / ORDERS / PRODUCT
-```
-
-핵심 해석은 다음과 같습니다.
-
-```text
-논리 모델
-```
-
-`Entity · Attribute · Relationship` 문제에서는 결과를 외우기보다 **왜 이 구조가 필요한지**를 설명할 수 있어야 합니다.
-
-시험에서는 작은 Relation을 직접 그리고 Key와 함수 종속을 표시하면 판단이 빨라집니다.
-
-### 예시 3. FK
-
-먼저 구조를 봅니다.
-
-```text
-ORDERS.CUSTOMER_ID
-```
-
-핵심 해석은 다음과 같습니다.
-
-```text
-관계 구현
-```
-
-`Entity · Attribute · Relationship` 문제에서는 결과를 외우기보다 **왜 이 구조가 필요한지**를 설명할 수 있어야 합니다.
-
-시험에서는 작은 Relation을 직접 그리고 Key와 함수 종속을 표시하면 판단이 빨라집니다.
-
-### 예시 4. 1:N
-
-먼저 구조를 봅니다.
-
-```text
-DEPARTMENT 1:N EMPLOYEE
-```
-
-핵심 해석은 다음과 같습니다.
-
-```text
-Cardinality
-```
-
-`Entity · Attribute · Relationship` 문제에서는 결과를 외우기보다 **왜 이 구조가 필요한지**를 설명할 수 있어야 합니다.
-
-시험에서는 작은 Relation을 직접 그리고 Key와 함수 종속을 표시하면 판단이 빨라집니다.
-
-### 예시 5. N:M
-
-먼저 구조를 봅니다.
-
-```text
-ORDERS N:M PRODUCT
-```
-
-핵심 해석은 다음과 같습니다.
-
-```text
-ORDER_ITEM으로 분해
-```
-
-`Entity · Attribute · Relationship` 문제에서는 결과를 외우기보다 **왜 이 구조가 필요한지**를 설명할 수 있어야 합니다.
-
-시험에서는 작은 Relation을 직접 그리고 Key와 함수 종속을 표시하면 판단이 빨라집니다.
-
-### 예시 6. 물리 구현
-
-먼저 구조를 봅니다.
-
-```text
-CREATE TABLE
-```
-
-핵심 해석은 다음과 같습니다.
-
-```text
-DBMS Schema
-```
-
-`Entity · Attribute · Relationship` 문제에서는 결과를 외우기보다 **왜 이 구조가 필요한지**를 설명할 수 있어야 합니다.
-
-시험에서는 작은 Relation을 직접 그리고 Key와 함수 종속을 표시하면 판단이 빨라집니다.
-
-## 자주 하는 실수
-
-### 실수 1. Table 이름만 보고 Entity와 Relation을 같은 수준으로 생각한다.
-
-이 실수를 피하려면 다음 순서를 지킵니다.
-
-```text
-업무 규칙
-→ Key
-→ 함수 종속
-→ 이상 현상
-→ 필요한 분해
-```
-
-`Entity · Attribute · Relationship`에서도 데이터 몇 Row만 보고 판단하지 말고 **Schema의 의미와 업무 규칙**을 기준으로 봅니다.
-
-### 실수 2. Key를 찾기 전에 정규형부터 판단한다.
-
-이 실수를 피하려면 다음 순서를 지킵니다.
-
-```text
-업무 규칙
-→ Key
-→ 함수 종속
-→ 이상 현상
-→ 필요한 분해
-```
-
-`Entity · Attribute · Relationship`에서도 데이터 몇 Row만 보고 판단하지 말고 **Schema의 의미와 업무 규칙**을 기준으로 봅니다.
-
-### 실수 3. 함수 종속을 현재 데이터 값의 우연한 중복 여부로만 판단한다.
-
-이 실수를 피하려면 다음 순서를 지킵니다.
-
-```text
-업무 규칙
-→ Key
-→ 함수 종속
-→ 이상 현상
-→ 필요한 분해
-```
-
-`Entity · Attribute · Relationship`에서도 데이터 몇 Row만 보고 판단하지 말고 **Schema의 의미와 업무 규칙**을 기준으로 봅니다.
-
-### 실수 4. 정규화 단계를 건너뛰고 바로 3NF나 BCNF라고 판단한다.
-
-이 실수를 피하려면 다음 순서를 지킵니다.
-
-```text
-업무 규칙
-→ Key
-→ 함수 종속
-→ 이상 현상
-→ 필요한 분해
-```
-
-`Entity · Attribute · Relationship`에서도 데이터 몇 Row만 보고 판단하지 말고 **Schema의 의미와 업무 규칙**을 기준으로 봅니다.
-
-### 실수 5. 분해 후 어떤 Attribute가 어느 Relation으로 가야 하는지 확인하지 않는다.
-
-이 실수를 피하려면 다음 순서를 지킵니다.
-
-```text
-업무 규칙
-→ Key
-→ 함수 종속
-→ 이상 현상
-→ 필요한 분해
-```
-
-`Entity · Attribute · Relationship`에서도 데이터 몇 Row만 보고 판단하지 말고 **Schema의 의미와 업무 규칙**을 기준으로 봅니다.
-
-### 실수 6. 정규화와 반정규화를 무조건 좋은 것과 나쁜 것으로 나눈다.
-
-이 실수를 피하려면 다음 순서를 지킵니다.
-
-```text
-업무 규칙
-→ Key
-→ 함수 종속
-→ 이상 현상
-→ 필요한 분해
-```
-
-`Entity · Attribute · Relationship`에서도 데이터 몇 Row만 보고 판단하지 말고 **Schema의 의미와 업무 규칙**을 기준으로 봅니다.
+<blockquote class="prompt-warning">
+<p>ERD 표기법마다 기호는 다를 수 있으므로 그림 모양보다 각 요소의 의미를 먼저 이해합니다.</p>
+</blockquote>
+
+## Table과 연결해서 이해
+
+ER Model의 요소는 관계형 데이터베이스에서는 다음처럼 연결해서 이해할 수 있습니다.
+
+| ER Model | 관계형 데이터베이스 |
+| --- | --- |
+| Entity | Table |
+| Attribute | Column |
+| Instance | Row |
+| 식별 Attribute | Primary Key |
+| Relationship | Foreign Key 관계 등으로 구현 가능 |
+
+다만 ER Model의 개념과 실제 관계형 데이터베이스 구현은 완전히 같은 것은 아닙니다.
 
 ## 잘 놓치는 핵심
 
-### 1. Entity
+### 1. Entity는 하나의 값이 아니다
 
-Entity는 업무에서 독립적으로 관리할 필요가 있는 대상입니다.
+Entity는 관리 대상의 종류입니다.
 
-핵심은 결과를 외우는 것이 아니라 **왜 이 구조가 필요한지**를 설명할 수 있는 것입니다.
+```text
+CUSTOMER
+→ Entity
 
-### 2. Entity 조건
+C001 고객1
+→ Instance
+```
 
-일반적으로 Entity로 볼 수 있으려면 다음과 같은 특징을 생각합니다.
+### 2. Attribute와 값은 다르다
 
-핵심은 결과를 외우는 것이 아니라 **왜 이 구조가 필요한지**를 설명할 수 있는 것입니다.
+```text
+NAME
+→ Attribute
 
-### 3. Attribute
+고객1
+→ 값
+```
 
-Attribute는 Entity가 가지는 특성입니다.
+### 3. Relationship은 Entity 사이의 관계다
 
-핵심은 결과를 외우는 것이 아니라 **왜 이 구조가 필요한지**를 설명할 수 있는 것입니다.
+단순한 Column 하나를 의미하는 것이 아닙니다.
 
-### 4. Key Attribute
+### 4. Entity는 식별 가능해야 한다
 
-Entity를 식별하는 Attribute는 Key 역할을 할 수 있습니다.
-
-핵심은 결과를 외우는 것이 아니라 **왜 이 구조가 필요한지**를 설명할 수 있는 것입니다.
-
-### 5. 단순·복합 Attribute
-
-하나의 더 작은 의미 단위로 나누기 어려운 Attribute를 단순 Attribute로 볼 수 있습니다.
-
-핵심은 결과를 외우는 것이 아니라 **왜 이 구조가 필요한지**를 설명할 수 있는 것입니다.
-
-### 6. 다중값 Attribute
-
-한 Entity에 여러 값을 가질 수 있는 속성은 관계형 모델에서 별도 Table로 분리하는 경우가 많습니다.
-
-핵심은 결과를 외우는 것이 아니라 **왜 이 구조가 필요한지**를 설명할 수 있는 것입니다.
+각 Instance를 서로 구분할 수 있는 기준이 필요합니다.
 
 ## 시험·면접
 
 ### 핵심 암기
 
 ```text
-Entity = 대상 / Attribute = 특성 / Relationship = 연결
+Entity
+→ 관리 대상
 ```
 
-### 시험 접근 순서
+```text
+Attribute
+→ Entity의 속성
+```
 
 ```text
-1. Entity 또는 Relation 확인
-2. Candidate Key 확인
-3. 함수 종속 확인
-4. 이상 현상 확인
-5. 정규형 조건 확인
-6. 필요한 분해 확인
+Relationship
+→ Entity 사이의 관계
+```
+
+```text
+Instance
+→ Entity의 실제 하나의 데이터
 ```
 
 ### 시험 함정
 
-현재 예시 데이터에서 값이 우연히 유일하다고 해서 함수 종속이나 Key가 자동으로 성립하는 것은 아닙니다.
+`CUSTOMER`는 Entity이고, `고객1`은 하나의 Instance입니다.
 
-Schema와 업무 규칙을 기준으로 판단해야 합니다.
+또한 `NAME`은 Attribute이고 `고객1`은 그 Attribute에 들어가는 값입니다.
 
-### 면접에서 짧게 답한다면
+### 면접 짧은 답변
 
-Entity는 관리 대상, Attribute는 그 대상의 특성, Relationship은 Entity 사이의 연관성을 의미합니다.
-
-정규화와 모델링에서는 Key와 함수 종속을 기준으로 중복과 이상 현상을 줄이는 방향으로 구조를 설계합니다.
-
-## 예시로 한 바퀴
-
-`Entity · Attribute · Relationship` 문제를 만나면 작은 Relation부터 그립니다.
-
-```text
-Key
-→ 결정되는 Attribute
-→ 반복되는 사실
-→ 발생 가능한 이상 현상
-```
-
-그다음 어떤 Attribute가 어떤 Key에 종속되는지 화살표로 표시합니다.
-
-마지막으로 분해가 필요하다면 **같은 사실을 한 곳에서만 관리할 수 있도록** Relation을 나눕니다.
+`Entity`는 데이터베이스에서 관리하려는 대상이고, `Attribute`는 그 Entity가 가지는 속성입니다. `Relationship`은 Entity 사이의 연관관계를 의미합니다. 예를 들어 고객은 Entity, 고객번호와 이름은 Attribute, 고객이 주문한다는 것은 Relationship으로 볼 수 있습니다.
 
 ## 객관식 문제
 
-### 1. Entity는?
+### 문제 1 · Entity
 
-① 관리 대상  
-② 항상 모든 Row 삭제  
-③ Index만 생성  
-④ Foreign Key는 항상 불필요
+다음 중 Entity에 해당하는 것은?
 
-<details>
+① 고객  
+② 고객1이라는 이름 값  
+③ 서울이라는 지역 값  
+④ 3000이라는 급여 값
+
+<details markdown="1">
 <summary>정답</summary>
 
 ①
 
+고객은 데이터베이스에서 관리할 대상이므로 Entity에 해당합니다.
+
 </details>
 
-해설: `관리 대상`가 이 문제의 핵심입니다.
+### 문제 2 · Attribute
 
-### 2. Attribute는?
+CUSTOMER Entity에서 Attribute로 가장 적절한 것은?
 
-① Entity의 특성  
-② 항상 모든 Row 삭제  
-③ Index만 생성  
-④ Foreign Key는 항상 불필요
+① 고객번호  
+② 주문한다  
+③ 고객1이라는 하나의 Row  
+④ CUSTOMER와 ORDERS의 연결선
 
-<details>
+<details markdown="1">
 <summary>정답</summary>
 
 ①
 
+고객번호는 CUSTOMER Entity가 가지는 정보이므로 Attribute입니다.
+
 </details>
 
-해설: `Entity의 특성`가 이 문제의 핵심입니다.
+### 문제 3 · Relationship
 
-### 3. Relationship은?
+다음 중 Relationship으로 가장 적절한 것은?
 
-① Entity 사이의 연관  
-② 항상 모든 Row 삭제  
-③ Index만 생성  
-④ Foreign Key는 항상 불필요
+① 고객번호  
+② 상품가격  
+③ 고객이 주문한다  
+④ 고객1
 
-<details>
+<details markdown="1">
 <summary>정답</summary>
 
-①
+③
+
+두 Entity 사이의 연관관계를 표현하므로 Relationship입니다.
 
 </details>
 
-해설: `Entity 사이의 연관`가 이 문제의 핵심입니다.
+### 문제 4 · Instance
 
-### 4. 정규화 판단 전에 먼저 찾을 것은?
+다음 Table에서 하나의 Instance에 해당하는 것은?
 
-① Candidate Key와 함수 종속  
-② 항상 모든 Row 삭제  
-③ Index만 생성  
-④ Foreign Key는 항상 불필요
+| CUSTOMER_ID | NAME |
+| --- | --- |
+| C001 | 고객1 |
+| C002 | 고객2 |
 
-<details>
+① CUSTOMER 전체  
+② CUSTOMER_ID Column 전체  
+③ C001 고객1 Row  
+④ NAME이라는 Attribute
+
+<details markdown="1">
 <summary>정답</summary>
 
-①
+③
+
+Entity 안의 실제 하나의 데이터가 Instance입니다.
 
 </details>
 
-해설: `Candidate Key와 함수 종속`가 이 문제의 핵심입니다.
+### 문제 5 · 연결 관계
 
-### 5. 정규화의 주요 목적은?
+다음 연결로 옳은 것은?
 
-① 중복과 이상 현상 감소  
-② 항상 모든 Row 삭제  
-③ Index만 생성  
-④ Foreign Key는 항상 불필요
+① Entity → Column  
+② Attribute → Table  
+③ Instance → 실제 하나의 Row  
+④ Relationship → 하나의 값
 
-<details>
+<details markdown="1">
 <summary>정답</summary>
 
-①
+③
+
+관계형 데이터베이스 관점에서 하나의 Instance는 하나의 Row와 연결해서 이해할 수 있습니다.
 
 </details>
 
-해설: `중복과 이상 현상 감소`가 이 문제의 핵심입니다.
-
-### 6. 현재 Row 값만 보고 함수 종속을 결정해도 되는가?
-
-① 아니며 업무 규칙을 봐야 한다  
-② 항상 모든 Row 삭제  
-③ Index만 생성  
-④ Foreign Key는 항상 불필요
-
-<details>
-<summary>정답</summary>
-
-①
-
-</details>
-
-해설: `아니며 업무 규칙을 봐야 한다`가 이 문제의 핵심입니다.
-
-### 7. Relation 분해 후 확인할 것은?
-
-① Key와 참조 관계  
-② 항상 모든 Row 삭제  
-③ Index만 생성  
-④ Foreign Key는 항상 불필요
-
-<details>
-<summary>정답</summary>
-
-①
-
-</details>
-
-해설: `Key와 참조 관계`가 이 문제의 핵심입니다.
-
-### 8. 정규화가 높을수록 무조건 성능이 좋은가?
-
-① 아니다  
-② 항상 모든 Row 삭제  
-③ Index만 생성  
-④ Foreign Key는 항상 불필요
-
-<details>
-<summary>정답</summary>
-
-①
-
-</details>
-
-해설: `아니다`가 이 문제의 핵심입니다.
-
-## 추가 확인
-
-### 체크 1
-
-`Entity · Attribute · Relationship`를 다시 볼 때 다음 순서로 확인합니다.
+## Entity · Attribute · Relationship 전체 요약
 
 ```text
-1. 업무에서 어떤 사실을 저장하는가
-2. Candidate Key는 무엇인가
-3. 어떤 함수 종속이 있는가
-4. 중복과 이상 현상은 무엇인가
-5. 분해 또는 결합이 필요한가
+Entity
+→ 관리 대상
+→ 고객
+
+Attribute
+→ 대상의 정보
+→ 고객번호, 이름
+
+Relationship
+→ 대상 사이의 관계
+→ 고객이 주문한다
 ```
 
-정규화 문제는 **Table 모양**보다 **함수 종속과 Key**를 중심으로 판단해야 합니다.
+| 개념 | 핵심 |
+| --- | --- |
+| Entity | 무엇을 관리하는가 |
+| Attribute | 어떤 정보를 가지는가 |
+| Relationship | 무엇과 어떻게 연결되는가 |
+| Instance | Entity의 실제 데이터 하나 |
 
-분해 후에는 각 Relation이 어떤 사실 하나를 표현하는지도 확인합니다.
-
-### 체크 2
-
-`Entity · Attribute · Relationship`를 다시 볼 때 다음 순서로 확인합니다.
-
-```text
-1. 업무에서 어떤 사실을 저장하는가
-2. Candidate Key는 무엇인가
-3. 어떤 함수 종속이 있는가
-4. 중복과 이상 현상은 무엇인가
-5. 분해 또는 결합이 필요한가
-```
-
-정규화 문제는 **Table 모양**보다 **함수 종속과 Key**를 중심으로 판단해야 합니다.
-
-분해 후에는 각 Relation이 어떤 사실 하나를 표현하는지도 확인합니다.
-
-### 체크 3
-
-`Entity · Attribute · Relationship`를 다시 볼 때 다음 순서로 확인합니다.
-
-```text
-1. 업무에서 어떤 사실을 저장하는가
-2. Candidate Key는 무엇인가
-3. 어떤 함수 종속이 있는가
-4. 중복과 이상 현상은 무엇인가
-5. 분해 또는 결합이 필요한가
-```
-
-정규화 문제는 **Table 모양**보다 **함수 종속과 Key**를 중심으로 판단해야 합니다.
-
-분해 후에는 각 Relation이 어떤 사실 하나를 표현하는지도 확인합니다.
-
-### 체크 4
-
-`Entity · Attribute · Relationship`를 다시 볼 때 다음 순서로 확인합니다.
-
-```text
-1. 업무에서 어떤 사실을 저장하는가
-2. Candidate Key는 무엇인가
-3. 어떤 함수 종속이 있는가
-4. 중복과 이상 현상은 무엇인가
-5. 분해 또는 결합이 필요한가
-```
-
-정규화 문제는 **Table 모양**보다 **함수 종속과 Key**를 중심으로 판단해야 합니다.
-
-분해 후에는 각 Relation이 어떤 사실 하나를 표현하는지도 확인합니다.
-
-### 체크 5
-
-`Entity · Attribute · Relationship`를 다시 볼 때 다음 순서로 확인합니다.
-
-```text
-1. 업무에서 어떤 사실을 저장하는가
-2. Candidate Key는 무엇인가
-3. 어떤 함수 종속이 있는가
-4. 중복과 이상 현상은 무엇인가
-5. 분해 또는 결합이 필요한가
-```
-
-정규화 문제는 **Table 모양**보다 **함수 종속과 Key**를 중심으로 판단해야 합니다.
-
-분해 후에는 각 Relation이 어떤 사실 하나를 표현하는지도 확인합니다.
-
-### 체크 6
-
-`Entity · Attribute · Relationship`를 다시 볼 때 다음 순서로 확인합니다.
-
-```text
-1. 업무에서 어떤 사실을 저장하는가
-2. Candidate Key는 무엇인가
-3. 어떤 함수 종속이 있는가
-4. 중복과 이상 현상은 무엇인가
-5. 분해 또는 결합이 필요한가
-```
-
-정규화 문제는 **Table 모양**보다 **함수 종속과 Key**를 중심으로 판단해야 합니다.
-
-분해 후에는 각 Relation이 어떤 사실 하나를 표현하는지도 확인합니다.
-
-### 체크 7
-
-`Entity · Attribute · Relationship`를 다시 볼 때 다음 순서로 확인합니다.
-
-```text
-1. 업무에서 어떤 사실을 저장하는가
-2. Candidate Key는 무엇인가
-3. 어떤 함수 종속이 있는가
-4. 중복과 이상 현상은 무엇인가
-5. 분해 또는 결합이 필요한가
-```
-
-정규화 문제는 **Table 모양**보다 **함수 종속과 Key**를 중심으로 판단해야 합니다.
-
-분해 후에는 각 Relation이 어떤 사실 하나를 표현하는지도 확인합니다.
+<blockquote class="prompt-danger">
+<p>시험에서는 대상인지, 대상의 속성인지, 대상 사이의 관계인지 먼저 구분하면 빠르게 판단할 수 있습니다.</p>
+</blockquote>
 
 ## 다음에 이을 글
 
 **Cardinality**입니다.
 
-Entity 사이 관계가 1:1, 1:N, N:M 중 어떤 형태인지 나타내는 Cardinality를 알아봅니다.
+Entity 사이의 관계가 1:1, 1:N, N:M 중 어떤 형태인지 표현하는 방법을 살펴봅니다.
