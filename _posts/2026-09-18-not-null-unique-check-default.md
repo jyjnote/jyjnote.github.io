@@ -1,656 +1,511 @@
 ---
 title: NOT NULL · UNIQUE · CHECK · DEFAULT
-date: 2026-09-18 23:10:00 +0900
+date: 2026-09-18 23:25:00 +0900
 slug: not-null-unique-check-default
 permalink: /posts/not-null-unique-check-default/
 categories: [CS, 데이터베이스]
-tags: [NOTNULL, UNIQUE, CHECK, DEFAULT, Constraint, SQL, DomainIntegrity, SQLite, 정보처리기사, NCS]
+tags: [NOTNULL, UNIQUE, CHECK, DEFAULT, Constraint, SQL, 제약조건, 정보처리기사, NCS]
 math: true
 ---
 
-NOT NULL, UNIQUE, CHECK, DEFAULT는 Column에 저장되는 값의 규칙을 정의하는 대표적인 SQL 제약조건입니다.
+`NOT NULL`, `UNIQUE`, `CHECK`, `DEFAULT`는 <mark>Column에 저장될 값의 규칙을 정하는 대표적인 제약조건</mark>입니다.
 
-SQL 명령은 비슷해 보여도 **구조를 바꾸는지, 데이터를 바꾸는지, 권한을 바꾸는지**를 구분하면 이해하기 쉽습니다.
+각 제약조건은 NULL 허용 여부, 중복 여부, 값의 범위, 기본값을 제어합니다.
 
 <blockquote class="prompt-info">
-<p>한 줄: 네 제약조건은 NULL, 중복, 값의 조건, 기본값을 각각 제어합니다.</p>
+<p>한 줄: NOT NULL은 NULL 금지, UNIQUE는 중복 금지, CHECK는 조건 검사, DEFAULT는 기본값 지정입니다.</p>
 </blockquote>
 
-<details>
+<details markdown="1">
 <summary>한 줄로</summary>
 
-NOT NULL = NULL 금지 / UNIQUE = 중복 금지 / CHECK = 조건 검사 / DEFAULT = 기본값
+Column에 들어갈 값의 규칙을 정하는 제약조건들입니다.
 
 </details>
 
-## 실습 데이터 전체 보기
+## NOT NULL
 
-아래 실습 데이터베이스를 기준으로 예시를 설명합니다.
+`NOT NULL`은 해당 Column에 NULL을 저장하지 못하게 합니다.
 
-<div style="width:100%; overflow:hidden; border:1px solid var(--main-border-color,#ddd); border-radius:12px; margin:1rem 0;">
-<iframe
-  src="https://docs.google.com/spreadsheets/d/1mtu6pFcGyOfwpFizaJskfFD87GxyjAmB/preview"
-  width="100%"
-  height="500"
-  style="border:0;"
-  loading="lazy">
-</iframe>
-</div>
+### 입력 상태
 
-주요 Table은 다음과 같습니다.
+CUSTOMER Table이 없다고 가정합니다.
 
-| Table | 핵심 Column | 역할 |
-| --- | --- | --- |
-| DEPARTMENT | DEPT_ID, DEPT_NAME, REGION | 부서 |
-| EMPLOYEE | EMP_ID, EMP_NAME, DEPT_ID, SALARY | 직원 |
-| CUSTOMER | CUSTOMER_ID, NAME, GENDER, REGION, GRADE | 고객 |
-| PRODUCT | PRODUCT_ID, PRODUCT_NAME, CATEGORY, PRICE, STOCK | 상품 |
-| ORDERS | ORDER_ID, CUSTOMER_ID, ORDER_DATE, STATUS | 주문 |
-| ORDER_ITEM | ORDER_ID, PRODUCT_ID, QTY | 주문 상세 |
-
-
-## 핵심 예시
-
-대표 문법은 다음과 같습니다.
+| 객체 | 상태 |
+| --- | --- |
+| CUSTOMER | 없음 |
 
 ```sql
-CREATE TABLE SAMPLE(
-    ID INTEGER PRIMARY KEY,
-    NAME TEXT NOT NULL,
-    EMAIL TEXT UNIQUE,
-    AGE INTEGER CHECK(AGE >= 0),
-    STATUS TEXT DEFAULT 'ACTIVE'
+CREATE TABLE CUSTOMER(
+    CUSTOMER_ID TEXT PRIMARY KEY,
+    NAME TEXT NOT NULL
 );
 ```
 
-<mark>네 제약조건은 NULL, 중복, 값의 조건, 기본값을 각각 제어합니다.</mark>
+### 결과 Table 구조
 
-## NOT NULL
+| Column | 제약조건 |
+| --- | --- |
+| CUSTOMER_ID | PRIMARY KEY |
+| NAME | NOT NULL |
 
-NULL을 허용하지 않습니다.
+이후 NAME 없이 Row를 추가하면 제약조건을 위반할 수 있습니다.
 
 ```sql
-NAME TEXT NOT NULL
+INSERT INTO CUSTOMER(
+    CUSTOMER_ID,
+    NAME
+)
+VALUES (
+    'C001',
+    NULL
+);
 ```
 
-반드시 값이 있어야 하는 Column에 사용합니다.
+### 결과
 
-Primary Key의 NULL 금지와 연결되지만 NOT NULL 자체는 일반 Column에도 사용할 수 있습니다.
+| CUSTOMER_ID | NAME |
+| --- | --- |
+| 추가 실패 가능 | NOT NULL 위반 |
+
+```text
+NOT NULL
+→ NULL 저장 금지
+```
 
 ## UNIQUE
 
-같은 값의 중복을 허용하지 않습니다.
+`UNIQUE`는 같은 Column에 중복된 값을 저장하지 못하게 합니다.
 
-```sql
-EMAIL TEXT UNIQUE
-```
+### 입력 상태
 
-회원 이메일처럼 중복되면 안 되는 Column에 사용할 수 있습니다.
+USER_ACCOUNT Table이 없다고 가정합니다.
 
-NULL 처리 세부는 DBMS마다 차이가 있을 수 있습니다.
-
-## CHECK
-
-저장할 값이 조건을 만족하는지 검사합니다.
-
-```sql
-AGE INTEGER CHECK(AGE >= 0)
-```
-
-음수 나이가 들어가는 것을 막을 수 있습니다.
-
-## DEFAULT
-
-값을 생략했을 때 사용할 기본값을 지정합니다.
-
-```sql
-STATUS TEXT DEFAULT 'ACTIVE'
-```
-
-직접 값을 넣으면 입력한 값이 사용됩니다.
-
-## NOT NULL과 DEFAULT
-
-두 제약은 목적이 다릅니다.
-
-```text
-NOT NULL
-→ NULL 금지
-
-DEFAULT
-→ 값을 생략했을 때 기본값 제공
-```
-
-DEFAULT가 있다고 해서 모든 형태의 NULL 입력이 자동으로 기본값으로 바뀌는 것은 아닙니다.
-
-## UNIQUE와 PRIMARY KEY
-
-둘 다 유일성을 보장하지만 역할이 다릅니다.
-
-```text
-PRIMARY KEY
-→ 대표 식별자
-
-UNIQUE
-→ 추가 유일성 규칙
-```
-
-Table에는 여러 UNIQUE 제약을 둘 수 있습니다.
-
-## CHECK와 도메인 무결성
-
-CHECK는 도메인 무결성을 구현하는 대표 수단입니다.
-
-```sql
-PRICE INTEGER CHECK(PRICE >= 0)
-```
-
-업무 규칙에 맞지 않는 값을 DBMS가 차단할 수 있습니다.
-
-## Table 수준 UNIQUE
-
-여러 Column 조합이 유일해야 할 수도 있습니다.
-
-```sql
-UNIQUE(CUSTOMER_ID, ORDER_DATE)
-```
-
-각 Column 단독이 아니라 조합의 중복을 막습니다.
-
-## Table 수준 CHECK
-
-여러 Column 사이 관계를 검사할 수도 있습니다.
-
-```sql
-CHECK(END_DATE >= START_DATE)
-```
-
-DBMS가 해당 표현을 지원하는 범위에서 사용합니다.
-
-## SQLite와 CHECK
-
-SQLite는 CHECK 제약을 지원합니다.
-
-```sql
-CHECK(STOCK >= 0)
-```
-
-다만 기존 데이터를 변경하거나 Schema를 바꾸는 과정에서는 제약조건 추가 방식에 제한이 있을 수 있습니다.
-
-## DEFAULT 표현식
-
-DEFAULT에 사용할 수 있는 값과 표현식 범위는 DBMS마다 차이가 있습니다.
-
-SQLite에서는 `CURRENT_DATE`, `CURRENT_TIME`, `CURRENT_TIMESTAMP` 같은 특별한 기본값을 사용할 수 있습니다.
-
-```sql
-CREATED_AT TEXT DEFAULT CURRENT_TIMESTAMP
-```
-
-## 제약조건 이름
-
-일부 DBMS에서는 제약조건에 이름을 붙일 수 있습니다.
-
-```text
-CONSTRAINT constraint_name ...
-```
-
-SQLite에서도 일부 Table Constraint 문맥에서 이름을 둘 수 있지만 관리 방식은 다른 DBMS와 차이가 있습니다.
-
-## 시험 비교
-
-| 제약조건 | 핵심 |
+| 객체 | 상태 |
 | --- | --- |
-| NOT NULL | NULL 금지 |
-| UNIQUE | 중복 금지 |
-| CHECK | 조건 검사 |
-| DEFAULT | 기본값 제공 |
+| USER_ACCOUNT | 없음 |
 
-한 줄씩 정확히 구분하면 객관식에서 대부분 해결할 수 있습니다.
-
-## 다른 개념과 비교
-
-### 비교 1. NOT NULL
-
-```text
-NOT NULL
-→ NULL 금지
+```sql
+CREATE TABLE USER_ACCOUNT(
+    USER_ID INTEGER PRIMARY KEY,
+    EMAIL TEXT UNIQUE
+);
 ```
 
-`NOT NULL · UNIQUE · CHECK · DEFAULT`과 비교할 때는 **Schema를 바꾸는지**, **Row를 바꾸는지**, **권한을 바꾸는지**를 먼저 확인합니다.
+### 입력 데이터
 
-### 비교 2. UNIQUE
+| USER_ID | EMAIL |
+| --- | --- |
+| 1 | a@test.com |
+
+```sql
+INSERT INTO USER_ACCOUNT
+VALUES (
+    2,
+    'a@test.com'
+);
+```
+
+### 결과
+
+| USER_ID | EMAIL |
+| --- | --- |
+| 1 | a@test.com |
+
+같은 이메일이 이미 있으므로 중복 저장이 제한됩니다.
 
 ```text
 UNIQUE
 → 중복 금지
 ```
 
-`NOT NULL · UNIQUE · CHECK · DEFAULT`과 비교할 때는 **Schema를 바꾸는지**, **Row를 바꾸는지**, **권한을 바꾸는지**를 먼저 확인합니다.
+## CHECK
 
-### 비교 3. CHECK
+`CHECK`는 입력값이 지정한 조건을 만족하는지 검사합니다.
+
+### 입력 상태
+
+EMPLOYEE Table이 없다고 가정합니다.
+
+| 객체 | 상태 |
+| --- | --- |
+| EMPLOYEE | 없음 |
+
+```sql
+CREATE TABLE EMPLOYEE(
+    EMP_ID INTEGER PRIMARY KEY,
+    EMP_NAME TEXT NOT NULL,
+    SALARY INTEGER CHECK (SALARY >= 0)
+);
+```
+
+### 입력 데이터
+
+| EMP_ID | EMP_NAME | SALARY |
+| --- | --- | ---: |
+| 1001 | 직원1 | 3000 |
+
+```sql
+INSERT INTO EMPLOYEE
+VALUES (
+    1002,
+    '직원2',
+    -500
+);
+```
+
+### 결과
+
+| EMP_ID | EMP_NAME | SALARY |
+| --- | --- | ---: |
+| 1001 | 직원1 | 3000 |
+
+`SALARY >= 0` 조건을 만족하지 않으므로 추가가 제한됩니다.
 
 ```text
 CHECK
-→ 조건 검사
+→ 지정 조건 검사
 ```
 
-`NOT NULL · UNIQUE · CHECK · DEFAULT`과 비교할 때는 **Schema를 바꾸는지**, **Row를 바꾸는지**, **권한을 바꾸는지**를 먼저 확인합니다.
+## DEFAULT
 
-### 비교 4. DEFAULT
+`DEFAULT`는 INSERT할 때 값을 생략한 경우 자동으로 사용할 기본값을 지정합니다.
+
+### 입력 상태
+
+ORDERS Table이 없다고 가정합니다.
+
+| 객체 | 상태 |
+| --- | --- |
+| ORDERS | 없음 |
+
+```sql
+CREATE TABLE ORDERS(
+    ORDER_ID TEXT PRIMARY KEY,
+    STATUS TEXT DEFAULT '결제대기'
+);
+```
+
+### 값 생략
+
+```sql
+INSERT INTO ORDERS(
+    ORDER_ID
+)
+VALUES (
+    'O0001'
+);
+```
+
+### 결과 Table
+
+| ORDER_ID | STATUS |
+| --- | --- |
+| O0001 | 결제대기 |
+
+STATUS 값을 직접 넣지 않았기 때문에 DEFAULT 값이 사용됩니다.
 
 ```text
 DEFAULT
-→ 기본값
+→ 값 생략 시 기본값 사용
 ```
 
-`NOT NULL · UNIQUE · CHECK · DEFAULT`과 비교할 때는 **Schema를 바꾸는지**, **Row를 바꾸는지**, **권한을 바꾸는지**를 먼저 확인합니다.
+## 네 제약조건 비교
 
-## 실전 SQL 패턴
+| 제약조건 | 핵심 역할 |
+| --- | --- |
+| NOT NULL | NULL 금지 |
+| UNIQUE | 중복 금지 |
+| CHECK | 조건 만족 여부 검사 |
+| DEFAULT | 값 생략 시 기본값 지정 |
 
-### 실전 패턴 1. NOT NULL
+```text
+NULL을 막는다
+→ NOT NULL
+
+중복을 막는다
+→ UNIQUE
+
+값의 범위를 제한한다
+→ CHECK
+
+값을 생략했을 때 자동 입력한다
+→ DEFAULT
+```
+
+## PRIMARY KEY와 UNIQUE 차이
+
+둘 다 중복을 막는다는 점에서 헷갈리기 쉽습니다.
+
+| 구분 | PRIMARY KEY | UNIQUE |
+| --- | --- | --- |
+| 중복 | 불가 | 불가 |
+| NULL | 불가 | DBMS 규칙에 따라 처리 차이 가능 |
+| 목적 | Row 식별 | 값 중복 방지 |
+| Table 내 사용 | 하나의 기본키 정의 | 여러 UNIQUE 가능 |
+
+예를 들어 회원 ID는 PRIMARY KEY, 이메일은 UNIQUE로 둘 수 있습니다.
 
 ```sql
-NAME TEXT NOT NULL
+CREATE TABLE USER_ACCOUNT(
+    USER_ID INTEGER PRIMARY KEY,
+    EMAIL TEXT UNIQUE
+);
 ```
 
-이 예시는 `NOT NULL · UNIQUE · CHECK · DEFAULT`에서 자주 보는 형태입니다.
+## DEFAULT와 NULL 차이
 
-문법을 외우기보다 **어떤 객체 또는 Row가 바뀌는지** 먼저 확인합니다.
+DEFAULT가 있다고 해서 명시적으로 NULL을 넣었을 때 항상 기본값으로 바뀌는 것은 아닙니다.
 
-```text
-대상
-→ 변경 내용
-→ 제약조건 영향
-→ 실행 후 결과
-```
-
-### 실전 패턴 2. UNIQUE
+### Table 구조
 
 ```sql
-EMAIL TEXT UNIQUE
+CREATE TABLE PRODUCT(
+    PRODUCT_ID TEXT PRIMARY KEY,
+    STOCK INTEGER DEFAULT 0
+);
 ```
 
-이 예시는 `NOT NULL · UNIQUE · CHECK · DEFAULT`에서 자주 보는 형태입니다.
-
-문법을 외우기보다 **어떤 객체 또는 Row가 바뀌는지** 먼저 확인합니다.
-
-```text
-대상
-→ 변경 내용
-→ 제약조건 영향
-→ 실행 후 결과
-```
-
-### 실전 패턴 3. CHECK
+### 값을 생략
 
 ```sql
-AGE INTEGER CHECK(AGE >= 0)
+INSERT INTO PRODUCT(
+    PRODUCT_ID
+)
+VALUES (
+    'P001'
+);
 ```
 
-이 예시는 `NOT NULL · UNIQUE · CHECK · DEFAULT`에서 자주 보는 형태입니다.
+### 결과
 
-문법을 외우기보다 **어떤 객체 또는 Row가 바뀌는지** 먼저 확인합니다.
+| PRODUCT_ID | STOCK |
+| --- | ---: |
+| P001 | 0 |
 
-```text
-대상
-→ 변경 내용
-→ 제약조건 영향
-→ 실행 후 결과
-```
-
-### 실전 패턴 4. DEFAULT
+반면 다음처럼 NULL을 직접 넣으면 NULL이 저장될 수 있습니다.
 
 ```sql
-STATUS TEXT DEFAULT 'ACTIVE'
+INSERT INTO PRODUCT(
+    PRODUCT_ID,
+    STOCK
+)
+VALUES (
+    'P002',
+    NULL
+);
 ```
 
-이 예시는 `NOT NULL · UNIQUE · CHECK · DEFAULT`에서 자주 보는 형태입니다.
+### 결과
 
-문법을 외우기보다 **어떤 객체 또는 Row가 바뀌는지** 먼저 확인합니다.
+| PRODUCT_ID | STOCK |
+| --- | --- |
+| P002 | NULL |
 
-```text
-대상
-→ 변경 내용
-→ 제약조건 영향
-→ 실행 후 결과
-```
-
-### 실전 패턴 5. 복합 UNIQUE
-
-```sql
-UNIQUE(CUSTOMER_ID, ORDER_DATE)
-```
-
-이 예시는 `NOT NULL · UNIQUE · CHECK · DEFAULT`에서 자주 보는 형태입니다.
-
-문법을 외우기보다 **어떤 객체 또는 Row가 바뀌는지** 먼저 확인합니다.
-
-```text
-대상
-→ 변경 내용
-→ 제약조건 영향
-→ 실행 후 결과
-```
-
-### 실전 패턴 6. 현재 시각 기본값
-
-```sql
-CREATED_AT TEXT DEFAULT CURRENT_TIMESTAMP
-```
-
-이 예시는 `NOT NULL · UNIQUE · CHECK · DEFAULT`에서 자주 보는 형태입니다.
-
-문법을 외우기보다 **어떤 객체 또는 Row가 바뀌는지** 먼저 확인합니다.
-
-```text
-대상
-→ 변경 내용
-→ 제약조건 영향
-→ 실행 후 결과
-```
-
-## 자주 하는 실수
-
-### 실수 1. 실행 대상 Table을 확인하지 않는다.
-
-`NOT NULL · UNIQUE · CHECK · DEFAULT`를 실행하기 전에는 다음을 확인합니다.
-
-```text
-1. 대상 객체
-2. 변경 범위
-3. Constraint
-4. 참조 관계
-5. DBMS 지원 여부
-```
-
-운영 환경에서는 특히 데이터 손실 가능성이 있는 명령을 바로 실행하지 않는 습관이 중요합니다.
-
-### 실수 2. WHERE가 필요한 명령에서 조건을 빠뜨린다.
-
-`NOT NULL · UNIQUE · CHECK · DEFAULT`를 실행하기 전에는 다음을 확인합니다.
-
-```text
-1. 대상 객체
-2. 변경 범위
-3. Constraint
-4. 참조 관계
-5. DBMS 지원 여부
-```
-
-운영 환경에서는 특히 데이터 손실 가능성이 있는 명령을 바로 실행하지 않는 습관이 중요합니다.
-
-### 실수 3. Constraint 영향을 확인하지 않는다.
-
-`NOT NULL · UNIQUE · CHECK · DEFAULT`를 실행하기 전에는 다음을 확인합니다.
-
-```text
-1. 대상 객체
-2. 변경 범위
-3. Constraint
-4. 참조 관계
-5. DBMS 지원 여부
-```
-
-운영 환경에서는 특히 데이터 손실 가능성이 있는 명령을 바로 실행하지 않는 습관이 중요합니다.
-
-### 실수 4. SQLite와 다른 DBMS의 문법 차이를 무시한다.
-
-`NOT NULL · UNIQUE · CHECK · DEFAULT`를 실행하기 전에는 다음을 확인합니다.
-
-```text
-1. 대상 객체
-2. 변경 범위
-3. Constraint
-4. 참조 관계
-5. DBMS 지원 여부
-```
-
-운영 환경에서는 특히 데이터 손실 가능성이 있는 명령을 바로 실행하지 않는 습관이 중요합니다.
-
-### 실수 5. 실행 전 SELECT나 Schema 확인을 하지 않는다.
-
-`NOT NULL · UNIQUE · CHECK · DEFAULT`를 실행하기 전에는 다음을 확인합니다.
-
-```text
-1. 대상 객체
-2. 변경 범위
-3. Constraint
-4. 참조 관계
-5. DBMS 지원 여부
-```
-
-운영 환경에서는 특히 데이터 손실 가능성이 있는 명령을 바로 실행하지 않는 습관이 중요합니다.
-
-### 실수 6. DDL과 DML을 같은 종류로 생각한다.
-
-`NOT NULL · UNIQUE · CHECK · DEFAULT`를 실행하기 전에는 다음을 확인합니다.
-
-```text
-1. 대상 객체
-2. 변경 범위
-3. Constraint
-4. 참조 관계
-5. DBMS 지원 여부
-```
-
-운영 환경에서는 특히 데이터 손실 가능성이 있는 명령을 바로 실행하지 않는 습관이 중요합니다.
+<blockquote class="prompt-warning">
+<p>DEFAULT는 보통 값을 생략했을 때 사용되며, NULL을 직접 입력하는 것과는 다릅니다.</p>
+</blockquote>
 
 ## 잘 놓치는 핵심
 
-### 1. NOT NULL
+### 1. NOT NULL은 NULL만 막는다
 
-NULL을 허용하지 않습니다.
+중복값 자체를 막는 제약조건은 아닙니다.
 
-시험에서는 명령어 이름만 외우지 말고 **대상·범위·제약조건·DBMS 차이**를 함께 봅니다.
+### 2. UNIQUE는 중복값을 막는다
 
-### 2. UNIQUE
+Row 전체가 아니라 지정한 Column의 중복 여부를 검사합니다.
 
-같은 값의 중복을 허용하지 않습니다.
+### 3. CHECK는 조건식을 검사한다
 
-시험에서는 명령어 이름만 외우지 말고 **대상·범위·제약조건·DBMS 차이**를 함께 봅니다.
+```text
+SALARY >= 0
+AGE >= 18
+STOCK >= 0
+```
 
-### 3. CHECK
+같은 규칙을 만들 수 있습니다.
 
-저장할 값이 조건을 만족하는지 검사합니다.
+### 4. DEFAULT는 값 생략 시 사용한다
 
-시험에서는 명령어 이름만 외우지 말고 **대상·범위·제약조건·DBMS 차이**를 함께 봅니다.
-
-### 4. DEFAULT
-
-값을 생략했을 때 사용할 기본값을 지정합니다.
-
-시험에서는 명령어 이름만 외우지 말고 **대상·범위·제약조건·DBMS 차이**를 함께 봅니다.
-
-### 5. NOT NULL과 DEFAULT
-
-두 제약은 목적이 다릅니다.
-
-시험에서는 명령어 이름만 외우지 말고 **대상·범위·제약조건·DBMS 차이**를 함께 봅니다.
-
-### 6. UNIQUE와 PRIMARY KEY
-
-둘 다 유일성을 보장하지만 역할이 다릅니다.
-
-시험에서는 명령어 이름만 외우지 말고 **대상·범위·제약조건·DBMS 차이**를 함께 봅니다.
+사용자가 직접 값을 넣으면 입력한 값이 우선됩니다.
 
 ## 시험·면접
 
 ### 핵심 암기
 
 ```text
-NOT NULL = NULL 금지 / UNIQUE = 중복 금지 / CHECK = 조건 검사 / DEFAULT = 기본값
+NOT NULL
+→ NULL 금지
 ```
-
-### 시험 접근 순서
 
 ```text
-1. 명령어 종류 확인
-2. 대상 객체 또는 Row 확인
-3. WHERE 또는 Column 목록 확인
-4. Constraint 영향 확인
-5. SQLite 지원 여부 확인
+UNIQUE
+→ 중복 금지
 ```
 
-### 면접에서 짧게 답한다면
-
-NOT NULL, UNIQUE, CHECK, DEFAULT는 Column에 저장되는 값의 규칙을 정의하는 대표적인 SQL 제약조건입니다.
-
-실무에서는 실행 전 영향 범위와 제약조건, Transaction 가능 여부를 함께 확인하는 것이 중요합니다.
-
-## 예시로 한 바퀴
-
-다음 대표 문법을 다시 봅니다.
-
-```sql
-CREATE TABLE SAMPLE(
-    ID INTEGER PRIMARY KEY,
-    NAME TEXT NOT NULL,
-    EMAIL TEXT UNIQUE,
-    AGE INTEGER CHECK(AGE >= 0),
-    STATUS TEXT DEFAULT 'ACTIVE'
-);
+```text
+CHECK
+→ 조건 검사
 ```
 
-먼저 이 명령이 **Schema**, **Row**, **권한** 중 무엇을 바꾸는지 판단합니다.
+```text
+DEFAULT
+→ 기본값
+```
 
-그다음 변경 범위와 제약조건을 확인합니다.
+### 시험 함정
 
-마지막으로 현재 실습 환경인 SQLite에서 같은 문법을 그대로 사용할 수 있는지 확인합니다.
+`DEFAULT`는 값이 NULL이면 무조건 기본값으로 바꿔주는 제약조건이라고 생각하면 안 됩니다.
+
+또한 `NOT NULL`은 중복값을 막지 않고, `UNIQUE`는 NULL 처리 방식이 데이터베이스 시스템에 따라 차이가 있을 수 있습니다.
+
+### 면접 짧은 답변
+
+`NOT NULL`은 NULL 입력을 금지하고, `UNIQUE`는 중복값을 제한합니다. `CHECK`는 입력값이 지정한 조건을 만족하는지 검사하며, `DEFAULT`는 값을 생략했을 때 사용할 기본값을 지정합니다.
 
 ## 객관식 문제
 
-### 1. NOT NULL은?
+### 문제 1 · NOT NULL
 
-① NULL 금지  
-② 항상 Index 삭제  
-③ 항상 모든 Row 유지  
-④ 항상 Schema 제거
-
-<details>
-<summary>정답</summary>
-
-①
-
-</details>
-
-해설: `NULL 금지`가 핵심입니다.
-
-### 2. UNIQUE는?
+다음 중 `NOT NULL`의 역할은?
 
 ① 중복 금지  
-② 항상 Index 삭제  
-③ 항상 모든 Row 유지  
-④ 항상 Schema 제거
+② NULL 금지  
+③ 기본값 지정  
+④ 범위 검사
 
-<details>
+<details markdown="1">
 <summary>정답</summary>
 
-①
+②
+
+`NOT NULL`은 해당 Column에 NULL이 저장되는 것을 막습니다.
 
 </details>
 
-해설: `중복 금지`가 핵심입니다.
+### 문제 2 · UNIQUE
 
-### 3. CHECK는?
+다음 중 이메일 중복을 막을 때 가장 적절한 제약조건은?
 
-① 조건 검사  
-② 항상 Index 삭제  
-③ 항상 모든 Row 유지  
-④ 항상 Schema 제거
+① DEFAULT  
+② CHECK  
+③ UNIQUE  
+④ NOT NULL만 사용
 
-<details>
+<details markdown="1">
 <summary>정답</summary>
 
-①
+③
+
+`UNIQUE`는 같은 값의 중복 저장을 제한합니다.
 
 </details>
 
-해설: `조건 검사`가 핵심입니다.
+### 문제 3 · CHECK
 
-### 4. DDL의 대표 목적은?
+다음 SQL에서 `CHECK`의 역할은?
 
-① Schema 정의 및 변경  
-② 항상 Index 삭제  
-③ 항상 모든 Row 유지  
-④ 항상 Schema 제거
+```sql
+SALARY INTEGER CHECK (SALARY >= 0)
+```
 
-<details>
+① SALARY를 자동으로 0으로 만든다.  
+② SALARY의 중복을 막는다.  
+③ SALARY가 0 이상인지 검사한다.  
+④ SALARY를 PRIMARY KEY로 만든다.
+
+<details markdown="1">
 <summary>정답</summary>
 
-①
+③
+
+입력되는 SALARY 값이 `0 이상`이라는 조건을 만족하는지 검사합니다.
 
 </details>
 
-해설: `Schema 정의 및 변경`가 핵심입니다.
+### 문제 4 · DEFAULT
 
-### 5. DML의 대표 목적은?
+다음 Table에서 STATUS 값을 생략하고 INSERT하면 기본적으로 사용되는 값은?
 
-① 데이터 조회 및 변경  
-② 항상 Index 삭제  
-③ 항상 모든 Row 유지  
-④ 항상 Schema 제거
+```sql
+CREATE TABLE ORDERS(
+    ORDER_ID TEXT PRIMARY KEY,
+    STATUS TEXT DEFAULT '결제대기'
+);
+```
 
-<details>
+① NULL만 가능  
+② 결제대기  
+③ ORDER_ID  
+④ 0
+
+<details markdown="1">
 <summary>정답</summary>
 
-①
+②
+
+STATUS 값을 생략하면 `결제대기`가 기본값으로 사용됩니다.
 
 </details>
 
-해설: `데이터 조회 및 변경`가 핵심입니다.
+### 문제 5 · PRIMARY KEY와 UNIQUE
 
-### 6. 실행 전 가장 먼저 확인할 것은?
+다음 설명으로 옳은 것은?
 
-① 대상과 변경 범위  
-② 항상 Index 삭제  
-③ 항상 모든 Row 유지  
-④ 항상 Schema 제거
+① PRIMARY KEY와 UNIQUE는 항상 완전히 같은 제약조건이다.  
+② UNIQUE는 중복값 제한에 사용한다.  
+③ NOT NULL은 중복값까지 자동으로 막는다.  
+④ DEFAULT는 Row를 삭제한다.
 
-<details>
+<details markdown="1">
 <summary>정답</summary>
 
-①
+②
+
+`UNIQUE`는 지정한 Column의 중복값을 제한하는 데 사용합니다.
 
 </details>
 
-해설: `대상과 변경 범위`가 핵심입니다.
+## NOT NULL · UNIQUE · CHECK · DEFAULT 전체 요약
 
-### 7. Constraint를 확인하는 이유는?
+| 제약조건 | 핵심 |
+| --- | --- |
+| NOT NULL | NULL 금지 |
+| UNIQUE | 중복 금지 |
+| CHECK | 조건 검사 |
+| DEFAULT | 기본값 지정 |
 
-① 명령이 무결성 규칙을 위반할 수 있기 때문  
-② 항상 Index 삭제  
-③ 항상 모든 Row 유지  
-④ 항상 Schema 제거
+```sql
+CREATE TABLE PRODUCT(
+    PRODUCT_ID TEXT PRIMARY KEY,
+    PRODUCT_NAME TEXT NOT NULL,
+    CATEGORY TEXT UNIQUE,
+    PRICE INTEGER CHECK (PRICE >= 0),
+    STOCK INTEGER DEFAULT 0
+);
+```
 
-<details>
-<summary>정답</summary>
+```text
+NOT NULL
+→ 반드시 값 필요
 
-①
+UNIQUE
+→ 중복 불가
 
-</details>
+CHECK
+→ 조건 만족 필요
 
-해설: `명령이 무결성 규칙을 위반할 수 있기 때문`가 핵심입니다.
+DEFAULT
+→ 생략 시 기본값
+```
 
-### 8. SQLite 차이를 확인해야 하는 이유는?
-
-① 지원 문법과 동작이 DBMS마다 다를 수 있기 때문  
-② 항상 Index 삭제  
-③ 항상 모든 Row 유지  
-④ 항상 Schema 제거
-
-<details>
-<summary>정답</summary>
-
-①
-
-</details>
-
-해설: `지원 문법과 동작이 DBMS마다 다를 수 있기 때문`가 핵심입니다.
-
+<blockquote class="prompt-danger">
+<p>제약조건 문제에서는 NULL, 중복, 조건 검사, 기본값 중 무엇을 제어하는지 먼저 구분합니다.</p>
+</blockquote>
 
 ## 다음에 이을 글
 
 **GRANT · REVOKE**입니다.
 
-사용자와 권한을 관리하는 GRANT와 REVOKE를 알아보고 SQLite와의 차이도 정리합니다.
+사용자에게 권한을 부여하고 회수하는 명령을 살펴봅니다.
