@@ -4,7 +4,7 @@ date: 2026-09-18 21:20:00 +0900
 slug: inner-join
 permalink: /posts/inner-join/
 categories: [CS, 데이터베이스]
-tags: [INNERJOIN, JOIN, SQL, ON, ForeignKey, 관계형데이터베이스, 정보처리기사, NCS]
+tags: [INNERJOIN, JOIN, SQL, "ON", ForeignKey, 관계형데이터베이스, 정보처리기사, NCS]
 math: true
 ---
 
