@@ -2,7 +2,7 @@
 title: "RIGHT OUTER JOIN — 짝이 없는 오른쪽 행도 남기는 조인"
 date: 2026-10-01 19:11:00 +0900
 slug: sql-right-outer-join
-permalink: /posts/sql-right-outer-join/
+permalink: /posts/right-outer-join/
 categories: [데이터베이스, SQL]
 tags: [오른쪽외부조인, 외부조인, 조인조건, 결측값, 결과행수, 정보처리기사]
 math: true
