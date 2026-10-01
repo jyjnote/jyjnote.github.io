@@ -4,7 +4,7 @@ date: 2026-09-18 21:30:00 +0900
 slug: right-outer-join
 permalink: /posts/right-outer-join/
 categories: [CS, 데이터베이스]
-tags: [RIGHTOUTERJOIN, RIGHTJOIN, JOIN, SQL, NULL, ON, 정보처리기사, NCS]
+tags: [RIGHTOUTERJOIN, RIGHTJOIN, JOIN, SQL, NULL, "ON", 정보처리기사, NCS]
 math: true
 ---
 
