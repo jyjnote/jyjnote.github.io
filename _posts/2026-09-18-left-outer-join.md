@@ -1,444 +1,2014 @@
 ---
-title: "LEFT OUTER JOIN — 짝이 없는 왼쪽 행도 남기는 조인"
-date: 2026-10-01 19:06:00 +0900
-slug: sql-left-outer-join
+title: LEFT JOIN · 레프트 조인
+date: 2026-09-18 21:40:00 +0900
+slug: left-join
 permalink: /posts/sql-left-outer-join/
-categories: [데이터베이스, SQL]
-tags: [왼쪽외부조인, 외부조인, 조인조건, 결측값, 결과행수, 정보처리기사]
+categories: [CS, 데이터베이스]
+tags: [LEFTJOIN, 레프트조인, OUTERJOIN, JOIN, SQL, 관계형데이터베이스, NULL, 정보처리기사, NCS]
 math: true
 ---
 
-왼쪽 외부 조인은 연결 조건을 만족하는 행을 연결하면서, 짝이 없는 왼쪽 행도 결과에 남기는 연산입니다. 오른쪽에서 연결할 행을 찾지 못하면 오른쪽 열을 결측값으로 채웁니다.
+LEFT JOIN은 <mark>왼쪽 Table의 모든 Row를 유지하면서, 오른쪽 Table에서 조건이 맞는 Row를 연결하는 JOIN</mark>입니다.
+
+오른쪽 Table에 연결되는 Row가 없으면 오른쪽 Column에는 `NULL`이 들어갑니다.
 
 <blockquote class="prompt-info">
-<p>왼쪽 행은 모두 보존합니다. 오른쪽 행은 조건에 맞는 짝이 있을 때 연결하고, 짝이 없으면 오른쪽 열을 결측값으로 채웁니다.</p>
+<p>한 줄: LEFT JOIN은 왼쪽 Table은 전부 살리고, 오른쪽에서 맞는 Row가 없으면 NULL로 채웁니다.</p>
 </blockquote>
-
-<mark>왼쪽 행을 모두 남긴다는 말은 왼쪽 행마다 결과가 정확히 한 행이라는 뜻이 아닙니다.</mark>
 
 <details>
 <summary>한 줄로</summary>
 
-왼쪽 행은 남기고, 오른쪽 짝이 없으면 오른쪽 열을 결측값으로 채웁니다.
+왼쪽 Table 전체를 유지하고 오른쪽 Table은 연결되는 경우만 붙입니다.
 
 </details>
 
-## 1. 핵심 예시 — 부서가 없는 직원도 조회
+## 연습 데이터베이스
 
-**직원 표**
+실제 연습 데이터베이스는 아래에서 확인할 수 있습니다.
 
-| 직원번호 | 이름 | 부서번호 |
+<div style="width:100%; overflow:hidden; border:1px solid var(--main-border-color,#ddd); border-radius:12px; margin:1rem 0;">
+<iframe
+  src="https://docs.google.com/spreadsheets/d/1mtu6pFcGyOfwpFizaJskfFD87GxyjAmB/preview"
+  width="100%"
+  height="500"
+  style="border:0;"
+  loading="lazy">
+</iframe>
+</div>
+
+이 글에서는 실제 데이터베이스의 관계를 기준으로 설명하되, LEFT JOIN 결과를 바로 볼 수 있도록 작은 Table로 줄여서 사용합니다.
+
+대표 관계는 다음과 같습니다.
+
+```text
+EMPLOYEE.DEPT_ID
+→ DEPARTMENT.DEPT_ID
+```
+
+```text
+ORDERS.CUSTOMER_ID
+→ CUSTOMER.CUSTOMER_ID
+```
+
+<blockquote class="prompt-info">
+<p>모든 핵심 설명과 문제에서 입력 Table과 결과 Table을 함께 확인합니다.</p>
+</blockquote>
+
+## LEFT JOIN의 가장 기본적인 예시
+
+먼저 직원과 부서 Table이 있다고 가정합니다.
+
+### 입력 Table 1 · EMPLOYEE
+
+| EMP_ID | EMP_NAME | DEPT_ID |
 | --- | --- | --- |
-| 1 | 민수 | 10 |
-| 2 | 지연 | 10 |
-| 3 | 현우 | 20 |
-| 4 | 수진 | NULL |
-| 5 | 도윤 | 40 |
+| 1001 | 직원1 | 10 |
+| 1002 | 직원2 | 20 |
+| 1003 | 직원3 | NULL |
 
-**부서 표**
+### 입력 Table 2 · DEPARTMENT
 
-| 부서번호 | 부서명 |
+| DEPT_ID | DEPT_NAME |
 | --- | --- |
-| 10 | 개발부 |
-| 20 | 영업부 |
-| 30 | 인사부 |
+| 10 | 개발 |
+| 20 | 인사 |
+| 30 | 영업 |
 
-직원을 왼쪽에 놓고 부서번호가 같은 행끼리 연결합니다. 도윤의 부서번호 40은 연결 실패를 보여 주기 위한 예시입니다.
+직원은 모두 보고 싶고, 연결되는 부서 이름이 있다면 같이 보고 싶습니다.
 
-```sql
-SELECT 직원.이름, 직원.부서번호 AS 직원부서번호, 부서.부서명
-FROM 직원
-LEFT OUTER JOIN 부서
-ON 직원.부서번호 = 부서.부서번호;
+<pre><code class="language-sql">SELECT
+    E.EMP_NAME,
+    D.DEPT_NAME
+FROM EMPLOYEE E
+<span style="background-color:#DFF5E8;">LEFT JOIN DEPARTMENT D
+    ON E.DEPT_ID = D.DEPT_ID</span>;</code></pre>
+
+### 결과 Table
+
+| EMP_NAME | DEPT_NAME |
+| --- | --- |
+| 직원1 | 개발 |
+| 직원2 | 인사 |
+| 직원3 | NULL |
+
+직원1과 직원2는 연결되는 부서가 있으므로 부서 이름이 붙습니다.
+
+직원3은 `DEPT_ID`가 `NULL`이라 연결되는 부서가 없지만, 왼쪽 `EMPLOYEE`의 Row이므로 결과에 남습니다.
+
+```text
+직원1
+→ 연결 성공
+→ 개발
+
+직원2
+→ 연결 성공
+→ 인사
+
+직원3
+→ 연결 실패
+→ 직원3은 유지
+→ 오른쪽 값은 NULL
 ```
 
-**조회 결과**
+## LEFT JOIN의 핵심
 
-| 이름 | 직원부서번호 | 부서명 |
-| --- | --- | --- |
-| 민수 | 10 | 개발부 |
-| 지연 | 10 | 개발부 |
-| 현우 | 20 | 영업부 |
-| 수진 | NULL | NULL |
-| 도윤 | 40 | NULL |
+LEFT JOIN은 다음 한 문장으로 기억할 수 있습니다.
 
-수진과 도윤도 결과에 남습니다. 두 직원에게 연결되는 부서 행이 없으므로 부서명은 `NULL`입니다.
+<mark>왼쪽 Table의 Row는 모두 유지한다.</mark>
 
-반면 직원이 없는 인사부는 결과에 없습니다. **보존 대상은 직원 표이며, 오른쪽 부서 표의 모든 행을 보존하는 것은 아닙니다.**
+다음 예시를 봅니다.
 
-## 2. 왜 필요한가
+### 입력 Table 1 · A
 
-관련 정보가 없다는 이유로 기준 대상을 조회 결과에서 빠뜨리면 안 되는 경우에 사용합니다.
+| ID | NAME |
+| --- | --- |
+| 1 | 가 |
+| 2 | 나 |
+| 4 | 라 |
 
-| 조회 목적 | 왼쪽에 놓을 표 | 오른쪽에 놓을 표 |
-| --- | --- | --- |
-| 부서 배정 여부와 관계없이 모든 직원 조회 | 직원 | 부서 |
-| 주문하지 않은 고객도 함께 조회 | 고객 | 주문 |
-| 직원이 없는 부서도 인원 집계에 포함 | 부서 | 직원 |
-| 제출하지 않은 학생도 함께 조회 | 학생 | 제출 |
+### 입력 Table 2 · B
 
-<mark>먼저 “누구를 빠짐없이 보여 주어야 하는가”를 정하고, 그 표를 왼쪽에 놓습니다.</mark>
-
-## 3. 작동 방식 — 왼쪽 행마다 최소 한 행
-
-### 3.1. 기본 문법
+| ID | VALUE |
+| --- | --- |
+| 1 | 하나 |
+| 2 | 둘 |
+| 3 | 셋 |
 
 ```sql
-SELECT 왼쪽표.조회열, 오른쪽표.조회열
-FROM 왼쪽표
-LEFT OUTER JOIN 오른쪽표
-ON 왼쪽표.연결열 = 오른쪽표.연결열;
+SELECT
+    A.ID,
+    A.NAME,
+    B.VALUE
+FROM A
+LEFT JOIN B
+    ON A.ID = B.ID;
 ```
 
-위 코드는 문법의 틀입니다. 실제 표와 열 이름으로 바꾸어 사용합니다.
+### 결과 Table
+
+| ID | NAME | VALUE |
+| --- | --- | --- |
+| 1 | 가 | 하나 |
+| 2 | 나 | 둘 |
+| 4 | 라 | NULL |
+
+`A.ID = 4`는 B에 연결되는 Row가 없습니다.
+
+하지만 A는 왼쪽 Table이므로 결과에 남습니다.
+
+반면 `B.ID = 3`은 오른쪽 Table에만 존재하므로 결과에 나오지 않습니다.
+
+## LEFT JOIN의 기본 문법
+
+기본 구조는 다음과 같습니다.
+
+```sql
+SELECT 조회할_Column
+FROM 왼쪽_Table
+LEFT JOIN 오른쪽_Table
+    ON 연결_조건;
+```
+
+실제 예시를 봅니다.
+
+### 입력 Table 1 · EMPLOYEE
+
+| EMP_NAME | DEPT_ID |
+| --- | --- |
+| 직원1 | 10 |
+| 직원2 | NULL |
+
+### 입력 Table 2 · DEPARTMENT
+
+| DEPT_ID | DEPT_NAME |
+| --- | --- |
+| 10 | 개발 |
+
+<pre><code class="language-sql">SELECT
+    E.EMP_NAME,
+    D.DEPT_NAME
+FROM EMPLOYEE E
+<span style="background-color:#DFF5E8;">LEFT JOIN DEPARTMENT D
+    ON E.DEPT_ID = D.DEPT_ID</span>;</code></pre>
+
+### 결과 Table
+
+| EMP_NAME | DEPT_NAME |
+| --- | --- |
+| 직원1 | 개발 |
+| 직원2 | NULL |
+
+각 요소의 역할은 다음과 같습니다.
 
 | 구문 | 역할 |
 | --- | --- |
-| FROM 왼쪽표 | 보존할 왼쪽 입력 표 |
-| LEFT OUTER JOIN 오른쪽표 | 오른쪽 표와 왼쪽 외부 조인 |
-| ON | 어떤 행끼리 연결할지 지정 |
-| SELECT | 결과에 보여 줄 열 선택 |
+| FROM EMPLOYEE E | 왼쪽 Table |
+| LEFT JOIN DEPARTMENT D | 오른쪽 Table 연결 |
+| ON | Row 연결 조건 |
+| SELECT | 최종 출력 Column |
 
-`OUTER`는 생략할 수 있습니다. `LEFT JOIN`과 `LEFT OUTER JOIN`은 같은 조인 종류입니다.
+## 왜 LEFT라고 부르는가
 
-### 3.2. 짝이 있으면 모든 짝을 연결
+LEFT JOIN에서 중요한 것은 SQL 문장의 왼쪽에 있는 Table입니다.
 
-민수는 부서번호 10인 개발부 행과 연결됩니다. 현우는 부서번호 20인 영업부 행과 연결됩니다.
+### 입력 Table 1 · EMPLOYEE
 
-한 왼쪽 행에 오른쪽 짝이 여러 개라면 각 짝과 연결된 행을 모두 만듭니다.
-
-### 3.3. 짝이 없으면 결측값을 채운 한 행
-
-수진은 부서번호가 결측이므로 일반적인 등호 조건을 만족하지 못합니다. 도윤은 부서번호 40에 해당하는 부서 행이 없습니다.
-
-두 직원은 각각 한 행씩 남고, 오른쪽 부서 표의 열은 결측값으로 채워집니다.
-
-| 왼쪽 한 행의 오른쪽 짝 수 | 만들어지는 결과 행 수 |
+| EMP_NAME | DEPT_ID |
 | --- | --- |
-| 0개 | 1행 — 오른쪽 열을 결측값으로 채움 |
-| 1개 | 1행 — 그 짝과 연결 |
-| 3개 | 3행 — 각 짝과 연결 |
+| 직원1 | 10 |
+| 직원2 | NULL |
+
+### 입력 Table 2 · DEPARTMENT
+
+| DEPT_ID | DEPT_NAME |
+| --- | --- |
+| 10 | 개발 |
+| 20 | 인사 |
+
+```sql
+SELECT
+    E.EMP_NAME,
+    D.DEPT_NAME
+FROM EMPLOYEE E
+LEFT JOIN DEPARTMENT D
+    ON E.DEPT_ID = D.DEPT_ID;
+```
+
+`FROM EMPLOYEE E`가 왼쪽입니다.
+
+따라서 직원1과 직원2가 모두 남습니다.
+
+### 결과 Table
+
+| EMP_NAME | DEPT_NAME |
+| --- | --- |
+| 직원1 | 개발 |
+| 직원2 | NULL |
+
+오른쪽에만 있는 인사 부서는 결과에 나오지 않습니다.
+
+```text
+LEFT JOIN
+→ FROM 쪽 Table 전체 유지
+```
+
+## OUTER는 생략할 수 있다
+
+`LEFT JOIN`과 `LEFT OUTER JOIN`은 일반적으로 같은 의미입니다.
+
+### 입력 Table 1 · A
+
+| ID | NAME |
+| --- | --- |
+| 1 | 가 |
+| 2 | 나 |
+
+### 입력 Table 2 · B
+
+| ID | VALUE |
+| --- | --- |
+| 1 | 하나 |
+
+첫 번째 Query입니다.
+
+```sql
+SELECT
+    A.NAME,
+    B.VALUE
+FROM A
+LEFT JOIN B
+    ON A.ID = B.ID;
+```
+
+두 번째 Query입니다.
+
+```sql
+SELECT
+    A.NAME,
+    B.VALUE
+FROM A
+LEFT OUTER JOIN B
+    ON A.ID = B.ID;
+```
+
+### 두 Query의 결과 Table
+
+| NAME | VALUE |
+| --- | --- |
+| 가 | 하나 |
+| 나 | NULL |
+
+즉, `OUTER`는 생략할 수 있습니다.
 
 <blockquote class="prompt-info">
-<p>이는 결과를 이해하기 위한 논리적 설명입니다. 실제 실행은 데이터베이스의 실행 계획을 따릅니다. 정렬 구문이 없으면 결과의 표시 순서는 보장되지 않습니다.</p>
+<p>LEFT JOIN과 LEFT OUTER JOIN은 일반적으로 같은 의미입니다.</p>
 </blockquote>
 
-## 4. 주요 개념
+## INNER JOIN과 가장 큰 차이
 
-### 4.1. 왼쪽은 표를 적은 순서다
+LEFT JOIN을 이해하려면 INNER JOIN과 비교하는 것이 가장 빠릅니다.
 
-직원을 왼쪽에 놓으면 모든 직원을 보존합니다.
+### 입력 Table 1 · EMPLOYEE
 
-```sql
-FROM 직원
-LEFT JOIN 부서
-ON 직원.부서번호 = 부서.부서번호
-```
-
-반대로 부서를 왼쪽에 놓으면 모든 부서를 보존합니다.
-
-```sql
-FROM 부서
-LEFT JOIN 직원
-ON 부서.부서번호 = 직원.부서번호
-```
-
-두 조회는 보존 대상이 다릅니다. 두 번째 조회에는 인사부가 포함되고 수진과 도윤은 포함되지 않습니다.
-
-### 4.2. 연결 실패는 오른쪽 열에 표시된다
-
-도윤의 직원부서번호 40은 그대로 남습니다. 결측값으로 채워지는 것은 **연결되지 않은 오른쪽 부서 표의 열**입니다.
-
-왼쪽 값을 지우거나 원본 표에 결측값을 저장하는 연산이 아닙니다. 결측값을 채운 조회 결과를 만드는 것입니다.
-
-### 4.3. 연결 열은 이름이 달라도 된다
-
-등호 조건으로 비교할 두 열은 같은 이름일 필요가 없습니다. 왼쪽의 소속번호와 오른쪽의 부서번호를 비교할 수도 있습니다.
-
-```sql
-ON 직원.소속번호 = 부서.부서번호
-```
-
-기본키·외래키가 선언되어 있어야만 조인을 할 수 있는 것도 아닙니다. 다만 키와 제약조건은 데이터의 관계와 무결성을 관리하는 데 중요합니다.
-
-## 5. 장점과 주의할 점
-
-| 구분 | 내용 |
+| EMP_NAME | DEPT_ID |
 | --- | --- |
-| 장점 | 관련 정보가 없는 기준 대상도 조회 가능 |
-| 장점 | 연결되지 않은 대상을 찾는 데 활용 |
-| 장점 | 활동이 없는 대상도 집계 결과에 포함 가능 |
-| 주의 | 연결값이 중복되면 결과 행 수 증가 |
-| 주의 | 결측값이 연결 실패 때문인지 원래 값인지 구분 필요 |
-| 주의 | 조회 조건 때문에 보존했던 행이 사라질 수 있음 |
+| 직원1 | 10 |
+| 직원2 | NULL |
 
-## 6. 내부 조인과 비교
+### 입력 Table 2 · DEPARTMENT
 
-처음 제시한 직원·부서 표를 부서번호의 등호 조건으로 연결한 결과입니다.
+| DEPT_ID | DEPT_NAME |
+| --- | --- |
+| 10 | 개발 |
+| 20 | 인사 |
 
-| 구분 | 내부 조인 | 직원 기준 왼쪽 외부 조인 |
+먼저 INNER JOIN입니다.
+
+```sql
+SELECT
+    E.EMP_NAME,
+    D.DEPT_NAME
+FROM EMPLOYEE E
+INNER JOIN DEPARTMENT D
+    ON E.DEPT_ID = D.DEPT_ID;
+```
+
+### INNER JOIN 결과 Table
+
+| EMP_NAME | DEPT_NAME |
+| --- | --- |
+| 직원1 | 개발 |
+
+이번에는 LEFT JOIN입니다.
+
+```sql
+SELECT
+    E.EMP_NAME,
+    D.DEPT_NAME
+FROM EMPLOYEE E
+LEFT JOIN DEPARTMENT D
+    ON E.DEPT_ID = D.DEPT_ID;
+```
+
+### LEFT JOIN 결과 Table
+
+| EMP_NAME | DEPT_NAME |
+| --- | --- |
+| 직원1 | 개발 |
+| 직원2 | NULL |
+
+차이는 직원2입니다.
+
+```text
+INNER JOIN
+→ 연결 실패
+→ 직원2 제외
+
+LEFT JOIN
+→ 연결 실패
+→ 직원2 유지
+→ 오른쪽 NULL
+```
+
+| 구분 | INNER JOIN | LEFT JOIN |
 | --- | --- | --- |
-| 민수·지연·현우 | 포함 | 포함 |
-| 수진·도윤 | 제외 | 포함 |
-| 직원 없는 인사부 | 제외 | 제외 |
-| 연결 실패 처리 | 해당 행을 결과에서 제외 | 오른쪽 열을 결측값으로 채움 |
-| 결과 행 수 | 3행 | 5행 |
+| 연결 성공 Row | 포함 | 포함 |
+| 왼쪽에만 있는 Row | 제외 | 포함 |
+| 연결 실패 시 | Row 제외 | 오른쪽 값 NULL |
 
-**짝이 있는 직원만 필요하면 내부 조인, 모든 직원이 필요하면 직원 기준 왼쪽 외부 조인**을 사용합니다.
+## 오른쪽에만 있는 Row는 남지 않는다
+
+LEFT JOIN은 양쪽 Table의 모든 Row를 남기는 JOIN이 아닙니다.
+
+### 입력 Table 1 · EMPLOYEE
+
+| EMP_NAME | DEPT_ID |
+| --- | --- |
+| 직원1 | 10 |
+
+### 입력 Table 2 · DEPARTMENT
+
+| DEPT_ID | DEPT_NAME |
+| --- | --- |
+| 10 | 개발 |
+| 20 | 인사 |
+| 30 | 영업 |
+
+```sql
+SELECT
+    E.EMP_NAME,
+    D.DEPT_NAME
+FROM EMPLOYEE E
+LEFT JOIN DEPARTMENT D
+    ON E.DEPT_ID = D.DEPT_ID;
+```
+
+### 결과 Table
+
+| EMP_NAME | DEPT_NAME |
+| --- | --- |
+| 직원1 | 개발 |
+
+인사와 영업은 오른쪽 Table에만 존재합니다.
+
+LEFT JOIN은 왼쪽 EMPLOYEE를 기준으로 하므로 두 부서는 결과에 나오지 않습니다.
+
+<blockquote class="prompt-warning">
+<p>LEFT JOIN은 양쪽 전체를 남기는 JOIN이 아닙니다. 왼쪽 Table만 전부 유지합니다.</p>
+</blockquote>
+
+## 연결 실패 시 NULL이 들어간다
+
+LEFT JOIN에서는 오른쪽에 연결되는 Row가 없으면 오른쪽 Column이 `NULL`이 됩니다.
+
+### 입력 Table 1 · CUSTOMER
+
+| CUSTOMER_ID | NAME |
+| --- | --- |
+| 101 | 고객1 |
+| 102 | 고객2 |
+| 103 | 고객3 |
+
+### 입력 Table 2 · ORDERS
+
+| ORDER_ID | CUSTOMER_ID |
+| --- | --- |
+| 1 | 101 |
+| 2 | 101 |
+| 3 | 102 |
+
+모든 고객을 보고 주문이 있으면 주문 번호까지 함께 보고 싶습니다.
+
+```sql
+SELECT
+    C.NAME,
+    O.ORDER_ID
+FROM CUSTOMER C
+LEFT JOIN ORDERS O
+    ON C.CUSTOMER_ID = O.CUSTOMER_ID;
+```
+
+### 결과 Table
+
+| NAME | ORDER_ID |
+| --- | --- |
+| 고객1 | 1 |
+| 고객1 | 2 |
+| 고객2 | 3 |
+| 고객3 | NULL |
+
+고객3은 주문이 없습니다.
+
+하지만 CUSTOMER가 왼쪽 Table이므로 고객3은 결과에 남습니다.
+
+주문 정보만 `NULL`이 됩니다.
+
+## 주문이 없는 고객 찾기
+
+LEFT JOIN은 <mark>연결되는 데이터가 없는 Row를 찾는 문제</mark>에서 매우 자주 사용됩니다.
+
+### 입력 Table 1 · CUSTOMER
+
+| CUSTOMER_ID | NAME |
+| --- | --- |
+| 101 | 고객1 |
+| 102 | 고객2 |
+| 103 | 고객3 |
+
+### 입력 Table 2 · ORDERS
+
+| ORDER_ID | CUSTOMER_ID |
+| --- | --- |
+| 1 | 101 |
+| 2 | 102 |
+
+먼저 LEFT JOIN 결과를 봅니다.
+
+```sql
+SELECT
+    C.CUSTOMER_ID,
+    C.NAME,
+    O.ORDER_ID
+FROM CUSTOMER C
+LEFT JOIN ORDERS O
+    ON C.CUSTOMER_ID = O.CUSTOMER_ID;
+```
+
+### JOIN 직후 결과 Table
+
+| CUSTOMER_ID | NAME | ORDER_ID |
+| --- | --- | --- |
+| 101 | 고객1 | 1 |
+| 102 | 고객2 | 2 |
+| 103 | 고객3 | NULL |
+
+주문이 없는 고객은 `ORDER_ID`가 `NULL`입니다.
+
+따라서 다음처럼 찾을 수 있습니다.
+
+<pre><code class="language-sql">SELECT
+    C.CUSTOMER_ID,
+    C.NAME
+FROM CUSTOMER C
+LEFT JOIN ORDERS O
+    ON C.CUSTOMER_ID = O.CUSTOMER_ID
+<span style="background-color:#DFF5E8;">WHERE O.ORDER_ID IS NULL</span>;</code></pre>
+
+### 최종 결과 Table
+
+| CUSTOMER_ID | NAME |
+| --- | --- |
+| 103 | 고객3 |
+
+이 패턴은 시험과 실무에서 매우 중요합니다.
+
+```text
+LEFT JOIN
++
+오른쪽 Key IS NULL
+
+→ 연결 상대가 없는 왼쪽 Row 찾기
+```
+
+## 직원이 없는 부서 찾기
+
+같은 패턴을 부서와 직원에도 적용할 수 있습니다.
+
+### 입력 Table 1 · DEPARTMENT
+
+| DEPT_ID | DEPT_NAME |
+| --- | --- |
+| 10 | 개발 |
+| 20 | 인사 |
+| 30 | 영업 |
+
+### 입력 Table 2 · EMPLOYEE
+
+| EMP_ID | EMP_NAME | DEPT_ID |
+| --- | --- | --- |
+| 1001 | 직원1 | 10 |
+| 1002 | 직원2 | 20 |
+
+모든 부서를 유지하도록 DEPARTMENT를 왼쪽에 둡니다.
+
+```sql
+SELECT
+    D.DEPT_NAME,
+    E.EMP_NAME
+FROM DEPARTMENT D
+LEFT JOIN EMPLOYEE E
+    ON D.DEPT_ID = E.DEPT_ID;
+```
+
+### JOIN 직후 결과 Table
+
+| DEPT_NAME | EMP_NAME |
+| --- | --- |
+| 개발 | 직원1 |
+| 인사 | 직원2 |
+| 영업 | NULL |
+
+직원이 없는 부서만 찾습니다.
+
+<pre><code class="language-sql">SELECT
+    D.DEPT_NAME
+FROM DEPARTMENT D
+LEFT JOIN EMPLOYEE E
+    ON D.DEPT_ID = E.DEPT_ID
+<span style="background-color:#DFF5E8;">WHERE E.EMP_ID IS NULL</span>;</code></pre>
+
+### 최종 결과 Table
+
+| DEPT_NAME |
+| --- |
+| 영업 |
+
+핵심은 어느 Table을 왼쪽에 둘지입니다.
+
+## 왼쪽 Table 선택이 중요하다
+
+LEFT JOIN은 Table 순서를 바꾸면 결과가 달라질 수 있습니다.
+
+### 입력 Table 1 · EMPLOYEE
+
+| EMP_NAME | DEPT_ID |
+| --- | --- |
+| 직원1 | 10 |
+| 직원2 | NULL |
+
+### 입력 Table 2 · DEPARTMENT
+
+| DEPT_ID | DEPT_NAME |
+| --- | --- |
+| 10 | 개발 |
+| 20 | 인사 |
+
+먼저 EMPLOYEE를 왼쪽에 둡니다.
+
+```sql
+SELECT
+    E.EMP_NAME,
+    D.DEPT_NAME
+FROM EMPLOYEE E
+LEFT JOIN DEPARTMENT D
+    ON E.DEPT_ID = D.DEPT_ID;
+```
+
+### 결과 Table 1
+
+| EMP_NAME | DEPT_NAME |
+| --- | --- |
+| 직원1 | 개발 |
+| 직원2 | NULL |
+
+이번에는 DEPARTMENT를 왼쪽에 둡니다.
+
+```sql
+SELECT
+    E.EMP_NAME,
+    D.DEPT_NAME
+FROM DEPARTMENT D
+LEFT JOIN EMPLOYEE E
+    ON E.DEPT_ID = D.DEPT_ID;
+```
+
+### 결과 Table 2
+
+| EMP_NAME | DEPT_NAME |
+| --- | --- |
+| 직원1 | 개발 |
+| NULL | 인사 |
+
+첫 번째 Query는 모든 직원을 유지합니다.
+
+두 번째 Query는 모든 부서를 유지합니다.
+
+<blockquote class="prompt-warning">
+<p>LEFT JOIN에서는 어떤 Table을 FROM에 두느냐가 결과를 결정합니다.</p>
+</blockquote>
+
+## 일대다 관계의 LEFT JOIN
+
+LEFT JOIN에서도 하나의 왼쪽 Row가 여러 오른쪽 Row와 연결될 수 있습니다.
+
+### 입력 Table 1 · CUSTOMER
+
+| CUSTOMER_ID | NAME |
+| --- | --- |
+| 101 | 고객1 |
+| 102 | 고객2 |
+| 103 | 고객3 |
+
+### 입력 Table 2 · ORDERS
+
+| ORDER_ID | CUSTOMER_ID |
+| --- | --- |
+| 1 | 101 |
+| 2 | 101 |
+| 3 | 102 |
+
+```sql
+SELECT
+    C.NAME,
+    O.ORDER_ID
+FROM CUSTOMER C
+LEFT JOIN ORDERS O
+    ON C.CUSTOMER_ID = O.CUSTOMER_ID;
+```
+
+### 결과 Table
+
+| NAME | ORDER_ID |
+| --- | --- |
+| 고객1 | 1 |
+| 고객1 | 2 |
+| 고객2 | 3 |
+| 고객3 | NULL |
+
+고객1은 주문이 두 개라 결과도 두 Row입니다.
+
+고객3은 주문이 없지만 왼쪽 CUSTOMER의 Row이므로 한 Row로 남습니다.
+
+```text
+고객1
+├─ 주문1
+└─ 주문2
+
+고객3
+└─ 주문 없음
+   → NULL
+```
+
+## LEFT JOIN 뒤 WHERE가 위험한 이유
+
+LEFT JOIN에서 가장 중요한 시험 함정입니다.
+
+오른쪽 Table의 조건을 `WHERE`에 넣으면 연결되지 않은 Row가 제거될 수 있습니다.
+
+### 입력 Table 1 · DEPARTMENT
+
+| DEPT_ID | DEPT_NAME |
+| --- | --- |
+| 10 | 개발 |
+| 20 | 인사 |
+| 30 | 영업 |
+
+### 입력 Table 2 · EMPLOYEE
+
+| EMP_NAME | DEPT_ID | SALARY |
+| --- | --- | ---: |
+| 직원1 | 10 | 3500 |
+| 직원2 | 10 | 2500 |
+| 직원3 | 20 | 3200 |
+
+먼저 단순 LEFT JOIN입니다.
+
+```sql
+SELECT
+    D.DEPT_NAME,
+    E.EMP_NAME,
+    E.SALARY
+FROM DEPARTMENT D
+LEFT JOIN EMPLOYEE E
+    ON D.DEPT_ID = E.DEPT_ID;
+```
+
+### 단순 LEFT JOIN 결과 Table
+
+| DEPT_NAME | EMP_NAME | SALARY |
+| --- | --- | ---: |
+| 개발 | 직원1 | 3500 |
+| 개발 | 직원2 | 2500 |
+| 인사 | 직원3 | 3200 |
+| 영업 | NULL | NULL |
+
+이번에는 `WHERE E.SALARY >= 3000`을 추가합니다.
+
+<pre><code class="language-sql">SELECT
+    D.DEPT_NAME,
+    E.EMP_NAME,
+    E.SALARY
+FROM DEPARTMENT D
+LEFT JOIN EMPLOYEE E
+    ON D.DEPT_ID = E.DEPT_ID
+<span style="background-color:#DFF5E8;">WHERE E.SALARY &gt;= 3000</span>;</code></pre>
+
+### WHERE 적용 결과 Table
+
+| DEPT_NAME | EMP_NAME | SALARY |
+| --- | --- | ---: |
+| 개발 | 직원1 | 3500 |
+| 인사 | 직원3 | 3200 |
+
+영업 부서는 LEFT JOIN 직후에는 남아 있었습니다.
+
+하지만 영업의 `E.SALARY`는 `NULL`입니다.
+
+`NULL >= 3000`은 참이 아니므로 WHERE 단계에서 제거됩니다.
+
+즉, LEFT JOIN을 썼더라도 WHERE 때문에 왼쪽 Row가 최종 결과에서 사라질 수 있습니다.
+
+## 조건을 ON에 넣으면 결과가 달라진다
+
+이번에는 급여 조건을 `ON`에 넣습니다.
+
+### 입력 Table 1 · DEPARTMENT
+
+| DEPT_ID | DEPT_NAME |
+| --- | --- |
+| 10 | 개발 |
+| 20 | 인사 |
+| 30 | 영업 |
+
+### 입력 Table 2 · EMPLOYEE
+
+| EMP_NAME | DEPT_ID | SALARY |
+| --- | --- | ---: |
+| 직원1 | 10 | 3500 |
+| 직원2 | 10 | 2500 |
+| 직원3 | 20 | 3200 |
+
+<pre><code class="language-sql">SELECT
+    D.DEPT_NAME,
+    E.EMP_NAME,
+    E.SALARY
+FROM DEPARTMENT D
+LEFT JOIN EMPLOYEE E
+    <span style="background-color:#DFF5E8;">ON D.DEPT_ID = E.DEPT_ID
+   AND E.SALARY &gt;= 3000</span>;</code></pre>
+
+### 결과 Table
+
+| DEPT_NAME | EMP_NAME | SALARY |
+| --- | --- | ---: |
+| 개발 | 직원1 | 3500 |
+| 인사 | 직원3 | 3200 |
+| 영업 | NULL | NULL |
+
+영업 부서가 남아 있습니다.
+
+이유는 급여 조건이 JOIN 과정에서 오른쪽 Row를 고르는 조건으로 사용되었기 때문입니다.
+
+```text
+ON에 조건
+→ 어떤 오른쪽 Row를 붙일지 결정
+→ 왼쪽 Row는 유지
+
+WHERE에 조건
+→ JOIN 후 최종 Row를 다시 필터링
+→ 왼쪽 Row도 제거될 수 있음
+```
+
+## ON과 WHERE 비교
+
+같은 입력 Table을 기준으로 두 결과를 직접 비교합니다.
+
+### 입력 Table 1
+
+| DEPT_ID | DEPT_NAME |
+| --- | --- |
+| 10 | 개발 |
+| 20 | 인사 |
+| 30 | 영업 |
+
+### 입력 Table 2
+
+| EMP_NAME | DEPT_ID | SALARY |
+| --- | --- | ---: |
+| 직원1 | 10 | 3500 |
+| 직원2 | 10 | 2500 |
+| 직원3 | 20 | 3200 |
+
+### 조건을 ON에 넣은 결과
+
+| DEPT_NAME | EMP_NAME | SALARY |
+| --- | --- | ---: |
+| 개발 | 직원1 | 3500 |
+| 인사 | 직원3 | 3200 |
+| 영업 | NULL | NULL |
+
+### 조건을 WHERE에 넣은 결과
+
+| DEPT_NAME | EMP_NAME | SALARY |
+| --- | --- | ---: |
+| 개발 | 직원1 | 3500 |
+| 인사 | 직원3 | 3200 |
+
+<blockquote class="prompt-danger">
+<p>LEFT JOIN에서 오른쪽 Table 조건을 WHERE에 넣으면 NULL Row가 제거될 수 있다는 점을 반드시 기억합니다.</p>
+</blockquote>
+
+## NULL을 찾을 때는 IS NULL
+
+LEFT JOIN 결과에서 연결되지 않은 Row를 찾을 때는 `= NULL`이 아니라 `IS NULL`을 사용합니다.
+
+### 입력 Table 1 · CUSTOMER
+
+| CUSTOMER_ID | NAME |
+| --- | --- |
+| 101 | 고객1 |
+| 102 | 고객2 |
+
+### 입력 Table 2 · ORDERS
+
+| ORDER_ID | CUSTOMER_ID |
+| --- | --- |
+| 1 | 101 |
+
+LEFT JOIN 결과는 다음과 같습니다.
+
+| NAME | ORDER_ID |
+| --- | --- |
+| 고객1 | 1 |
+| 고객2 | NULL |
+
+잘못된 조건입니다.
+
+```sql
+WHERE O.ORDER_ID = NULL
+```
+
+올바른 조건입니다.
+
+```sql
+WHERE O.ORDER_ID IS NULL
+```
+
+### 올바른 Query의 결과 Table
+
+| NAME |
+| --- |
+| 고객2 |
+
+NULL 비교에는 `IS NULL`을 사용해야 합니다.
+
+## 여러 Table과 LEFT JOIN
+
+LEFT JOIN도 여러 Table을 연속해서 연결할 수 있습니다.
+
+### 입력 Table 1 · CUSTOMER
+
+| CUSTOMER_ID | NAME |
+| --- | --- |
+| 101 | 고객1 |
+| 102 | 고객2 |
+| 103 | 고객3 |
+
+### 입력 Table 2 · ORDERS
+
+| ORDER_ID | CUSTOMER_ID |
+| --- | --- |
+| 1 | 101 |
+| 2 | 102 |
+
+### 입력 Table 3 · ORDER_ITEM
+
+| ORDER_ID | PRODUCT_ID | QTY |
+| --- | --- | --- |
+| 1 | 501 | 2 |
+| 2 | 502 | 1 |
+
+### 입력 Table 4 · PRODUCT
+
+| PRODUCT_ID | PRODUCT_NAME |
+| --- | --- |
+| 501 | 키보드 |
+| 502 | 마우스 |
+
+모든 고객을 유지하면서 주문 상품을 조회한다고 가정합니다.
+
+```sql
+SELECT
+    C.NAME,
+    O.ORDER_ID,
+    P.PRODUCT_NAME,
+    OI.QTY
+FROM CUSTOMER C
+LEFT JOIN ORDERS O
+    ON C.CUSTOMER_ID = O.CUSTOMER_ID
+LEFT JOIN ORDER_ITEM OI
+    ON O.ORDER_ID = OI.ORDER_ID
+LEFT JOIN PRODUCT P
+    ON OI.PRODUCT_ID = P.PRODUCT_ID;
+```
+
+### 결과 Table
+
+| NAME | ORDER_ID | PRODUCT_NAME | QTY |
+| --- | --- | --- | ---: |
+| 고객1 | 1 | 키보드 | 2 |
+| 고객2 | 2 | 마우스 | 1 |
+| 고객3 | NULL | NULL | NULL |
+
+고객3은 주문이 없어도 CUSTOMER가 가장 왼쪽에 있으므로 결과에 남습니다.
+
+## LEFT JOIN과 RIGHT JOIN의 관계
+
+RIGHT JOIN은 Table 순서를 바꾸면 LEFT JOIN으로 표현할 수 있습니다.
+
+### 입력 Table 1 · EMPLOYEE
+
+| EMP_NAME | DEPT_ID |
+| --- | --- |
+| 직원1 | 10 |
+
+### 입력 Table 2 · DEPARTMENT
+
+| DEPT_ID | DEPT_NAME |
+| --- | --- |
+| 10 | 개발 |
+| 20 | 인사 |
+
+다음 RIGHT JOIN을 봅니다.
+
+```sql
+SELECT
+    E.EMP_NAME,
+    D.DEPT_NAME
+FROM EMPLOYEE E
+RIGHT JOIN DEPARTMENT D
+    ON E.DEPT_ID = D.DEPT_ID;
+```
+
+### 결과 Table
+
+| EMP_NAME | DEPT_NAME |
+| --- | --- |
+| 직원1 | 개발 |
+| NULL | 인사 |
+
+Table 순서를 바꾸고 LEFT JOIN을 사용합니다.
+
+```sql
+SELECT
+    E.EMP_NAME,
+    D.DEPT_NAME
+FROM DEPARTMENT D
+LEFT JOIN EMPLOYEE E
+    ON E.DEPT_ID = D.DEPT_ID;
+```
+
+### 결과 Table
+
+| EMP_NAME | DEPT_NAME |
+| --- | --- |
+| 직원1 | 개발 |
+| NULL | 인사 |
+
+두 Query는 같은 결과를 만들 수 있습니다.
+
+## LEFT JOIN과 FULL OUTER JOIN 비교
+
+LEFT JOIN은 왼쪽만 전부 유지합니다.
+
+FULL OUTER JOIN은 양쪽을 모두 유지합니다.
+
+### 입력 Table 1 · A
+
+| ID | NAME |
+| --- | --- |
+| 1 | 가 |
+| 2 | 나 |
+
+### 입력 Table 2 · B
+
+| ID | VALUE |
+| --- | --- |
+| 1 | 하나 |
+| 3 | 셋 |
+
+LEFT JOIN 결과입니다.
+
+```sql
+SELECT *
+FROM A
+LEFT JOIN B
+    ON A.ID = B.ID;
+```
+
+### LEFT JOIN 결과 Table
+
+| A.ID | NAME | B.ID | VALUE |
+| --- | --- | --- | --- |
+| 1 | 가 | 1 | 하나 |
+| 2 | 나 | NULL | NULL |
+
+FULL OUTER JOIN 결과입니다.
+
+```sql
+SELECT *
+FROM A
+FULL OUTER JOIN B
+    ON A.ID = B.ID;
+```
+
+### FULL OUTER JOIN 결과 Table
+
+| A.ID | NAME | B.ID | VALUE |
+| --- | --- | --- | --- |
+| 1 | 가 | 1 | 하나 |
+| 2 | 나 | NULL | NULL |
+| NULL | NULL | 3 | 셋 |
+
+차이는 오른쪽에만 존재하는 `B.ID = 3`입니다.
+
+## LEFT JOIN과 CROSS JOIN 비교
+
+LEFT JOIN은 연결 조건을 기준으로 Row를 연결합니다.
+
+CROSS JOIN은 모든 조합을 만듭니다.
+
+### 입력 Table 1 · A
+
+| ID | NAME |
+| --- | --- |
+| 1 | 가 |
+| 2 | 나 |
+
+### 입력 Table 2 · B
+
+| ID | VALUE |
+| --- | --- |
+| 1 | 하나 |
+
+LEFT JOIN입니다.
+
+```sql
+SELECT
+    A.NAME,
+    B.VALUE
+FROM A
+LEFT JOIN B
+    ON A.ID = B.ID;
+```
+
+### LEFT JOIN 결과 Table
+
+| NAME | VALUE |
+| --- | --- |
+| 가 | 하나 |
+| 나 | NULL |
+
+CROSS JOIN입니다.
+
+```sql
+SELECT
+    A.NAME,
+    B.VALUE
+FROM A
+CROSS JOIN B;
+```
+
+### CROSS JOIN 결과 Table
+
+| NAME | VALUE |
+| --- | --- |
+| 가 | 하나 |
+| 나 | 하나 |
+
+LEFT JOIN은 연결 조건을 사용하고, CROSS JOIN은 모든 조합을 만듭니다.
+
+## 실제 문제 풀이 1 · 모든 고객과 주문
+
+모든 고객을 조회하되 주문이 있다면 주문 번호도 함께 보여 줍니다.
+
+### 입력 Table 1 · CUSTOMER
+
+| CUSTOMER_ID | NAME |
+| --- | --- |
+| 101 | 고객1 |
+| 102 | 고객2 |
+| 103 | 고객3 |
+
+### 입력 Table 2 · ORDERS
+
+| ORDER_ID | CUSTOMER_ID |
+| --- | --- |
+| 1 | 101 |
+| 2 | 102 |
+
+모든 고객을 유지해야 하므로 CUSTOMER를 왼쪽에 둡니다.
+
+<pre><code class="language-sql">SELECT
+    C.NAME,
+    O.ORDER_ID
+FROM CUSTOMER C
+<span style="background-color:#DFF5E8;">LEFT JOIN ORDERS O
+    ON C.CUSTOMER_ID = O.CUSTOMER_ID</span>;</code></pre>
+
+### 결과 Table
+
+| NAME | ORDER_ID |
+| --- | --- |
+| 고객1 | 1 |
+| 고객2 | 2 |
+| 고객3 | NULL |
+
+고객3은 주문이 없어도 결과에 남습니다.
+
+## 실제 문제 풀이 2 · 주문이 없는 고객
+
+앞의 결과에서 주문이 없는 고객만 찾습니다.
+
+### 입력 Table 1 · CUSTOMER
+
+| CUSTOMER_ID | NAME |
+| --- | --- |
+| 101 | 고객1 |
+| 102 | 고객2 |
+| 103 | 고객3 |
+
+### 입력 Table 2 · ORDERS
+
+| ORDER_ID | CUSTOMER_ID |
+| --- | --- |
+| 1 | 101 |
+| 2 | 102 |
+
+<pre><code class="language-sql">SELECT
+    C.NAME
+FROM CUSTOMER C
+LEFT JOIN ORDERS O
+    ON C.CUSTOMER_ID = O.CUSTOMER_ID
+<span style="background-color:#DFF5E8;">WHERE O.ORDER_ID IS NULL</span>;</code></pre>
+
+### 결과 Table
+
+| NAME |
+| --- |
+| 고객3 |
+
+이 패턴은 LEFT JOIN의 대표 활용입니다.
+
+## 실제 문제 풀이 3 · 모든 부서와 직원
+
+모든 부서를 조회하되 직원이 있다면 직원 이름을 보여 줍니다.
+
+### 입력 Table 1 · DEPARTMENT
+
+| DEPT_ID | DEPT_NAME |
+| --- | --- |
+| 10 | 개발 |
+| 20 | 인사 |
+| 30 | 영업 |
+
+### 입력 Table 2 · EMPLOYEE
+
+| EMP_NAME | DEPT_ID |
+| --- | --- |
+| 직원1 | 10 |
+| 직원2 | 10 |
+| 직원3 | 20 |
+
+```sql
+SELECT
+    D.DEPT_NAME,
+    E.EMP_NAME
+FROM DEPARTMENT D
+LEFT JOIN EMPLOYEE E
+    ON D.DEPT_ID = E.DEPT_ID;
+```
+
+### 결과 Table
+
+| DEPT_NAME | EMP_NAME |
+| --- | --- |
+| 개발 | 직원1 |
+| 개발 | 직원2 |
+| 인사 | 직원3 |
+| 영업 | NULL |
+
+개발 부서는 직원이 두 명이라 두 Row가 만들어집니다.
+
+영업 부서는 직원이 없어도 왼쪽 Row이므로 남습니다.
+
+## 실제 문제 풀이 4 · 조건이 있는 LEFT JOIN
+
+모든 부서를 유지하면서 급여 3000 이상 직원만 연결합니다.
+
+### 입력 Table 1 · DEPARTMENT
+
+| DEPT_ID | DEPT_NAME |
+| --- | --- |
+| 10 | 개발 |
+| 20 | 인사 |
+| 30 | 영업 |
+
+### 입력 Table 2 · EMPLOYEE
+
+| EMP_NAME | DEPT_ID | SALARY |
+| --- | --- | ---: |
+| 직원1 | 10 | 3500 |
+| 직원2 | 10 | 2500 |
+| 직원3 | 20 | 3200 |
+
+<pre><code class="language-sql">SELECT
+    D.DEPT_NAME,
+    E.EMP_NAME,
+    E.SALARY
+FROM DEPARTMENT D
+LEFT JOIN EMPLOYEE E
+    <span style="background-color:#DFF5E8;">ON D.DEPT_ID = E.DEPT_ID
+   AND E.SALARY &gt;= 3000</span>;</code></pre>
+
+### 결과 Table
+
+| DEPT_NAME | EMP_NAME | SALARY |
+| --- | --- | ---: |
+| 개발 | 직원1 | 3500 |
+| 인사 | 직원3 | 3200 |
+| 영업 | NULL | NULL |
+
+급여 조건을 ON에 두었기 때문에 영업 부서는 유지됩니다.
+
+## LEFT JOIN 문제 풀이 순서
+
+LEFT JOIN 문제에서는 먼저 무엇을 반드시 남길지 찾습니다.
+
+### 문제 상황
+
+모든 고객을 조회하고 주문이 있다면 주문 정보도 보여 주라고 합니다.
+
+### 입력 Table 1 · CUSTOMER
+
+| CUSTOMER_ID | NAME |
+| --- | --- |
+| 101 | 고객1 |
+| 102 | 고객2 |
+| 103 | 고객3 |
+
+### 입력 Table 2 · ORDERS
+
+| ORDER_ID | CUSTOMER_ID |
+| --- | --- |
+| 1 | 101 |
+| 2 | 102 |
+
+첫째, 반드시 남길 대상을 찾습니다.
+
+```text
+모든 고객
+→ CUSTOMER를 왼쪽에 둔다
+```
+
+둘째, 연결 Column을 찾습니다.
+
+```text
+CUSTOMER.CUSTOMER_ID
+=
+ORDERS.CUSTOMER_ID
+```
+
+셋째, Query를 작성합니다.
+
+```sql
+SELECT
+    C.NAME,
+    O.ORDER_ID
+FROM CUSTOMER C
+LEFT JOIN ORDERS O
+    ON C.CUSTOMER_ID = O.CUSTOMER_ID;
+```
+
+### 결과 Table
+
+| NAME | ORDER_ID |
+| --- | --- |
+| 고객1 | 1 |
+| 고객2 | 2 |
+| 고객3 | NULL |
+
+핵심은 문제 문장의 `모든 고객`입니다.
 
 ## 잘 놓치는 핵심
 
-### 1. 왼쪽 행을 보존해도 결과 행 수는 늘어날 수 있다
+### 1. 왼쪽 Table은 모두 유지된다
 
-연결값 10이 왼쪽에 2행, 오른쪽에 3행 있다면 2 × 3 = 6행이 나옵니다.
+#### 입력 Table 1
 
-같은 등호 조건에서 값별 행 수는 다음처럼 셉니다.
+| A.ID | A.NAME |
+| --- | --- |
+| 1 | 가 |
+| 2 | 나 |
 
-| 연결값 | 왼쪽 행 수 | 오른쪽 행 수 | 결과 행 수 |
-| --- | --- | --- | --- |
-| 10 | 2 | 3 | 6 |
-| 20 | 1 | 1 | 1 |
-| 30 | 2 | 0 | 2 |
-| 합계 | 5 | 4 | 9 |
+#### 입력 Table 2
 
-**짝이 있으면 곱하고, 짝이 없으면 왼쪽 행 수를 그대로 남깁니다.** 결과는 6 + 1 + 2 = 9행입니다.
-
-### 2. 조회 조건을 추가하면 왼쪽 행이 사라질 수 있다
-
-다음은 **모든 직원을 남기고 개발부 정보만 연결**합니다.
+| B.ID | B.VALUE |
+| --- | --- |
+| 1 | 하나 |
 
 ```sql
-SELECT 직원.이름, 부서.부서명
-FROM 직원
-LEFT JOIN 부서
-ON 직원.부서번호 = 부서.부서번호
-AND 부서.부서명 = '개발부';
+SELECT
+    A.NAME,
+    B.VALUE
+FROM A
+LEFT JOIN B
+    ON A.ID = B.ID;
 ```
 
-반면 다음은 **연결한 결과에서 개발부인 행만 남깁니다.**
+#### 결과 Table
+
+| NAME | VALUE |
+| --- | --- |
+| 가 | 하나 |
+| 나 | NULL |
+
+A의 `ID = 2`는 연결 상대가 없어도 남습니다.
+
+### 2. 오른쪽에만 있는 Row는 제외된다
+
+#### 입력 Table 1
+
+| A.ID |
+| --- |
+| 1 |
+
+#### 입력 Table 2
+
+| B.ID |
+| --- |
+| 1 |
+| 2 |
 
 ```sql
-SELECT 직원.이름, 부서.부서명
-FROM 직원
-LEFT JOIN 부서
-ON 직원.부서번호 = 부서.부서번호
-WHERE 부서.부서명 = '개발부';
+SELECT
+    A.ID AS A_ID,
+    B.ID AS B_ID
+FROM A
+LEFT JOIN B
+    ON A.ID = B.ID;
 ```
 
-| 이름 | 개발부 조건을 ON에 지정 | 개발부 조건을 WHERE에 지정 |
-| --- | --- | --- |
-| 민수 | 개발부로 연결 | 개발부로 연결 |
-| 지연 | 개발부로 연결 | 개발부로 연결 |
-| 현우 | 남음 — 부서명은 NULL | 제외 |
-| 수진 | 남음 — 부서명은 NULL | 제외 |
-| 도윤 | 남음 — 부서명은 NULL | 제외 |
-| 결과 행 수 | 5행 | 2행 |
+#### 결과 Table
 
-현우는 실제 부서가 있지만 첫 번째 조회의 연결 조건을 만족하지 못합니다. 그래서 영업부 정보가 붙지 않고 결측값으로 채워집니다.
+| A_ID | B_ID |
+| --- | --- |
+| 1 | 1 |
 
-<blockquote class="prompt-warning">
-<p>왼쪽 외부 조인은 조인 단계에서 왼쪽 행을 보존합니다. 이후 조회 조건까지 적용한 최종 결과에서 모든 왼쪽 행이 남는다는 보장은 없습니다.</p>
-</blockquote>
+`B.ID = 2`는 오른쪽에만 있으므로 나오지 않습니다.
 
-### 3. 연결 실패를 찾을 때는 오른쪽 기본키를 확인한다
+### 3. 연결 실패 시 오른쪽 값이 NULL이 된다
 
-다음 예시에서 부서번호는 부서 표의 기본키이며, 실제 부서 행에서는 결측일 수 없습니다.
+#### 입력 Table 1
+
+| CUSTOMER_ID | NAME |
+| --- | --- |
+| 1 | 고객1 |
+| 2 | 고객2 |
+
+#### 입력 Table 2
+
+| ORDER_ID | CUSTOMER_ID |
+| --- | --- |
+| 10 | 1 |
 
 ```sql
-SELECT 직원.이름
-FROM 직원
-LEFT JOIN 부서
-ON 직원.부서번호 = 부서.부서번호
-WHERE 부서.부서번호 IS NULL;
+SELECT
+    C.NAME,
+    O.ORDER_ID
+FROM CUSTOMER C
+LEFT JOIN ORDERS O
+    ON C.CUSTOMER_ID = O.CUSTOMER_ID;
 ```
 
-결과는 **수진과 도윤**입니다. 부서명 대신 기본키를 검사하므로, 원래 부서명만 결측인 실제 부서 행을 연결 실패로 오해하지 않습니다.
+#### 결과 Table
 
-이 조회는 “부서번호가 결측인 직원”보다 넓은 의미입니다. **조건에 맞는 부서 행을 찾지 못한 직원**을 찾습니다.
+| NAME | ORDER_ID |
+| --- | --- |
+| 고객1 | 10 |
+| 고객2 | NULL |
 
-### 4. 원래 결측인 값과 조인으로 채운 결측값을 구분한다
+### 4. WHERE 때문에 왼쪽 Row가 사라질 수 있다
 
-실제 부서 행에 부서명만 결측일 수 있다면, 부서명의 결측만 보고 연결 실패라고 판단할 수 없습니다.
+#### 입력 Table 1
 
-| 상황 | 오른쪽 부서번호 | 오른쪽 부서명 | 해석 |
-| --- | --- | --- | --- |
-| 부서 연결 성공, 이름도 있음 | 실제 번호 | 실제 이름 | 정상 연결 |
-| 부서 연결 성공, 이름만 결측 | 실제 번호 | NULL | 연결된 부서의 이름이 결측 |
-| 부서 연결 실패 | NULL | NULL | 오른쪽 열을 결측값으로 채움 |
+| DEPT_ID | DEPT_NAME |
+| --- | --- |
+| 10 | 개발 |
+| 20 | 인사 |
 
-`NULL`은 0이나 빈 문자열이 아닙니다. 결측 여부는 `= NULL`이 아니라 `IS NULL`로 확인합니다.
+#### 입력 Table 2
 
-### 5. 집계할 때 전체 행 수와 연결된 행 수를 구분한다
+| EMP_NAME | DEPT_ID | SALARY |
+| --- | --- | ---: |
+| 직원1 | 10 | 3500 |
 
-직원이 없는 부서도 집계하려면 부서를 왼쪽에 놓습니다. 직원번호는 직원 표의 기본키라고 가정합니다.
+다음 Query를 봅니다.
 
 ```sql
-SELECT 부서.부서명, COUNT(직원.직원번호) AS 직원수
-FROM 부서
-LEFT JOIN 직원
-ON 부서.부서번호 = 직원.부서번호
-GROUP BY 부서.부서번호, 부서.부서명;
+SELECT
+    D.DEPT_NAME,
+    E.EMP_NAME
+FROM DEPARTMENT D
+LEFT JOIN EMPLOYEE E
+    ON D.DEPT_ID = E.DEPT_ID
+WHERE E.SALARY >= 3000;
 ```
 
-| 부서명 | COUNT(직원.직원번호) | COUNT(*)를 사용했다면 |
-| --- | --- | --- |
-| 개발부 | 2 | 2 |
-| 영업부 | 1 | 1 |
-| 인사부 | 0 | 1 |
+#### 결과 Table
 
-`COUNT(*)`는 결측값을 채워 남긴 행도 셉니다. `COUNT(직원.직원번호)`는 직원번호가 결측인 행을 세지 않으므로 인사부의 직원 수가 0이 됩니다.
+| DEPT_NAME | EMP_NAME |
+| --- | --- |
+| 개발 | 직원1 |
+
+인사는 LEFT JOIN 직후에는 존재하지만 WHERE에서 제거됩니다.
+
+### 5. 연결되지 않은 Row를 찾을 때 자주 사용한다
+
+#### 입력 Table 1
+
+| CUSTOMER_ID | NAME |
+| --- | --- |
+| 1 | 고객1 |
+| 2 | 고객2 |
+
+#### 입력 Table 2
+
+| ORDER_ID | CUSTOMER_ID |
+| --- | --- |
+| 10 | 1 |
+
+```sql
+SELECT
+    C.NAME
+FROM CUSTOMER C
+LEFT JOIN ORDERS O
+    ON C.CUSTOMER_ID = O.CUSTOMER_ID
+WHERE O.ORDER_ID IS NULL;
+```
+
+#### 결과 Table
+
+| NAME |
+| --- |
+| 고객2 |
+
+```text
+LEFT JOIN
++
+오른쪽 Key IS NULL
+
+→ 연결되지 않은 왼쪽 Row
+```
 
 ## 시험·면접
 
-### 핵심 암기 포인트
+### 핵심 암기
 
-- 보존할 표를 왼쪽에 놓습니다.
-- 짝이 없으면 오른쪽 열을 결측값으로 채웁니다.
-- 짝이 여러 개면 모든 조합이 나옵니다.
-- 오른쪽에만 있는 미연결 행은 남기지 않습니다.
-- 연결 조건과 조회 조건의 위치를 바꾸면 결과가 달라질 수 있습니다.
-- 연결 실패는 오른쪽의 결측 불가 열로 확인합니다.
-
-### 면접에서 바로 말하기
-
-“왼쪽 외부 조인은 왼쪽 표의 행을 모두 보존하면서 조건에 맞는 오른쪽 행을 연결합니다. 짝이 없으면 오른쪽 열을 결측값으로 채웁니다. 다만 이후 조회 조건을 적용하면 보존했던 행도 걸러질 수 있습니다.”
-
-### 시험 함정 정리
-
-| 잘못된 설명 | 올바른 판단 |
-| --- | --- |
-| 결과 행 수는 항상 왼쪽 표와 같다 | 여러 짝이 있으면 더 많아짐 |
-| 양쪽 표의 모든 행을 남긴다 | 왼쪽 행만 모두 보존 |
-| 결측값이 나오면 반드시 연결 실패다 | 실제 연결된 열의 원래 값도 결측일 수 있음 |
-| 조건을 어디에 적어도 결과는 같다 | 외부 조인은 조건 위치에 따라 달라질 수 있음 |
-
-## 예시로 한 바퀴 — 부서가 연결되지 않는 직원 찾기
-
-**첫째, 모든 직원을 보존합니다.** 직원 표를 왼쪽에 놓습니다.
-
-**둘째, 부서번호가 같은 부서를 연결합니다.** 수진과 도윤에게는 연결할 부서 행이 없습니다.
-
-**셋째, 오른쪽 기본키의 결측 여부를 확인합니다.** 연결에 실패한 두 직원만 남깁니다.
-
-```sql
-SELECT 직원.이름, 직원.부서번호
-FROM 직원
-LEFT OUTER JOIN 부서
-ON 직원.부서번호 = 부서.부서번호
-WHERE 부서.부서번호 IS NULL
-ORDER BY 직원.직원번호;
+```text
+LEFT JOIN
+→ 왼쪽 전체 유지
 ```
 
-| 이름 | 부서번호 |
-| --- | --- |
-| 수진 | NULL |
-| 도윤 | 40 |
+```text
+오른쪽 연결 성공
+→ 값 연결
+```
 
-수진은 부서번호가 없고, 도윤은 부서 표에 없는 번호를 가지고 있습니다. 원인은 다르지만 둘 다 연결할 부서 행을 찾지 못했습니다.
+```text
+오른쪽 연결 실패
+→ 오른쪽 Column NULL
+```
+
+```text
+오른쪽에만 존재
+→ 결과 제외
+```
+
+```text
+LEFT JOIN + 오른쪽 Key IS NULL
+→ 연결되지 않은 왼쪽 Row 찾기
+```
+
+### 시험용 한 장 예시
+
+#### 입력 Table 1 · A
+
+| ID | NAME |
+| --- | --- |
+| 1 | 가 |
+| 2 | 나 |
+| 4 | 라 |
+
+#### 입력 Table 2 · B
+
+| ID | VALUE |
+| --- | --- |
+| 1 | 하나 |
+| 2 | 둘 |
+| 3 | 셋 |
+
+```sql
+SELECT
+    A.ID,
+    A.NAME,
+    B.VALUE
+FROM A
+LEFT JOIN B
+    ON A.ID = B.ID;
+```
+
+#### 결과 Table
+
+| ID | NAME | VALUE |
+| --- | --- | --- |
+| 1 | 가 | 하나 |
+| 2 | 나 | 둘 |
+| 4 | 라 | NULL |
+
+왼쪽 A의 `1`, `2`, `4`가 모두 남습니다.
+
+오른쪽에만 있는 `B.ID = 3`은 나오지 않습니다.
+
+### 자주 나오는 문장
+
+<mark>LEFT JOIN은 왼쪽 Table의 모든 Row를 유지합니다.</mark>
+
+<mark>오른쪽 Table에 연결되는 Row가 없으면 오른쪽 Column이 NULL이 될 수 있습니다.</mark>
+
+<mark>LEFT JOIN과 LEFT OUTER JOIN은 일반적으로 같은 의미입니다.</mark>
+
+<mark>LEFT JOIN 뒤 WHERE 조건에 따라 왼쪽 Row가 최종 결과에서 제거될 수 있습니다.</mark>
+
+### 시험 함정 1 · LEFT JOIN은 양쪽 전체가 아니다
+
+#### 입력 Table
+
+| A.ID |
+| --- |
+| 1 |
+
+| B.ID |
+| --- |
+| 1 |
+| 2 |
+
+```sql
+SELECT
+    A.ID AS A_ID,
+    B.ID AS B_ID
+FROM A
+LEFT JOIN B
+    ON A.ID = B.ID;
+```
+
+#### 결과 Table
+
+| A_ID | B_ID |
+| --- | --- |
+| 1 | 1 |
+
+`B.ID = 2`는 오른쪽에만 있으므로 나오지 않습니다.
+
+### 시험 함정 2 · WHERE가 LEFT JOIN 효과를 약하게 만들 수 있다
+
+#### 입력 Table
+
+| DEPT_ID | DEPT_NAME |
+| --- | --- |
+| 10 | 개발 |
+| 20 | 인사 |
+
+| EMP_NAME | DEPT_ID | SALARY |
+| --- | --- | ---: |
+| 직원1 | 10 | 3500 |
+
+```sql
+SELECT
+    D.DEPT_NAME,
+    E.EMP_NAME
+FROM DEPARTMENT D
+LEFT JOIN EMPLOYEE E
+    ON D.DEPT_ID = E.DEPT_ID
+WHERE E.SALARY >= 3000;
+```
+
+#### 결과 Table
+
+| DEPT_NAME | EMP_NAME |
+| --- | --- |
+| 개발 | 직원1 |
+
+인사는 LEFT JOIN 직후에는 존재하지만 WHERE 조건에서 제거됩니다.
+
+### 면접 짧은 답변
+
+LEFT JOIN은 왼쪽 Table의 모든 Row를 유지하면서 오른쪽 Table에서 JOIN 조건을 만족하는 Row를 연결하는 방식입니다. 오른쪽에 연결되는 Row가 없으면 오른쪽 Column은 NULL이 되며, 연결되지 않은 데이터를 찾을 때 `LEFT JOIN`과 `IS NULL` 조합을 자주 사용합니다.
 
 ## 객관식 문제
 
-### 문제 1. 왼쪽 외부 조인의 설명으로 옳은 것은?
+### 문제 1 · 기본 LEFT JOIN
 
-① 양쪽에서 짝이 있는 행만 남긴다.  
-② 왼쪽 행을 보존하고 짝이 없으면 오른쪽 열을 결측값으로 채운다.  
-③ 오른쪽의 모든 행을 무조건 남긴다.  
-④ 두 표의 모든 행 조합을 조건 없이 만든다.
+#### EMPLOYEE
+
+| EMP_NAME | DEPT_ID |
+| --- | --- |
+| 직원1 | 10 |
+| 직원2 | NULL |
+
+#### DEPARTMENT
+
+| DEPT_ID | DEPT_NAME |
+| --- | --- |
+| 10 | 개발 |
+| 20 | 인사 |
+
+다음 Query의 결과는 무엇인가?
+
+```sql
+SELECT
+    E.EMP_NAME,
+    D.DEPT_NAME
+FROM EMPLOYEE E
+LEFT JOIN DEPARTMENT D
+    ON E.DEPT_ID = D.DEPT_ID;
+```
+
+① 직원1·개발만 나온다.  
+② 직원1·개발, 직원2·NULL이 나온다.  
+③ 직원1·개발, NULL·인사가 나온다.  
+④ 직원1·개발, 직원2·NULL, NULL·인사가 모두 나온다.
 
 <details>
-<summary>정답과 해설</summary>
+<summary>정답</summary>
 
-**②**. 왼쪽은 보존 대상입니다. 오른쪽에만 있는 미연결 행은 포함하지 않습니다.
+②
+
+왼쪽 EMPLOYEE의 Row는 모두 남습니다.
+
+| EMP_NAME | DEPT_NAME |
+| --- | --- |
+| 직원1 | 개발 |
+| 직원2 | NULL |
+
+직원2는 연결 부서가 없으므로 오른쪽 값이 NULL입니다.
 
 </details>
 
-### 문제 2. 기본 직원·부서 표를 직원 기준으로 왼쪽 외부 조인하면?
+### 문제 2 · 오른쪽에만 있는 Row
 
-부서번호의 등호 조건을 사용하고 추가 조회 조건은 없습니다.
+#### A
 
-① 3행  
-② 4행  
-③ 5행  
-④ 6행
+| ID | NAME |
+| --- | --- |
+| 1 | 가 |
+
+#### B
+
+| ID | VALUE |
+| --- | --- |
+| 1 | 하나 |
+| 2 | 둘 |
+
+다음 Query의 결과는 무엇인가?
+
+```sql
+SELECT
+    A.NAME,
+    B.VALUE
+FROM A
+LEFT JOIN B
+    ON A.ID = B.ID;
+```
+
+① 가·하나만 나온다.  
+② 가·하나, 가·둘이 나온다.  
+③ NULL·둘만 나온다.  
+④ 두 Row 모두 NULL이 나온다.
 
 <details>
-<summary>정답과 해설</summary>
+<summary>정답</summary>
 
-**③**. 연결된 직원 3행과 연결되지 않은 수진·도윤 2행을 남깁니다. 인사부는 추가하지 않습니다.
+①
+
+오른쪽에만 있는 `B.ID = 2`는 LEFT JOIN 결과에 포함되지 않습니다.
+
+| NAME | VALUE |
+| --- | --- |
+| 가 | 하나 |
 
 </details>
 
-### 문제 3. 왼쪽 한 행에 오른쪽 짝이 3개라면?
+### 문제 3 · 주문이 없는 고객
 
-추가 조회 조건과 중복 제거는 없습니다.
+#### CUSTOMER
 
-① 0행  
-② 1행  
-③ 2행  
-④ 3행
+| CUSTOMER_ID | NAME |
+| --- | --- |
+| 1 | 고객1 |
+| 2 | 고객2 |
+| 3 | 고객3 |
+
+#### ORDERS
+
+| ORDER_ID | CUSTOMER_ID |
+| --- | --- |
+| 10 | 1 |
+| 11 | 2 |
+
+다음 Query의 결과는 무엇인가?
+
+```sql
+SELECT
+    C.NAME
+FROM CUSTOMER C
+LEFT JOIN ORDERS O
+    ON C.CUSTOMER_ID = O.CUSTOMER_ID
+WHERE O.ORDER_ID IS NULL;
+```
+
+① 고객1  
+② 고객2  
+③ 고객3  
+④ 고객1, 고객2
 
 <details>
-<summary>정답과 해설</summary>
+<summary>정답</summary>
 
-**④**. 세 짝과 각각 연결된 결과가 나옵니다. 짝이 이미 있으므로 결측값을 채운 별도 행은 추가하지 않습니다.
+③
+
+LEFT JOIN 결과에서 주문이 없는 고객3의 `ORDER_ID`만 NULL입니다.
+
+| NAME |
+| --- |
+| 고객3 |
 
 </details>
 
-### 문제 4. 기본 예시에서 개발부 조건을 ON에 추가하면 몇 행인가?
+### 문제 4 · LEFT JOIN과 WHERE
 
-직원을 왼쪽에 놓고 `AND 부서.부서명 = '개발부'`를 연결 조건에 추가합니다.
+#### DEPARTMENT
 
-① 2행  
-② 3행  
-③ 4행  
-④ 5행
+| DEPT_ID | DEPT_NAME |
+| --- | --- |
+| 10 | 개발 |
+| 20 | 인사 |
+| 30 | 영업 |
+
+#### EMPLOYEE
+
+| EMP_NAME | DEPT_ID | SALARY |
+| --- | --- | ---: |
+| 직원1 | 10 | 3500 |
+| 직원2 | 20 | 2500 |
+
+다음 Query의 결과는 무엇인가?
+
+```sql
+SELECT
+    D.DEPT_NAME,
+    E.EMP_NAME
+FROM DEPARTMENT D
+LEFT JOIN EMPLOYEE E
+    ON D.DEPT_ID = E.DEPT_ID
+WHERE E.SALARY >= 3000;
+```
+
+① 개발·직원1만 나온다.  
+② 개발·직원1, 인사·직원2가 나온다.  
+③ 개발·직원1, 영업·NULL이 나온다.  
+④ 개발·직원1, 인사·NULL, 영업·NULL이 나온다.
 
 <details>
-<summary>정답과 해설</summary>
+<summary>정답</summary>
 
-**④**. 모든 직원이 남습니다. 민수·지연만 개발부 정보가 연결되고 현우·수진·도윤의 오른쪽 열은 결측값으로 채워집니다.
+①
+
+개발의 직원1만 급여 조건을 만족합니다.
+
+인사의 직원2는 2500이라 제거됩니다.
+
+영업은 직원이 없어 SALARY가 NULL이므로 WHERE에서 제거됩니다.
+
+| DEPT_NAME | EMP_NAME |
+| --- | --- |
+| 개발 | 직원1 |
 
 </details>
 
-### 문제 5. 부서 연결에 실패한 직원을 찾는 적절한 조건은?
+### 문제 5 · ON에 조건을 넣은 경우
 
-직원 기준 왼쪽 외부 조인이고, 부서 표의 부서번호는 기본키입니다.
+#### DEPARTMENT
 
-① 부서.부서번호 = NULL  
-② 부서.부서번호 IS NULL  
-③ 직원.부서번호 = 0  
-④ 부서.부서명 = NULL
+| DEPT_ID | DEPT_NAME |
+| --- | --- |
+| 10 | 개발 |
+| 20 | 인사 |
+| 30 | 영업 |
+
+#### EMPLOYEE
+
+| EMP_NAME | DEPT_ID | SALARY |
+| --- | --- | ---: |
+| 직원1 | 10 | 3500 |
+| 직원2 | 20 | 2500 |
+
+다음 Query의 결과는 무엇인가?
+
+```sql
+SELECT
+    D.DEPT_NAME,
+    E.EMP_NAME
+FROM DEPARTMENT D
+LEFT JOIN EMPLOYEE E
+    ON D.DEPT_ID = E.DEPT_ID
+   AND E.SALARY >= 3000;
+```
+
+① 개발·직원1만 나온다.  
+② 개발·직원1, 인사·NULL, 영업·NULL이 나온다.  
+③ 개발·직원1, 인사·직원2가 나온다.  
+④ 영업만 나온다.
 
 <details>
-<summary>정답과 해설</summary>
+<summary>정답</summary>
 
-**②**. 실제 부서 행에서는 기본키가 결측일 수 없습니다. 결측 여부는 등호가 아니라 결측 검사 구문을 사용합니다.
+②
+
+급여 조건이 ON에 있으므로 오른쪽에서 연결할 직원을 제한합니다.
+
+왼쪽 DEPARTMENT의 개발, 인사, 영업은 모두 유지됩니다.
+
+| DEPT_NAME | EMP_NAME |
+| --- | --- |
+| 개발 | 직원1 |
+| 인사 | NULL |
+| 영업 | NULL |
 
 </details>
 
-### 문제 6. 부서별 직원 수를 집계할 때 인사부의 결과는?
+### 문제 6 · Table 순서
 
-부서 기준 왼쪽 외부 조인 후 부서별로 묶습니다. 인사부에는 직원이 없으며 직원번호는 기본키입니다.
+#### EMPLOYEE
 
-① COUNT(*)는 0, COUNT(직원.직원번호)는 0  
-② COUNT(*)는 0, COUNT(직원.직원번호)는 1  
-③ COUNT(*)는 1, COUNT(직원.직원번호)는 0  
-④ COUNT(*)는 1, COUNT(직원.직원번호)는 1
+| EMP_NAME | DEPT_ID |
+| --- | --- |
+| 직원1 | 10 |
+| 직원2 | NULL |
+
+#### DEPARTMENT
+
+| DEPT_ID | DEPT_NAME |
+| --- | --- |
+| 10 | 개발 |
+| 20 | 인사 |
+
+다음 Query의 결과는 무엇인가?
+
+```sql
+SELECT
+    E.EMP_NAME,
+    D.DEPT_NAME
+FROM DEPARTMENT D
+LEFT JOIN EMPLOYEE E
+    ON E.DEPT_ID = D.DEPT_ID;
+```
+
+① 직원1·개발, 직원2·NULL이 나온다.  
+② 직원1·개발, NULL·인사가 나온다.  
+③ 직원1·개발만 나온다.  
+④ 직원2·NULL만 나온다.
 
 <details>
-<summary>정답과 해설</summary>
+<summary>정답</summary>
 
-**③**. 결측값을 채운 한 행이 남아 전체 행 수는 1입니다. 직원번호는 결측이므로 직원번호를 세면 0입니다.
+②
+
+이번에는 DEPARTMENT가 왼쪽 Table입니다.
+
+따라서 개발과 인사가 모두 남습니다.
+
+| EMP_NAME | DEPT_NAME |
+| --- | --- |
+| 직원1 | 개발 |
+| NULL | 인사 |
+
+직원2는 EMPLOYEE에만 있고 연결되는 부서가 없으므로 결과에 나오지 않습니다.
 
 </details>
 
-## 참고 자료
+## LEFT JOIN 전체 요약
 
-- [공식 문서: 외부 조인과 조건 위치](https://www.postgresql.org/docs/current/queries-table-expressions.html)
-- [공식 문서: 비교 연산과 결측값](https://www.postgresql.org/docs/current/functions-comparison.html)
+마지막으로 가장 작은 예시로 정리합니다.
+
+### 입력 Table 1 · A
+
+| ID | NAME |
+| --- | --- |
+| 1 | 가 |
+| 2 | 나 |
+| 4 | 라 |
+
+### 입력 Table 2 · B
+
+| ID | VALUE |
+| --- | --- |
+| 1 | 하나 |
+| 2 | 둘 |
+| 3 | 셋 |
+
+<pre><code class="language-sql">SELECT
+    A.ID,
+    A.NAME,
+    B.VALUE
+FROM A
+<span style="background-color:#DFF5E8;">LEFT JOIN B
+    ON A.ID = B.ID</span>;</code></pre>
+
+### 결과 Table
+
+| ID | NAME | VALUE |
+| --- | --- | --- |
+| 1 | 가 | 하나 |
+| 2 | 나 | 둘 |
+| 4 | 라 | NULL |
+
+```text
+A.ID = 1
+→ 연결 성공
+→ 하나
+
+A.ID = 2
+→ 연결 성공
+→ 둘
+
+A.ID = 4
+→ 연결 실패
+→ A Row 유지
+→ B 값 NULL
+
+B.ID = 3
+→ 오른쪽에만 존재
+→ 결과 제외
+```
+
+<blockquote class="prompt-danger">
+<p>LEFT JOIN 문제는 무엇을 반드시 남겨야 하는지 먼저 찾고, 그 Table을 왼쪽에 둡니다.</p>
+</blockquote>
 
 ## 다음에 이을 글
 
-**오른쪽 외부 조인 — 오른쪽 행을 모두 남기는 방법**입니다.
+**RIGHT JOIN**입니다.
 
-표의 순서를 바꾸면 왼쪽 외부 조인과 어떻게 대응하는지, 결과에 남는 행을 기준으로 비교합니다.
+LEFT JOIN의 방향을 반대로 생각하여 오른쪽 Table의 모든 Row를 유지하는 구조를 실제 입력 Table과 결과 Table로 비교합니다.
