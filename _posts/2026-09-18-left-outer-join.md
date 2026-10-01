@@ -2,7 +2,7 @@
 title: LEFT JOIN · 레프트 조인
 date: 2026-09-18 21:40:00 +0900
 slug: left-join
-permalink: /posts/sql-left-outer-join/
+permalink: /posts/left-outer-join/
 categories: [CS, 데이터베이스]
 tags: [LEFTJOIN, 레프트조인, OUTERJOIN, JOIN, SQL, 관계형데이터베이스, NULL, 정보처리기사, NCS]
 math: true
