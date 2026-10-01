@@ -2,7 +2,7 @@
 title: JOIN · 조인의 개념
 date: 2026-09-18 21:30:00 +0900
 slug: join-concept
-permalink: /posts/join-concept/
+permalink: /posts/sql-join-concept/
 categories: [CS, 데이터베이스]
 tags: [JOIN, 조인, INNERJOIN, OUTERJOIN, LEFTJOIN, RIGHTJOIN, FULLJOIN, SELFJOIN, CROSSJOIN, SQL, 정보처리기사, NCS]
 math: true
