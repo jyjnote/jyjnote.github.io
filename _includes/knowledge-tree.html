@@ -199,6 +199,32 @@
   font-size:1.03rem;
 }
 
+/* 코딩 테스트: 긴 파일명과 빈 폴더 안내 */
+.truthmap .troot-file{
+  align-items:flex-start;
+}
+
+.truthmap .troot-file-label{
+  min-width:0;
+  overflow-wrap:anywhere;
+}
+
+.truthmap .troot-file-kind{
+  margin-left:auto;
+  flex:0 0 auto;
+  font-size:.76rem;
+  white-space:nowrap;
+  color:var(--text-muted-color,#888);
+}
+
+.truthmap .troot-empty{
+  display:block;
+  padding:.42rem .65rem;
+  font-size:.9rem;
+  color:var(--text-muted-color,#888);
+}
+
+
 @media (max-width: 576px){
   .truthmap{
     padding:1rem .65rem;
@@ -1648,9 +1674,6 @@
                 </ul>
               </li>
           
-            </ul>
-          </li>
-
               <li class="troot-item">
                 <button class="troot-folder" type="button" aria-expanded="false">
                   <span class="troot-mark"></span><span>사전학습 모델</span>
@@ -1823,7 +1846,97 @@
       </li>
 
       <!-- =========================================================
-           5. 실전
+           5. 코딩 테스트
+           원본 파일: coding-test/sql/, coding-test/algorithm/
+      ========================================================== -->
+      {% assign ct_static_files = site.static_files | sort: 'path' %}
+      {% assign ct_pages = site.pages | sort: 'path' %}
+      {% assign ct_tracks = 'sql,algorithm' | split: ',' %}
+
+      <li class="troot-item" id="coding-test">
+        <button class="troot-folder" type="button" aria-expanded="false">
+          <span class="troot-mark"></span>
+          <span>코딩 테스트</span>
+          <em>SQL · 알고리즘</em>
+        </button>
+
+        <ul class="troot-children">
+          {% for ct_track in ct_tracks %}
+            {% assign ct_prefix = '/coding-test/' | append: ct_track | append: '/' %}
+            {% assign ct_prefix_size = ct_prefix | size %}
+            {% assign ct_count = 0 %}
+
+            {% if ct_track == 'sql' %}
+              {% assign ct_label = 'SQL' %}
+              {% assign ct_extension = '.sql' %}
+            {% else %}
+              {% assign ct_label = '알고리즘' %}
+              {% assign ct_extension = '.py' %}
+            {% endif %}
+
+            {% capture ct_items %}
+              {% if ct_track == 'algorithm' %}
+                {% for ct_page in ct_pages %}
+                  {% assign ct_page_path = ct_page.path | prepend: '/' | replace: '//', '/' %}
+                  {% assign ct_page_prefix = ct_page_path | slice: 0, ct_prefix_size %}
+                  {% assign ct_page_extension = ct_page_path | split: '.' | last | downcase %}
+
+                  {% if ct_page_prefix == ct_prefix and ct_page.published != false %}
+                    {% if ct_page_extension == 'md' or ct_page_extension == 'markdown' %}
+                      {% assign ct_count = ct_count | plus: 1 %}
+                      <li class="troot-item">
+                        <a class="troot-link troot-file" href="{{ ct_page.url | relative_url | uri_escape | escape }}">
+                          <span class="troot-file-label">{{ ct_page.title | default: ct_page.name | escape }}</span>
+                          <span class="troot-file-kind">풀이 글</span>
+                        </a>
+                      </li>
+                    {% endif %}
+                  {% endif %}
+                {% endfor %}
+              {% endif %}
+
+              {% for ct_file in ct_static_files %}
+                {% assign ct_file_prefix = ct_file.path | slice: 0, ct_prefix_size %}
+                {% assign ct_file_extension = ct_file.extname | downcase %}
+
+                {% if ct_file_prefix == ct_prefix and ct_file_extension == ct_extension %}
+                  {% assign ct_count = ct_count | plus: 1 %}
+                  {% assign ct_file_label = ct_file.path | remove_first: ct_prefix %}
+                  {% assign ct_file_url = ct_file.path | relative_url | url_encode | replace: '+', '%20' | replace: '%2F', '/' %}
+                  <li class="troot-item">
+                    <a class="troot-link troot-file" href="{{ ct_file_url | escape }}" download="{{ ct_file.name | escape }}">
+                      <span class="troot-file-label">{{ ct_file_label | escape }}</span>
+                      <span class="troot-file-kind">내려받기</span>
+                    </a>
+                  </li>
+                {% endif %}
+              {% endfor %}
+            {% endcapture %}
+
+            <li class="troot-item">
+              <button class="troot-folder" type="button" aria-expanded="false">
+                <span class="troot-mark"></span>
+                <span>{{ ct_label }}</span>
+                <em>{{ ct_count }}개</em>
+              </button>
+
+              <ul class="troot-children">
+                {% if ct_count > 0 %}
+                  {{ ct_items }}
+                {% else %}
+                  <li class="troot-item">
+                    <span class="troot-empty">아직 등록된 파일이 없습니다.</span>
+                  </li>
+                {% endif %}
+              </ul>
+            </li>
+          {% endfor %}
+        </ul>
+      </li>
+
+
+      <!-- =========================================================
+           6. 실전
       ========================================================== -->
       <li class="troot-item">
         <button class="troot-folder" type="button" aria-expanded="false">
@@ -1875,7 +1988,6 @@
             <ul class="troot-children">
               <li class="troot-item"><a class="troot-link" href="#">포트폴리오</a></li>
               <li class="troot-item"><a class="troot-link" href="#">기술면접</a></li>
-              <li class="troot-item"><a class="troot-link" href="#">코딩테스트</a></li>
             </ul>
           </li>
 
