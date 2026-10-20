@@ -56,7 +56,7 @@ math: true
 
 표는 각 도구의 계약을 비교한 것입니다. 특히 자원 정리의 실제 행동은 해당 컨텍스트 관리자가, 타입 오류의 정적 진단은 타입 검사 도구가 담당합니다.[^compound][^json][^import][^venv][^typing]
 
-<a id="part-20"></a>
+<span id="part-20"></span>
 
 ## 20부. 예외와 오류 처리
 
@@ -320,7 +320,7 @@ print(위험한반환())  # 출력: 덮어쓴 결과
 
 </details>
 
-<a id="part-21"></a>
+<span id="part-21"></span>
 
 ## 21부. 컨텍스트 관리자와 자원 관리
 
@@ -545,7 +545,7 @@ asyncio.run(실행())
 
 </details>
 
-<a id="part-22"></a>
+<span id="part-22"></span>
 
 ## 22부. 파일·경로·직렬화
 
@@ -814,7 +814,7 @@ print(복원[0] is 공유)     # 출력: False
 
 </details>
 
-<a id="part-23"></a>
+<span id="part-23"></span>
 
 ## 23부. 모듈·패키지·가져오기 구조
 
@@ -1052,7 +1052,7 @@ print(모듈.isqrt(81))  # 출력: 9
 
 </details>
 
-<a id="part-24"></a>
+<span id="part-24"></span>
 
 ## 24부. 가상환경·의존성·배포
 
@@ -1289,7 +1289,7 @@ python -m build
 
 </details>
 
-<a id="part-25"></a>
+<span id="part-25"></span>
 
 ## 25부. 타입 힌트와 점진적 타입 검사
 
