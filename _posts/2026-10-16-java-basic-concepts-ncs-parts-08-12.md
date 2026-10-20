@@ -71,7 +71,7 @@ math: true
 | [예시로 한 바퀴](#walkthrough) | 통합 예제 | 읽기·검증·저장·가공을 연결하는가? |
 | [객관식 문제](#questions) | 25문제 | 모든 선택지의 근거를 설명하는가? |
 
-<a id="part-8"></a>
+<span id="part-8"></span>
 
 ## 8부. 문자열·숫자·날짜·공통 유틸리티
 
@@ -447,7 +447,7 @@ true
 
 </details>
 
-<a id="part-9"></a>
+<span id="part-9"></span>
 
 ## 9부. 컬렉션과 자료구조
 
@@ -937,7 +937,7 @@ System.out.println(역순);
 
 </details>
 
-<a id="part-10"></a>
+<span id="part-10"></span>
 
 ## 10부. 람다·함수형 인터페이스·스트림
 
@@ -1389,7 +1389,7 @@ true
 
 </details>
 
-<a id="part-11"></a>
+<span id="part-11"></span>
 
 ## 11부. 예외·자원 관리·입출력
 
@@ -1884,7 +1884,7 @@ try (GZIPInputStream 해제 = new GZIPInputStream(
 
 </details>
 
-<a id="part-12"></a>
+<span id="part-12"></span>
 
 ## 12부. 네트워크·데이터베이스·보안·운영체제 연동
 
@@ -2276,7 +2276,7 @@ true
 
 </details>
 
-<a id="pitfalls"></a>
+<span id="pitfalls"></span>
 
 ## 잘 놓치는 핵심
 
@@ -2347,7 +2347,7 @@ true
 
 표현을 바꾸거나 크기를 줄이는 것과, 비밀을 보호하고 위조를 막는 것은 목적이 다릅니다. 신뢰할 수 없는 직렬화·문서·압축 입력은 크기와 해석 범위를 제한합니다.[^base64][^zip][^crypto][^securecoding]
 
-<a id="exam"></a>
+<span id="exam"></span>
 
 ## 시험·면접
 
@@ -2403,7 +2403,7 @@ true
 
 기관이 제시한 실제 전공 범위가 있으면 이 구분보다 해당 범위를 우선합니다.
 
-<a id="walkthrough"></a>
+<span id="walkthrough"></span>
 
 ## 예시로 한 바퀴
 
@@ -2501,7 +2501,7 @@ public class Main {
 
 `합격자`에 요소를 추가해야 한다면 수집 방식을 바꿔야 합니다. 빈 자료의 평균을 0으로 정한 것은 **이 예제의 선택**이며, 실제 업무에서는 결과 없음으로 유지하는 것이 더 적절할 수도 있습니다.
 
-<a id="questions"></a>
+<span id="questions"></span>
 
 ## 객관식 문제
 
