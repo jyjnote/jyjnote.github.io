@@ -62,7 +62,7 @@ math: true
 | [객관식 문제](#questions) | 20문제 | 네 선택지의 판단 근거를 설명하는가? |
 | [전체 시리즈 마무리](#series-review) | 1~18부 연결 | 문법에서 운영까지 하나의 흐름으로 설명하는가? |
 
-<a id="part-17"></a>
+<span id="part-17"></span>
 
 ## 17부. 개발 도구·빌드·테스트·배포·진단
 
@@ -994,7 +994,7 @@ jdeprscan --release 21 app.jar
 
 **업그레이드 확인 순서:** 실행 자바 → 컴파일 대상 → 빌드 도구·플러그인 → 외부 의존성 → 접근 제한 → 테스트 → 대표 부하에서 실행입니다.
 
-<a id="part-18"></a>
+<span id="part-18"></span>
 
 ## 18부. 전문 표준 기능과 자바 생태계 확장
 
@@ -1710,7 +1710,7 @@ public class Main {
 
 **정리의 기준은 이름 암기보다 역할·경계·호환성입니다.**
 
-<a id="pitfalls"></a>
+<span id="pitfalls"></span>
 
 ## 잘 놓치는 핵심
 
@@ -1786,7 +1786,7 @@ public class Main {
 
 `javax`라는 이름만으로 기업용 구형 기능이라고 단정하지 않습니다. 자바 문법을 쓴다는 이유로 안드로이드와 일반 자바 서버의 실행 구조를 같다고 보지도 않습니다.[^modules][^android]
 
-<a id="exam"></a>
+<span id="exam"></span>
 
 ## 시험·면접
 
@@ -1838,7 +1838,7 @@ public class Main {
 
 **두 번째 회독:** 세부 옵션, 재현 가능한 빌드, 모듈 이미지, 클래스 데이터 공유, 데스크톱·원격 호출·표준 모듈 지도를 보충합니다.
 
-<a id="walkthrough"></a>
+<span id="walkthrough"></span>
 
 ## 예시로 한 바퀴
 
@@ -2114,7 +2114,7 @@ jlink --add-modules java.base --output score-runtime
 
 **확장할 때의 질문:** 여러 스레드가 저장하면 안전한가, 프로세스 종료 후 자료가 남는가, 저장 실패 시 결과 처리는 어떻게 하는가, 설정 변경을 언제 반영하는가를 따로 설계해야 합니다.
 
-<a id="questions"></a>
+<span id="questions"></span>
 
 ## 객관식 문제
 
@@ -2690,7 +2690,7 @@ public class Main {
 
 따라서 이 글의 검사를 **윈도우 실행, 스프링 서버 구동, 실제 데이터베이스 트랜잭션, 운영 환경 성능까지 검증한 결과로 해석하지 않습니다.** 운영체제별 명령 경로는 설명용으로 함께 제시했습니다.
 
-<a id="series-review"></a>
+<span id="series-review"></span>
 
 ## 전체 시리즈 마무리
 
